@@ -1,0 +1,23 @@
+{
+  "name": "@atrium/importers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@atrium/schema": "workspace:*",
+    "exceljs": "^4.4.0",
+    "fast-xml-parser": "^5.11.2",
+    "papaparse": "^5.5.3",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/papaparse": "^5.5.2"
+  }
+}

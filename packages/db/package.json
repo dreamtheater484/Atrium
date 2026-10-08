@@ -1,0 +1,16 @@
+{
+  "name": "@atrium/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": ["src", "migrations"],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "postgres": "^3.4.9"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "atrium-server",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@atrium/server", "dev"],
+      "port": 7300
+    },
+    {
+      "name": "atrium-web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@atrium/web", "dev"],
+      "port": 5173
+    }
+  ]
+}

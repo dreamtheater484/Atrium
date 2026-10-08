@@ -1,0 +1,22 @@
+{
+  "name": "@atrium/exporters",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@atrium/schema": "workspace:*",
+    "exceljs": "^4.4.0",
+    "fast-xml-parser": "^5.11.2",
+    "pptxgenjs": "^4.0.1"
+  },
+  "devDependencies": {
+    "@atrium/importers": "workspace:*"
+  }
+}

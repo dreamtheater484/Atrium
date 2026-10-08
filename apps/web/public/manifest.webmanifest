@@ -1,0 +1,10 @@
+{
+  "name": "Atrium",
+  "short_name": "Atrium",
+  "description": "One shared, living map of your enterprise architecture.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fb",
+  "theme_color": "#4f46e5",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

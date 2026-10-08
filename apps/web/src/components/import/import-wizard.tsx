@@ -27,7 +27,9 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  EyeOff,
   FileUp,
+  Link2,
   Sparkles,
   TriangleAlert,
   Undo2,
@@ -51,6 +53,7 @@ interface SheetPreview {
   file: string;
   name: string;
   rows: number;
+  role: 'elements' | 'relations' | 'skip';
   type: ElementType;
   typeReason: string;
   confidence: number;
@@ -170,18 +173,33 @@ function SheetCard({
   preview: Preview;
   onChange: (p: Preview) => void;
 }) {
-  const [open, setOpen] = useState(sheet.confidence < 0.75);
+  const [open, setOpen] = useState(sheet.role === 'elements' && sheet.confidence < 0.75);
   const patch = useMutation({
-    mutationFn: (body: { type?: ElementType; columns?: Record<string, Target> }) =>
+    mutationFn: (body: {
+      role?: SheetPreview['role'];
+      type?: ElementType;
+      columns?: Record<string, Target>;
+    }) =>
       api<Preview>(`/import/${preview.importId}/sheets/${sheet.index}`, { method: 'PATCH', body }),
     onSuccess: onChange,
   });
   const def = typeDef(sheet.type);
   const mapped = sheet.columns.filter((c) => c.target.kind !== 'ignore').length;
+  const kind = sheet.role === 'elements' ? sheet.type : `role:${sheet.role}`;
   return (
     <div className="rounded-xl border border-border">
       <div className="flex flex-wrap items-center gap-3 p-3">
-        <TypeIcon type={sheet.type} size="md" />
+        {sheet.role === 'elements' ? (
+          <TypeIcon type={sheet.type} size="md" />
+        ) : (
+          <span className="flex size-8 items-center justify-center rounded-lg bg-surface-2 text-muted-foreground">
+            {sheet.role === 'relations' ? (
+              <Link2 className="size-4" />
+            ) : (
+              <EyeOff className="size-4" />
+            )}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-[13px] font-semibold">
             {sheet.name}
@@ -192,40 +210,63 @@ function SheetCard({
             )}
           </div>
           <div className="text-xs text-muted-foreground">
-            {sheet.rows} rows from {sheet.file} · {mapped} of {sheet.columns.length} columns
-            recognised
+            {sheet.role === 'elements'
+              ? `${sheet.rows} rows from ${sheet.file} · ${mapped} of ${sheet.columns.length} columns recognised`
+              : `${sheet.rows} rows from ${sheet.file} · ${sheet.typeReason}`}
           </div>
         </div>
         <div className="w-44">
           <Select
             size="sm"
-            value={sheet.type}
-            onValueChange={(v) => v && patch.mutate({ type: v as ElementType })}
-            options={ELEMENT_TYPE_LIST.map((d) => ({ value: d.type, label: d.plural }))}
+            value={kind}
+            onValueChange={(v) =>
+              v &&
+              patch.mutate(
+                v.startsWith('role:')
+                  ? { role: v.slice(5) as SheetPreview['role'] }
+                  : { type: v as ElementType },
+              )
+            }
+            options={[
+              ...ELEMENT_TYPE_LIST.map((d) => ({ value: d.type, label: d.plural })),
+              { value: 'role:relations', label: 'Links between elements' },
+              { value: 'role:skip', label: 'Skip this sheet' },
+            ]}
             aria-label="These rows are"
           />
         </div>
       </div>
-      <div className="flex flex-wrap gap-2 border-t border-border px-3 py-2 text-xs">
-        <Badge tone="good">{sheet.outcome.create} new</Badge>
-        <Badge tone="primary">{sheet.outcome.update} updated</Badge>
-        <Badge>{sheet.outcome.unchanged} unchanged</Badge>
-        {sheet.outcome.similar > 0 && (
-          <Badge tone="watch">{sheet.outcome.similar} matched by similar name</Badge>
-        )}
-        {sheet.outcome.skipped > 0 && (
-          <Badge tone="act">{sheet.outcome.skipped} rows skipped</Badge>
-        )}
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          className="ml-auto flex items-center gap-1 font-medium text-muted-foreground hover:text-foreground"
-        >
-          {open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}{' '}
-          Check columns
-        </button>
-      </div>
-      {open && (
+      {sheet.role === 'relations' && (
+        <div className="flex flex-wrap gap-2 border-t border-border px-3 py-2 text-xs">
+          <Badge tone="good">{sheet.outcome.create} new links</Badge>
+          <Badge>{sheet.outcome.unchanged} already there</Badge>
+          {sheet.warnings.length > 0 && (
+            <Badge tone="watch">{sheet.warnings.length} rows not understood</Badge>
+          )}
+        </div>
+      )}
+      {sheet.role === 'elements' && (
+        <div className="flex flex-wrap gap-2 border-t border-border px-3 py-2 text-xs">
+          <Badge tone="good">{sheet.outcome.create} new</Badge>
+          <Badge tone="primary">{sheet.outcome.update} updated</Badge>
+          <Badge>{sheet.outcome.unchanged} unchanged</Badge>
+          {sheet.outcome.similar > 0 && (
+            <Badge tone="watch">{sheet.outcome.similar} matched by similar name</Badge>
+          )}
+          {sheet.outcome.skipped > 0 && (
+            <Badge tone="act">{sheet.outcome.skipped} rows skipped</Badge>
+          )}
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            className="ml-auto flex items-center gap-1 font-medium text-muted-foreground hover:text-foreground"
+          >
+            {open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}{' '}
+            Check columns
+          </button>
+        </div>
+      )}
+      {open && sheet.role === 'elements' && (
         <div className="border-t border-border p-3">
           <div className="grid grid-cols-[minmax(0,1fr)_220px_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 text-[12.5px]">
             <div className="text-[11px] font-medium text-muted-foreground">Column in your file</div>

@@ -13,10 +13,14 @@ import {
 } from '@atrium/importers';
 import {
   ELEMENT_TYPE_DEFS,
+  ELEMENT_TYPES,
   type Element,
   type ElementType,
   enumLabel,
   normalizeName,
+  RELATION_TYPE_DEFS,
+  RELATION_TYPES,
+  type RelationType,
   similarity,
   typeDef,
 } from '@atrium/schema';
@@ -38,6 +42,8 @@ interface StoredImport {
   sheets: Array<{
     fileIndex: number;
     sheet: ParsedSheet;
+    /** `elements`: one element per row; `relations`: one link per row; `skip`: leave the sheet out. */
+    role: SheetRole;
     type: ElementType;
     mapping: SheetMapping;
     remembered: boolean;
@@ -53,6 +59,92 @@ setInterval(() => {
 }, 60_000).unref();
 
 const signature = (sheet: ParsedSheet) => sheet.headers.map(normalizeName).sort().join('|');
+
+export type SheetRole = 'elements' | 'relations' | 'skip';
+
+const NOTE_SHEETS =
+  /^(read ?me|about|info|instructions?|notes?|help|legend|summary|contents|cover)$/i;
+
+/** Columns of a sheet that lists one link per row (as Atrium's own Excel export does). */
+function relationColumns(sheet: ParsedSheet) {
+  const find = (...names: string[]) => sheet.headers.find((h) => names.includes(normalizeName(h)));
+  const from = find('from', 'source', 'from element', 'source element');
+  const to = find('to', 'target', 'to element', 'target element');
+  const type = find('type', 'relation', 'relationship', 'relation type', 'link', 'link type');
+  if (!from || !to || !type) return null;
+  return {
+    from,
+    to,
+    type,
+    fromType: find('from type', 'source type'),
+    toType: find('to type', 'target type'),
+  };
+}
+
+function guessRole(sheet: ParsedSheet): SheetRole {
+  if (NOTE_SHEETS.test(sheet.name.trim())) return 'skip';
+  if (relationColumns(sheet)) return 'relations';
+  return 'elements';
+}
+
+const RELATION_WORDS = new Map<string, { type: RelationType; reverse: boolean }>();
+for (const t of RELATION_TYPES) {
+  const d = RELATION_TYPE_DEFS[t];
+  RELATION_WORDS.set(normalizeName(t.replace(/_/g, ' ')), { type: t, reverse: false });
+  RELATION_WORDS.set(normalizeName(d.label), { type: t, reverse: false });
+  RELATION_WORDS.set(normalizeName(d.inverseLabel), { type: t, reverse: true });
+}
+const TYPE_WORDS = new Map<string, ElementType>();
+for (const t of ELEMENT_TYPES) {
+  const d = ELEMENT_TYPE_DEFS[t];
+  for (const w of [t.replace(/_/g, ' '), d.label, d.plural]) TYPE_WORDS.set(normalizeName(w), t);
+}
+
+interface LinkEnd {
+  name: string;
+  type?: ElementType;
+}
+
+interface LinkRow {
+  row: number;
+  type: RelationType;
+  from: LinkEnd;
+  to: LinkEnd;
+}
+
+/** Reads a relations sheet into links; rows it can't understand become warnings. */
+function sheetToLinks(sheet: ParsedSheet): { links: LinkRow[]; warnings: string[] } {
+  const cols = relationColumns(sheet);
+  const links: LinkRow[] = [];
+  const warnings: string[] = [];
+  if (!cols) return { links, warnings: ['This sheet needs "From", "To" and "Type" columns.'] };
+  const text = (v: unknown) => (v === null || v === undefined ? '' : String(v).trim());
+  sheet.rows.forEach((r, i) => {
+    const kind = RELATION_WORDS.get(normalizeName(text(r[cols.type])));
+    const fromName = text(r[cols.from]);
+    const toName = text(r[cols.to]);
+    if (!fromName || !toName) return;
+    if (!kind) {
+      warnings.push(`Row ${i + 2}: "${text(r[cols.type])}" is not a link type Atrium knows.`);
+      return;
+    }
+    const a: LinkEnd = {
+      name: fromName,
+      type: cols.fromType ? TYPE_WORDS.get(normalizeName(text(r[cols.fromType]))) : undefined,
+    };
+    const b: LinkEnd = {
+      name: toName,
+      type: cols.toType ? TYPE_WORDS.get(normalizeName(text(r[cols.toType]))) : undefined,
+    };
+    links.push({
+      row: i + 2,
+      type: kind.type,
+      from: kind.reverse ? b : a,
+      to: kind.reverse ? a : b,
+    });
+  });
+  return { links, warnings };
+}
 
 export function targetLabel(t: ColumnTarget, type: ElementType): string {
   switch (t.kind) {
@@ -120,9 +212,11 @@ function findMatch(
   type: ElementType,
   c: { name: string; key?: string; externalId?: string },
 ): { el: Element; how: 'id' | 'external' | 'key' | 'name' | 'similar' } | null {
-  if (c.externalId && UUID.test(c.externalId)) {
-    const el = idx.byId.get(c.externalId);
-    if (el) return { el, how: 'id' };
+  // Atrium's own ArchiMate export writes ids as "id-<uuid>".
+  const own = c.externalId?.replace(/^id-(?=[0-9a-f]{8}-)/i, '');
+  if (own && UUID.test(own)) {
+    const el = idx.byId.get(own);
+    if (el && el.type === type) return { el, how: 'id' };
   }
   if (c.externalId) {
     const el = idx.byExternal.get(`${type}:${c.externalId.toLowerCase()}`);
@@ -147,6 +241,45 @@ function findMatch(
   return best && bestScore >= 0.86 ? { el: best, how: 'similar' } : null;
 }
 
+/** Types the far end of a link column may have, the column's own type first. */
+function farTypes(r: Candidate['relations'][number]): ElementType[] {
+  const def = RELATION_TYPE_DEFS[r.relation];
+  const allowed = r.direction === 'out' ? def.to : def.from;
+  return [r.targetType, ...allowed.filter((t) => t !== r.targetType)];
+}
+
+/**
+ * List cells are split on commas, which breaks names that contain one ("API first, events for
+ * change"). Glue neighbours back together when only the joined name is known.
+ */
+function rejoin(names: string[], known: (name: string) => boolean): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < names.length; i++) {
+    let name = names[i]!;
+    if (!known(name)) {
+      for (let j = i + 1; j < Math.min(names.length, i + 4); j++) {
+        const joined = names.slice(i, j + 1).join(', ');
+        if (known(joined)) {
+          name = joined;
+          i = j;
+          break;
+        }
+      }
+    }
+    out.push(name);
+  }
+  return out;
+}
+
+/** The element a link end refers to, by name and (when given) type. */
+function findEnd(idx: MatchIndex, end: LinkEnd, allowed: readonly ElementType[]) {
+  for (const t of end.type ? [end.type] : allowed) {
+    const m = findMatch(idx, t, { name: end.name });
+    if (m) return m.el;
+  }
+  return null;
+}
+
 /* ------------------------------------------------------------------ */
 /* Preview                                                              */
 /* ------------------------------------------------------------------ */
@@ -156,6 +289,7 @@ export interface SheetPreview {
   file: string;
   name: string;
   rows: number;
+  role: SheetRole;
   type: ElementType;
   typeReason: string;
   confidence: number;
@@ -222,7 +356,49 @@ async function buildPreview(
   const idx = matchIndex(state.elements.values());
   const domainName = (id: string | null) => (id ? (state.elements.get(id)?.name ?? null) : null);
   const totals = { create: 0, update: 0, unchanged: 0, relations: 0 };
+  const linked = new Set(
+    [...state.relations.values()].map((r) => `${r.type}|${r.sourceId}|${r.targetId}`),
+  );
+  const exists = (type: RelationType, from: string, to: string) =>
+    linked.has(`${type}|${from}|${to}`);
   const sheets: SheetPreview[] = stored.sheets.map((s, i) => {
+    const base = {
+      index: i,
+      file: stored.files[s.fileIndex]!.name,
+      name: s.sheet.name,
+      rows: s.sheet.rows.length,
+      role: s.role,
+      type: s.type,
+      remembered: s.remembered,
+    };
+    if (s.role !== 'elements') {
+      const outcome = { create: 0, update: 0, unchanged: 0, similar: 0, skipped: 0 };
+      const { links, warnings } =
+        s.role === 'relations' ? sheetToLinks(s.sheet) : { links: [], warnings: [] };
+      for (const l of links) {
+        const def = RELATION_TYPE_DEFS[l.type];
+        const from = findEnd(idx, l.from, def.from);
+        const to = findEnd(idx, l.to, def.to);
+        if (from && to && exists(l.type, from.id, to.id)) outcome.unchanged++;
+        else {
+          outcome.create++;
+          totals.relations++;
+        }
+      }
+      if (s.role === 'skip') outcome.skipped = s.sheet.rows.length;
+      return {
+        ...base,
+        typeReason:
+          s.role === 'skip'
+            ? 'Looks like notes rather than data, so it is left out.'
+            : 'One link per row: a type, where it starts and where it points.',
+        confidence: 1,
+        columns: [],
+        outcome,
+        examples: [],
+        warnings: warnings.slice(0, 20),
+      };
+    }
     const { candidates, warnings } = sheetToCandidates(s.sheet, s.mapping);
     const outcome = {
       create: 0,
@@ -234,7 +410,15 @@ async function buildPreview(
     const examples: SheetPreview['examples'] = [];
     for (const c of candidates) {
       const m = findMatch(idx, c.type, c);
-      totals.relations += c.relations.reduce((n, r) => n + r.names.length, 0);
+      // Only links that don't exist yet count as news.
+      for (const r of c.relations) {
+        const known = (name: string) => !!findEnd(idx, { name }, farTypes(r));
+        for (const name of rejoin(r.names, known)) {
+          const other = findEnd(idx, { name }, farTypes(r));
+          const [from, to] = r.direction === 'out' ? [m?.el, other] : [other, m?.el];
+          if (!from || !to || !exists(r.relation, from.id, to.id)) totals.relations++;
+        }
+      }
       let ex: SheetPreview['examples'][number];
       if (!m) {
         outcome.create++;
@@ -264,14 +448,9 @@ async function buildPreview(
     totals.update += outcome.update;
     totals.unchanged += outcome.unchanged;
     return {
-      index: i,
-      file: stored.files[s.fileIndex]!.name,
-      name: s.sheet.name,
-      rows: s.sheet.rows.length,
-      type: s.type,
+      ...base,
       typeReason: detectElementType(s.sheet).reason,
       confidence: s.mapping.confidence,
-      remembered: s.remembered,
       columns: s.sheet.headers.map((h) => {
         const target = s.mapping.columns[h] ?? { kind: 'ignore' as const };
         return {
@@ -293,6 +472,8 @@ async function buildPreview(
   });
   const models = stored.models.map((m) => {
     const byType: Record<string, number> = {};
+    const refs = new Map<string, Element>();
+    const byRef = new Map(m.model.elements.map((e) => [e.ref, e]));
     for (const e of m.model.elements) {
       byType[e.type] = (byType[e.type] ?? 0) + 1;
       const match = findMatch(idx, e.type, {
@@ -300,10 +481,36 @@ async function buildPreview(
         key: e.key,
         externalId: Object.values(e.externalIds)[0],
       });
-      if (match) totals.update++;
-      else if (!e.placeholder) totals.create++;
+      if (match) refs.set(e.ref, match.el);
+      if (!match) {
+        if (!e.placeholder) totals.create++;
+        continue;
+      }
+      if (e.placeholder) continue;
+      const fields = candidateDiff(
+        {
+          row: 0,
+          type: e.type,
+          name: e.name,
+          description: e.description,
+          owner: e.owner,
+          lifecycle: e.lifecycle,
+          classification: e.classification,
+          domainName: e.domainRef ? byRef.get(e.domainRef)?.name : undefined,
+          attributes: e.attributes ?? {},
+          relations: [],
+        },
+        match.el,
+        domainName(match.el.domainId),
+      );
+      if (fields.length) totals.update++;
+      else totals.unchanged++;
     }
-    totals.relations += m.model.relations.length;
+    for (const r of m.model.relations) {
+      const from = refs.get(r.from);
+      const to = refs.get(r.to);
+      if (!from || !to || !exists(r.type, from.id, to.id)) totals.relations++;
+    }
     return {
       file: stored.files[m.fileIndex]!.name,
       elements: m.model.elements.length,
@@ -353,10 +560,12 @@ export async function previewImport(
       if (!sheet.rows.length) continue;
       const [remembered] =
         await deps.sql`select element_type, mapping from import_mappings where signature = ${signature(sheet)}`;
-      if (remembered) {
+      const role = guessRole(sheet);
+      if (remembered && role === 'elements') {
         stored.sheets.push({
           fileIndex,
           sheet,
+          role,
           type: remembered.elementType as ElementType,
           mapping: remembered.mapping as SheetMapping,
           remembered: true,
@@ -366,6 +575,7 @@ export async function previewImport(
         stored.sheets.push({
           fileIndex,
           sheet,
+          role,
           type,
           mapping: guessMapping(sheet, type),
           remembered: false,
@@ -392,11 +602,17 @@ export async function updateImportSheet(
   ctx: RequestContext,
   importId: string,
   sheetIndex: number,
-  patch: { type?: ElementType; columns?: Record<string, ColumnTarget> },
+  patch: { role?: SheetRole; type?: ElementType; columns?: Record<string, ColumnTarget> },
 ) {
   const stored = getStored(importId, ctx);
   const s = stored.sheets[sheetIndex];
   if (!s) throw notFound('That sheet');
+  if (patch.role) {
+    if (patch.role === 'relations' && !relationColumns(s.sheet))
+      throw badRequest('A links sheet needs "From", "To" and "Type" columns.');
+    s.role = patch.role;
+  }
+  if (patch.type) s.role = 'elements';
   if (patch.type && patch.type !== s.type) {
     s.type = patch.type;
     s.mapping = guessMapping(s.sheet, patch.type);
@@ -430,6 +646,13 @@ export async function applyImport(
   let created = 0;
   let updated = 0;
   let linked = 0;
+  // Links that already existed (in the model or earlier in this import) are not counted again.
+  const counted = new Set<string>();
+  const count = (rel: { id: string } | null) => {
+    if (!rel || state.relations.has(rel.id) || counted.has(rel.id)) return;
+    counted.add(rel.id);
+    linked++;
+  };
 
   const ensure = async (
     type: ElementType,
@@ -515,7 +738,7 @@ export async function applyImport(
     }
     if (c.teamName) {
       const team = await ensure('team', c.teamName);
-      if (team && b.link('owned_by', el.id, team.id)) linked++;
+      if (team) count(b.link('owned_by', el.id, team.id));
     }
     return el;
   };
@@ -531,9 +754,11 @@ export async function applyImport(
     'application',
     'interface',
   ];
-  const sheets = stored.sheets
+  const active = stored.sheets
     .map((s, i) => ({ ...s, i }))
-    .filter((s) => !opts.skipSheets?.includes(s.i))
+    .filter((s) => !opts.skipSheets?.includes(s.i) && s.role !== 'skip');
+  const sheets = active
+    .filter((s) => s.role === 'elements')
     .sort((a, b2) => (order.indexOf(a.type) + 1 || 99) - (order.indexOf(b2.type) + 1 || 99));
   const pendingRelations: Array<{ el: Element; c: Candidate }> = [];
   for (const s of sheets) {
@@ -545,14 +770,39 @@ export async function applyImport(
   }
   for (const { el, c } of pendingRelations) {
     for (const r of c.relations) {
-      for (const name of r.names) {
-        const target = await ensure(r.targetType, name);
+      const types = farTypes(r);
+      const find = (name: string) =>
+        types
+          .map((t) => made.get(`${t}:${normalizeName(name)}`) ?? findMatch(idx, t, { name })?.el)
+          .find(Boolean);
+      for (const name of rejoin(r.names, (n) => !!find(n))) {
+        // A "Governed by" column can name standards, principles and decisions alike.
+        const known = find(name);
+        const target = known ? (b.get(known.id) ?? known) : await ensure(r.targetType, name);
         if (!target) continue;
         const rel =
           r.direction === 'out'
             ? b.link(r.relation, el.id, target.id)
             : b.link(r.relation, target.id, el.id);
-        if (rel) linked++;
+        count(rel);
+      }
+    }
+  }
+
+  // Sheets with one link per row, once every element exists.
+  const relationSheets = active.filter((x) => x.role === 'relations');
+  if (relationSheets.length) {
+    const lookup = matchIndex(b.index.model.elements.values());
+    const end = async (e: LinkEnd, allowed: readonly ElementType[]) =>
+      findEnd(lookup, e, allowed) ??
+      made.get(`${e.type}:${normalizeName(e.name)}`) ??
+      (e.type ? await ensure(e.type, e.name) : null);
+    for (const s of relationSheets) {
+      for (const l of sheetToLinks(s.sheet).links) {
+        const def = RELATION_TYPE_DEFS[l.type];
+        const from = await end(l.from, def.from);
+        const to = await end(l.to, def.to);
+        if (from && to) count(b.link(l.type, from.id, to.id));
       }
     }
   }
@@ -605,7 +855,7 @@ export async function applyImport(
     for (const r of m.model.relations) {
       const from = refs.get(r.from);
       const to = refs.get(r.to);
-      if (from && to && b.link(r.type, from.id, to.id)) linked++;
+      if (from && to) count(b.link(r.type, from.id, to.id));
     }
   }
 

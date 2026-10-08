@@ -68,7 +68,10 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
  * Accepts "#rgb", "#rrggbb", "#rrggbbaa", bare hex, "rgb(r,g,b)", "rgba(...)",
  * "hsl(...)" and a few colour names. Anything else returns `fallback`.
  */
-export function toHex(color: string | null | undefined, fallback: string = PALETTE.unknown): string {
+export function toHex(
+  color: string | null | undefined,
+  fallback: string = PALETTE.unknown,
+): string {
   if (!color) return fallback;
   const c = color.trim().toLowerCase();
   if (NAMED[c]) return NAMED[c];

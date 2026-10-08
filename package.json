@@ -20,7 +20,10 @@
     "db:seed": "pnpm --filter @atrium/server seed",
     "e2e": "playwright test -c e2e/playwright.config.ts",
     "videos:capture": "pnpm --filter @atrium/videos capture",
-    "videos:render": "pnpm --filter @atrium/videos render"
+    "videos:render": "pnpm --filter @atrium/videos render",
+    "start": "node apps/server/dist/main.js",
+    "docker:build": "docker build -t atrium:latest .",
+    "docker:up": "docker compose -f deploy/docker-compose.yml up -d"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

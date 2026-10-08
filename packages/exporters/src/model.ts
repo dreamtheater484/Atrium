@@ -1,7 +1,7 @@
 import {
   type AttributeDef,
-  type Element,
   ELEMENT_TYPE_DEFS,
+  type Element,
   enumLabel,
   RELATION_TYPE_DEFS,
   type RelationType,

@@ -1,9 +1,9 @@
 import {
   type AttributeDef,
   CLASSIFICATIONS,
-  type Element,
   ELEMENT_TYPE_DEFS,
   ELEMENT_TYPES,
+  type Element,
   type ElementType,
   enumLabel,
   LIFECYCLE_PHASES,
@@ -170,10 +170,20 @@ function buildColumns(
   ];
 
   if (type !== 'domain' || any((el) => !!el.domainId)) {
-    cols.push({ header: 'Domain', group: 'core', value: (el) => nameOf(el.domainId), maxWidth: 30 });
+    cols.push({
+      header: 'Domain',
+      group: 'core',
+      value: (el) => nameOf(el.domainId),
+      maxWidth: 30,
+    });
   }
   if (def.hierarchical || any((el) => !!el.parentId)) {
-    cols.push({ header: 'Parent', group: 'core', value: (el) => nameOf(el.parentId), maxWidth: 34 });
+    cols.push({
+      header: 'Parent',
+      group: 'core',
+      value: (el) => nameOf(el.parentId),
+      maxWidth: 34,
+    });
   }
   cols.push({ header: 'Owner', group: 'core', value: (el) => el.owner, maxWidth: 30 });
 
@@ -300,7 +310,10 @@ function displayLength(value: ExcelJS.CellValue, numFmt?: string): number {
 function columnWidth(col: ColumnSpec, values: ExcelJS.CellValue[]): number {
   if (col.width) return col.width;
   const words = col.header.split(/\s+/);
-  const headerNeed = Math.max(Math.max(...words.map((w) => w.length)), Math.ceil(col.header.length * 0.6));
+  const headerNeed = Math.max(
+    Math.max(...words.map((w) => w.length)),
+    Math.ceil(col.header.length * 0.6),
+  );
   let longest = 0;
   for (const v of values) longest = Math.max(longest, displayLength(v, col.numFmt));
   const raw = Math.max(headerNeed + 4, longest + 2);
@@ -326,7 +339,10 @@ function addValidation(ws: ExcelJS.Worksheet, address: string, dv: ExcelJS.DataV
   (ws as unknown as ValidationTarget).dataValidations.add(address, dv);
 }
 
-const thinLine = (hex: string): Partial<ExcelJS.Border> => ({ style: 'thin', color: { argb: argb(hex) } });
+const thinLine = (hex: string): Partial<ExcelJS.Border> => ({
+  style: 'thin',
+  color: { argb: argb(hex) },
+});
 
 function styleHeader(row: ExcelJS.Row, groups: ColumnGroup[]) {
   row.height = 32;
@@ -336,7 +352,10 @@ function styleHeader(row: ExcelJS.Row, groups: ColumnGroup[]) {
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: argb(HEADER_FILL[group]) } };
     cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
     cell.border = {
-      bottom: { style: 'medium', color: { argb: argb(group === 'relation' ? '0891B2' : PALETTE.accent) } },
+      bottom: {
+        style: 'medium',
+        color: { argb: argb(group === 'relation' ? '0891B2' : PALETTE.accent) },
+      },
       right: thinLine('FFFFFF'),
     };
   });
@@ -368,7 +387,9 @@ function writeTable(
 
   for (const r of rows) {
     const row = ws.addRow(
-      r.values.map((v) => (typeof v === 'string' && v.length > MAX_CELL ? v.slice(0, MAX_CELL) : v)),
+      r.values.map((v) =>
+        typeof v === 'string' && v.length > MAX_CELL ? v.slice(0, MAX_CELL) : v,
+      ),
     );
     for (let colNumber = 1; colNumber <= cols.length; colNumber++) {
       const col = cols[colNumber - 1]!;
@@ -393,14 +414,22 @@ function writeTable(
         }
         case 'name':
           cell.font = { name: FONT, size: 11, bold: true, color: { argb: argb(PALETTE.text) } };
-          cell.alignment = { vertical: 'top', horizontal: 'left', indent: Math.min(r.depth ?? 0, 6) };
+          cell.alignment = {
+            vertical: 'top',
+            horizontal: 'left',
+            indent: Math.min(r.depth ?? 0, 6),
+          };
           break;
         case 'health': {
           const key = typeof cell.value === 'string' ? cell.value.toLowerCase() : '';
           const color = HEALTH_COLOR[key];
           if (color) {
             cell.font = { name: FONT, size: 11, bold: true, color: { argb: argb(color) } };
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: argb(tint(color, 0.85)) } };
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: argb(tint(color, 0.85)) },
+            };
           }
           break;
         }
@@ -506,7 +535,12 @@ function writeReadme(
     r++;
     const row = ws.getRow(r++);
     row.getCell(2).value = text;
-    row.getCell(2).font = { name: FONT, size: 13, bold: true, color: { argb: argb(PALETTE.accent) } };
+    row.getCell(2).font = {
+      name: FONT,
+      size: 13,
+      bold: true,
+      color: { argb: argb(PALETTE.accent) },
+    };
     row.height = 22;
   };
 
@@ -514,7 +548,12 @@ function writeReadme(
   title.getCell(2).value = 'Atrium export';
   title.getCell(2).font = { name: FONT, size: 22, bold: true, color: { argb: argb(PALETTE.text) } };
   title.height = 34;
-  put('Workspace', model.workspaceName, { ...base, bold: true }, { ...base, color: { argb: argb(PALETTE.muted) } });
+  put(
+    'Workspace',
+    model.workspaceName,
+    { ...base, bold: true },
+    { ...base, color: { argb: argb(PALETTE.muted) } },
+  );
   put(
     'Generated',
     formatDisplayDate(model.generatedAt) +
@@ -526,7 +565,11 @@ function writeReadme(
   heading('What is in this workbook');
   const head = put('Sheet', 'Contents', { ...base, bold: true });
   for (const c of [2, 3]) {
-    head.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: argb(HEADER_FILL.core) } };
+    head.getCell(c).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: argb(HEADER_FILL.core) },
+    };
     head.getCell(c).border = { bottom: { style: 'medium', color: { argb: argb(PALETTE.accent) } } };
   }
   for (const s of sheets) {
@@ -541,20 +584,26 @@ function writeReadme(
     'Keep the header names and sheet names as they are; Atrium uses them to recognise element types and fields.',
     'In Atrium, open Import, choose this file and review the proposed changes before applying them.',
   ];
-  steps.forEach((s, i) => put(`Step ${i + 1}`, s));
+  for (const [i, s] of steps.entries()) put(`Step ${i + 1}`, s);
 
   heading('Column guide');
   const guide: Array<[string, string]> = [
     ['ID', 'Atrium identifier, used to match rows on re-import. Do not change it.'],
     ['Key', 'Optional short code, such as an application number from your CMDB.'],
     ['Domain, Parent', 'Names of the domain and parent element. They must match existing names.'],
-    ['Lifecycle', 'Plan, Build, Active, Phase out or Retired. Date columns hold the date each phase starts.'],
+    [
+      'Lifecycle',
+      'Plan, Build, Active, Phase out or Retired. Date columns hold the date each phase starts.',
+    ],
     ['Tags and lists', 'Several values in one cell are separated by commas.'],
     [
       'Relation columns',
       'Columns such as "Supports" or "Runs on" list the names of related elements, separated by commas. The Relations sheet lists every relation once.',
     ],
-    ['Dropdowns', 'Columns with a fixed set of values (Lifecycle, Hosting, TIME…) offer a dropdown.'],
+    [
+      'Dropdowns',
+      'Columns with a fixed set of values (Lifecycle, Hosting, TIME…) offer a dropdown.',
+    ],
     ['Money', 'Amounts are in euro, stored as plain numbers.'],
     ['Quality %, Health', 'Calculated by Atrium. Shown for reference and ignored on import.'],
   ];
@@ -566,7 +615,10 @@ function writeReadme(
 /* ------------------------------------------------------------------ */
 
 /** Exports the model as a styled Excel workbook that Atrium's importer can read back. */
-export async function exportExcel(model: ExportModel, opts: ExcelExportOptions = {}): Promise<Uint8Array> {
+export async function exportExcel(
+  model: ExportModel,
+  opts: ExcelExportOptions = {},
+): Promise<Uint8Array> {
   const byId = indexById(model.elements);
   const wanted = new Set(opts.types ?? ELEMENT_TYPES);
   const types = ELEMENT_TYPES.filter(
@@ -574,7 +626,9 @@ export async function exportExcel(model: ExportModel, opts: ExcelExportOptions =
   );
 
   const outgoing = new Map<string, Map<RelationType, string[]>>();
-  const validRelations = model.relations.filter((r) => byId.has(r.sourceId) && byId.has(r.targetId));
+  const validRelations = model.relations.filter(
+    (r) => byId.has(r.sourceId) && byId.has(r.targetId),
+  );
   for (const rel of validRelations) {
     const byType = outgoing.get(rel.sourceId) ?? new Map<RelationType, string[]>();
     const names = byType.get(rel.type) ?? [];
@@ -641,7 +695,9 @@ export async function exportExcel(model: ExportModel, opts: ExcelExportOptions =
       }
       return 0;
     });
-  const relWs = wb.addWorksheet('Relations', { properties: { tabColor: { argb: argb('64748B') } } });
+  const relWs = wb.addWorksheet('Relations', {
+    properties: { tabColor: { argb: argb('64748B') } },
+  });
   const relCols: ColumnSpec[] = [
     {
       header: 'Type',
@@ -668,7 +724,11 @@ export async function exportExcel(model: ExportModel, opts: ExcelExportOptions =
   });
   summary.push({ name: 'README', count: 0, what: 'This page.' });
 
-  writeReadme(wb.addWorksheet('README', { properties: { tabColor: { argb: argb(PALETTE.faint) } } }), model, summary);
+  writeReadme(
+    wb.addWorksheet('README', { properties: { tabColor: { argb: argb(PALETTE.faint) } } }),
+    model,
+    summary,
+  );
 
   const buffer = await wb.xlsx.writeBuffer();
   return new Uint8Array(buffer as ArrayBuffer);

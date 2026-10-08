@@ -186,7 +186,12 @@ export function matchColumn(
   let best: { target: ColumnTarget; score: number } | undefined;
   for (const spec of targetsFor(type)) {
     const s = aliasScore(forms, spec);
-    if (s >= MIN_SCORE && (!best || s > best.score)) best = { target: spec.target, score: s };
+    // On a tie, a field of this type ("Contact" on a team) beats a general alias (owner).
+    const better =
+      !best ||
+      s > best.score ||
+      (s === best.score && spec.target.kind === 'attribute' && best.target.kind === 'core');
+    if (s >= MIN_SCORE && better) best = { target: spec.target, score: s };
   }
   return best;
 }

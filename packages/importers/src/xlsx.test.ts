@@ -503,3 +503,18 @@ describe('sheetToCandidates', () => {
     });
   });
 });
+
+describe('percent formats', () => {
+  it('scales real percent formats but keeps a quoted % label as is', async () => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Initiatives');
+    setRow(ws, 1, ['Name', 'Progress', 'Share']);
+    setRow(ws, 2, ['Data platform 2.0', 55, 0.25]);
+    ws.getCell('B2').numFmt = '0"%"';
+    ws.getCell('C2').numFmt = '0%';
+    const parsed = await parseFile('initiatives.xlsx', await toBytes(wb));
+    const row = parsed.sheets![0]!.rows[0]!;
+    expect(row.Progress).toBe('55%');
+    expect(row.Share).toBe('25%');
+  });
+});

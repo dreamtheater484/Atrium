@@ -26,7 +26,9 @@ describe('exportArchimate', () => {
   const relationships: Array<Record<string, any>> = doc.relationships.relationship;
   const idOf = (name: string) => archimateId(model.elements.find((e) => e.name === name)!.id);
   const find = (type: string, from: string, to: string) =>
-    relationships.find((r) => r['@_xsi:type'] === type && r['@_source'] === idOf(from) && r['@_target'] === idOf(to));
+    relationships.find(
+      (r) => r['@_xsi:type'] === type && r['@_source'] === idOf(from) && r['@_target'] === idOf(to),
+    );
 
   it('is well-formed XML in the ArchiMate 3.x exchange namespace', () => {
     expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
@@ -107,7 +109,8 @@ describe('exportArchimate', () => {
       'Sla hours': '4',
     });
     for (const e of elements) {
-      for (const p of e.properties?.property ?? []) expect(defIds.has(p['@_propertyDefinitionRef'])).toBe(true);
+      for (const p of e.properties?.property ?? [])
+        expect(defIds.has(p['@_propertyDefinitionRef'])).toBe(true);
     }
   });
 
@@ -123,7 +126,9 @@ describe('exportArchimate', () => {
       'Other',
       'Relations',
     ]);
-    const filed = folders.slice(0, -1).flatMap((f) => f.item.map((i: Record<string, string>) => i['@_identifierRef']));
+    const filed = folders
+      .slice(0, -1)
+      .flatMap((f) => f.item.map((i: Record<string, string>) => i['@_identifierRef']));
     expect(new Set(filed).size).toBe(model.elements.length);
   });
 

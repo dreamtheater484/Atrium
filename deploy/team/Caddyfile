@@ -1,0 +1,4 @@
+{$ATRIUM_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy atrium:7300
+}

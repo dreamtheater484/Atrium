@@ -19,6 +19,8 @@ export interface Config {
   /** solo: one person, no login, no reviews. team: accounts, SSO, reviews. */
   mode: 'solo' | 'team';
   publicUrl: string;
+  /** Solo mode answers only requests addressed to these host names (besides localhost). */
+  allowedHosts: string[];
   workspaceName: string;
   webDist: string | null;
   /** Look up end-of-life dates on endoflife.date. Off means only the bundled snapshot is used. */
@@ -68,6 +70,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     databaseUrl: env.DATABASE_URL ?? 'postgres://atrium:atrium@localhost:5433/atrium',
     mode,
     publicUrl,
+    allowedHosts: (env.ATRIUM_ALLOWED_HOSTS ?? '')
+      .split(',')
+      .map((h) => h.trim().toLowerCase())
+      .filter(Boolean),
     workspaceName: env.ATRIUM_WORKSPACE_NAME ?? 'Atrium',
     webDist: findWebDist(),
     eolLookup: bool(env.ATRIUM_EOL_LOOKUP, false),

@@ -25,8 +25,11 @@ function scalarOf(value: ExcelJS.CellValue, numFmt: string | undefined): CellSca
   if (typeof value === 'string') return cleanText(value) || null;
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) return null;
-    // Keep the meaning of percent-formatted cells: 0.45 shown as 45% stays "45%".
-    if (numFmt?.includes('%')) return `${round(value * 100, 4)}%`;
+    // Keep the meaning of percent-formatted cells: 0.45 shown as 45% stays "45%". A quoted or
+    // escaped % (as in 0"%") is just a label after the number, so the value is already a percentage.
+    const fmt = numFmt?.replace(/"[^"]*"/g, '').replace(/\\./g, '');
+    if (fmt?.includes('%')) return `${round(value * 100, 4)}%`;
+    if (numFmt && /"%"|\\%/.test(numFmt)) return `${value}%`;
     return value;
   }
   if (typeof value === 'boolean') return value;

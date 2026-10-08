@@ -211,7 +211,11 @@ const AVATAR_TONES = [
 ];
 
 export function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
+  // Words only: "atrium sync (CI)" → "AS", not "A(".
+  const parts = name
+    .replace(/\(.*?\)/g, ' ')
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
   if (!parts.length) return '?';
   return (
     (parts[0]![0] ?? '') + (parts.length > 1 ? parts.at(-1)![0] : (parts[0]![1] ?? ''))

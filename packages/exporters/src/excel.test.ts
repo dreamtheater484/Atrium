@@ -6,7 +6,9 @@ import { exportExcel } from './excel';
 
 async function open(bytes: Uint8Array) {
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer);
+  await wb.xlsx.load(
+    bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+  );
   return wb;
 }
 
@@ -61,7 +63,17 @@ describe('exportExcel', () => {
     expect(apps).not.toContain('Plan date'); // no values, no column
     for (const attr of ELEMENT_TYPE_DEFS.application.attributes) expect(apps).toContain(attr.label);
     expect(apps).toContain('Sla hours'); // attribute outside the metamodel still round-trips
-    for (const h of ['Supports', 'Runs on', 'Sends data to', 'Provides', 'Uses interface', 'Manages', 'Owned by', 'Replaces', 'Depends on']) {
+    for (const h of [
+      'Supports',
+      'Runs on',
+      'Sends data to',
+      'Provides',
+      'Uses interface',
+      'Manages',
+      'Owned by',
+      'Replaces',
+      'Depends on',
+    ]) {
       expect(apps).toContain(h);
     }
     expect(apps.slice(-2)).toEqual(['Quality %', 'Health']);
@@ -193,14 +205,28 @@ describe('exportExcel', () => {
   });
 
   it('honours the types option', async () => {
-    const wb = await open(await exportExcel(sampleModel(), { types: ['application', 'technology'] }));
-    expect(wb.worksheets.map((w) => w.name)).toEqual(['Applications', 'Technologies', 'Relations', 'README']);
+    const wb = await open(
+      await exportExcel(sampleModel(), { types: ['application', 'technology'] }),
+    );
+    expect(wb.worksheets.map((w) => w.name)).toEqual([
+      'Applications',
+      'Technologies',
+      'Relations',
+      'README',
+    ]);
     // Names of filtered-out elements are still resolved.
-    expect(rows(wb.getWorksheet('Applications')!).find((r) => r.Name === 'CRM Suite')!.Domain).toBe('Customer');
+    expect(rows(wb.getWorksheet('Applications')!).find((r) => r.Name === 'CRM Suite')!.Domain).toBe(
+      'Customer',
+    );
   });
 
   it('copes with an empty model', async () => {
-    const bytes = await exportExcel({ elements: [], relations: [], workspaceName: 'Empty', generatedAt: '2026-10-08' });
+    const bytes = await exportExcel({
+      elements: [],
+      relations: [],
+      workspaceName: 'Empty',
+      generatedAt: '2026-10-08',
+    });
     const wb = await open(bytes);
     expect(wb.worksheets.map((w) => w.name)).toEqual(['Relations', 'README']);
   });

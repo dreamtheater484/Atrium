@@ -24,6 +24,7 @@ const ELEMENT_TYPE_MAP: Record<string, ElementType> = {
   Principle: 'principle',
   Constraint: 'standard',
   Requirement: 'standard',
+  Assessment: 'decision',
   BusinessActor: 'team',
   BusinessRole: 'team',
   Grouping: 'domain',
@@ -96,13 +97,14 @@ type Action =
 
 const SUPPORTERS: ElementType[] = ['application', 'technology', 'interface'];
 const SUPPORTED: ElementType[] = ['capability', 'business_process'];
-const GOVERNING: ElementType[] = ['principle', 'standard'];
+const GOVERNING: ElementType[] = ['principle', 'standard', 'decision'];
 
 /** Maps an ArchiMate relationship between two imported elements to what it means in Atrium. */
 function mapRelationship(
   kind: string,
   s: NormalizedElement,
   t: NormalizedElement,
+  name?: string,
 ): Action | undefined {
   const rel = (type: RelationType, from: NormalizedElement, to: NormalizedElement): Action => ({
     kind: 'relation',
@@ -146,8 +148,12 @@ function mapRelationship(
       return undefined;
     case 'Influence':
       if (s.type === 'initiative') return rel('impacts', s, t);
+      // A principle, standard or decision influences what it governs.
+      if (GOVERNING.includes(s.type)) return rel('governed_by', t, s);
       return undefined;
     case 'Association':
+      if (name && /^replaces$/i.test(name.trim()) && s.type === t.type)
+        return rel('replaces', s, t);
       if (s.type === 'initiative') return rel('impacts', s, t);
       if (t.type === 'initiative') return rel('impacts', t, s);
       if (GOVERNING.includes(t.type) && !GOVERNING.includes(s.type))
@@ -282,7 +288,7 @@ export function parseArchimate(xml: string): NormalizedModel {
       danglingRelations++;
       continue;
     }
-    const action = mapRelationship(kind, s, t);
+    const action = mapRelationship(kind, s, t, langText(node.name));
     if (!action) {
       bump(
         skippedRelations,

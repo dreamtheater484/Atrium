@@ -161,9 +161,12 @@ export function registerAuth(
     const ip = req.ip;
     // Solo mode has no login, so only answer requests addressed to this computer. This blocks
     // DNS-rebinding tricks where another website points its own hostname at 127.0.0.1.
-    if (config.mode === 'solo' && config.host === '127.0.0.1') {
+    // It also applies inside a container, where the server has to listen on every address.
+    if (config.mode === 'solo') {
       const host = (req.headers.host ?? '').replace(/:\d+$/, '').toLowerCase();
-      if (!['localhost', '127.0.0.1', '[::1]'].includes(host) && !host.endsWith('.localhost')) {
+      const local =
+        ['localhost', '127.0.0.1', '[::1]'].includes(host) || host.endsWith('.localhost');
+      if (!local && !config.allowedHosts.includes(host)) {
         throw new HttpError(
           421,
           'Atrium only answers requests for localhost in solo mode.',
@@ -198,6 +201,14 @@ export function registerAuth(
     // Atrium's own pages always send this header. Other websites can't (it forces a CORS
     // preflight, which Atrium never allows), so cross-site form posts are blocked — also in
     // solo mode, where there is no login to protect the local server.
+    // Agents always connect with a token, so say how to get one rather than mention headers.
+    if (req.url.startsWith('/mcp') && req.ctx.kind !== 'token') {
+      throw new HttpError(
+        401,
+        'Agents need a token. Create one in Atrium under Settings → Agents and tokens → Connect coding agent.',
+        'token_required',
+      );
+    }
     if (MUTATING.has(req.method) && req.ctx.kind !== 'token' && !req.headers['x-atrium-csrf']) {
       throw new HttpError(403, 'Missing request header. Reload the page and try again.', 'csrf');
     }

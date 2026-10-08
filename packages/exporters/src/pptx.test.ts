@@ -8,8 +8,12 @@ import type { DeckSpec, SlideSpec } from './types';
  */
 function inspect(bytes: Uint8Array) {
   const raw = Buffer.from(bytes).toString('utf8');
-  const slides = new Set([...raw.matchAll(/ppt\/slides\/slide(\d+)\.xml/g)].map((m) => Number(m[1])));
-  const charts = new Set([...raw.matchAll(/ppt\/charts\/chart(\d+)\.xml/g)].map((m) => Number(m[1])));
+  const slides = new Set(
+    [...raw.matchAll(/ppt\/slides\/slide(\d+)\.xml/g)].map((m) => Number(m[1])),
+  );
+  const charts = new Set(
+    [...raw.matchAll(/ppt\/charts\/chart(\d+)\.xml/g)].map((m) => Number(m[1])),
+  );
   return { raw, has: (s: string) => raw.includes(s), slides: slides.size, charts: charts.size };
 }
 
@@ -65,13 +69,25 @@ describe('exportPptx', () => {
           title: 'Run cost by domain',
           subtitle: 'Annual cost, euro',
           labels: ['Customer', 'Finance', 'Network', 'Operations'],
-          series: [{ name: 'Cost', values: [4_200_000, 2_100_000, 7_800_000, 950_000], color: '#4f46e5' }],
+          series: [
+            { name: 'Cost', values: [4_200_000, 2_100_000, 7_800_000, 950_000], color: '#4f46e5' },
+          ],
           valueFormat: 'money',
         },
         {
           kind: 'bar',
           title: 'Health by domain',
-          labels: ['Customer', 'Finance', 'Network', 'Operations', 'Shared services platform', 'HR', 'Legal', 'Marketing', 'Sales'],
+          labels: [
+            'Customer',
+            'Finance',
+            'Network',
+            'Operations',
+            'Shared services platform',
+            'HR',
+            'Legal',
+            'Marketing',
+            'Sales',
+          ],
           series: [
             { name: 'Good', values: [10, 8, 12, 4, 3, 2, 1, 5, 6], color: '#2f9e7a' },
             { name: 'Watch', values: [3, 2, 5, 1, 0, 1, 0, 2, 1], color: '#e0a526' },
@@ -110,14 +126,26 @@ describe('exportPptx', () => {
             {
               name: 'Billing',
               bars: [
-                { label: 'Replace Billing Engine', start: '2026-02-01', end: '2026-11-30', color: '#4f46e5' },
+                {
+                  label: 'Replace Billing Engine',
+                  start: '2026-02-01',
+                  end: '2026-11-30',
+                  color: '#4f46e5',
+                },
                 { label: 'Decommission', start: '2026-10-01', end: '2027-01-31', color: '#d9534f' },
                 { label: 'Tiny', start: '2027-03-01', end: '2027-03-10', color: '#e0a526' },
               ],
             },
             {
               name: 'Customer',
-              bars: [{ label: 'CRM consolidation', start: '2025-06-01', end: '2028-06-30', color: 'rgb(47,158,122)' }],
+              bars: [
+                {
+                  label: 'CRM consolidation',
+                  start: '2025-06-01',
+                  end: '2028-06-30',
+                  color: 'rgb(47,158,122)',
+                },
+              ],
             },
             { name: 'Empty lane', bars: [] },
           ],
@@ -156,7 +184,14 @@ describe('exportPptx', () => {
   });
 
   it('copes with very large and very small capability maps', async () => {
-    const bytes = await exportPptx(deck([capabilityMap(10, 15), capabilityMap(3, 40), capabilityMap(14, 2), capabilityMap(1, 0)]));
+    const bytes = await exportPptx(
+      deck([
+        capabilityMap(10, 15),
+        capabilityMap(3, 40),
+        capabilityMap(14, 2),
+        capabilityMap(1, 0),
+      ]),
+    );
     expect(isZip(bytes)).toBe(true);
     // 14 columns split over two slides.
     expect(inspect(bytes).slides).toBe(1 + 1 + 1 + 2 + 1);
@@ -170,7 +205,14 @@ describe('exportPptx', () => {
       { text: ['Good', 'Watch', 'Act'][i % 3]!, tone: (['good', 'watch', 'act'] as const)[i % 3] },
     ]);
     const bytes = await exportPptx(
-      deck([{ kind: 'table', title: 'All applications', columns: ['Name', 'Owner', 'Cost', 'Health'], rows }]),
+      deck([
+        {
+          kind: 'table',
+          title: 'All applications',
+          columns: ['Name', 'Owner', 'Cost', 'Health'],
+          rows,
+        },
+      ]),
     );
     expect(isZip(bytes)).toBe(true);
     const { has, slides } = inspect(bytes);
@@ -207,7 +249,13 @@ describe('exportPptx', () => {
     const bytes = await exportPptx(
       deck([
         { kind: 'roadmap', title: 'Everything', start: '2026-01-01', end: '2027-06-30', lanes },
-        { kind: 'doughnut', title: 'Spend by vendor', labels, series: [{ name: 'Spend', values: labels.map((_, i) => (i + 1) * 1000) }], valueFormat: 'money' },
+        {
+          kind: 'doughnut',
+          title: 'Spend by vendor',
+          labels,
+          series: [{ name: 'Spend', values: labels.map((_, i) => (i + 1) * 1000) }],
+          valueFormat: 'money',
+        },
       ]),
     );
     expect(isZip(bytes)).toBe(true);

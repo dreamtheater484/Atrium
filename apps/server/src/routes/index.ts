@@ -4,6 +4,7 @@ import { agentRoutes } from './agents';
 import { authRoutes } from './auth';
 import { changeRoutes } from './changes';
 import { dashboardRoutes } from './dashboards';
+import { exportRoutes } from './export';
 import { importRoutes } from './import';
 import { packRoutes } from './packs';
 import { peopleRoutes } from './people';
@@ -22,5 +23,6 @@ export function allRoutes(deps: Deps): AnyRoute[] {
     ...agentRoutes(deps),
     ...importRoutes(deps),
     ...packRoutes(deps),
+    ...exportRoutes(deps),
   ];
 }

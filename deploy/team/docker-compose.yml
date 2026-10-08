@@ -1,0 +1,65 @@
+# Atrium as a shared team server, with automatic HTTPS (Caddy + Let's Encrypt).
+#   cp deploy/team/.env.example deploy/team/.env   # then edit it
+#   docker compose -f deploy/team/docker-compose.yml --env-file deploy/team/.env up -d
+# The first person to open https://<your domain> creates the admin account.
+name: atrium-team
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ATRIUM_DOMAIN: ${ATRIUM_DOMAIN:?Set ATRIUM_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - atrium
+    restart: unless-stopped
+
+  atrium:
+    image: ${ATRIUM_IMAGE:-atrium:latest}
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://atrium:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/atrium
+      ATRIUM_MODE: team
+      ATRIUM_PUBLIC_URL: https://${ATRIUM_DOMAIN}
+      ATRIUM_WORKSPACE_NAME: ${ATRIUM_WORKSPACE_NAME:-Atrium}
+      ATRIUM_EOL_LOOKUP: ${ATRIUM_EOL_LOOKUP:-true}
+      # Single sign-on (optional): any OpenID Connect provider, e.g. Microsoft Entra ID, Okta, Google.
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_LABEL: ${OIDC_LABEL:-Single sign-on}
+      OIDC_DEFAULT_ROLE: ${OIDC_DEFAULT_ROLE:-viewer}
+    expose:
+      - "7300"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: atrium
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: atrium
+    volumes:
+      - atrium-db:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atrium -d atrium"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+volumes:
+  atrium-db:
+  caddy-data:
+  caddy-config:

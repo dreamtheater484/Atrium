@@ -61,11 +61,13 @@ export function importRoutes(deps: Deps) {
     route({
       method: 'PATCH',
       url: '/api/v1/import/:importId/sheets/:sheet',
-      summary: 'Change the element type or column mapping of one sheet',
+      summary:
+        'Change what one sheet holds (elements of a type, links, or nothing) or its column mapping',
       tag: 'Import and export',
       access: 'any',
       params: z.object({ importId: z.string().uuid(), sheet: z.coerce.number().int().min(0) }),
       body: z.object({
+        role: z.enum(['elements', 'relations', 'skip']).optional(),
         type: z.enum(ELEMENT_TYPES).optional(),
         columns: z.record(z.string(), target).optional(),
       }),

@@ -17,3 +17,7 @@ backups/
 *.tsbuildinfo
 .DS_Store
 Thumbs.db
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars

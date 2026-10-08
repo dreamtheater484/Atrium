@@ -51,14 +51,38 @@ export function rel(type: RelationType, source: Element, target: Element | strin
 
 /** A small but representative workspace. */
 export function sampleModel(): ExportModel {
-  const customer = el({ type: 'domain', name: 'Customer', description: 'Everything about customers.' });
+  const customer = el({
+    type: 'domain',
+    name: 'Customer',
+    description: 'Everything about customers.',
+  });
   const finance = el({ type: 'domain', name: 'Finance', description: 'Money in, money out.' });
   const squad = el({ type: 'team', name: 'Billing Squad', attributes: { contact: '#billing' } });
 
-  const custMgmt = el({ type: 'capability', name: 'Customer Management', domainId: customer.id, attributes: { importance: 'high', maturity: 3 } });
-  const onboarding = el({ type: 'capability', name: 'Customer Onboarding', domainId: customer.id, parentId: custMgmt.id });
-  const billing = el({ type: 'capability', name: 'Billing', domainId: finance.id, attributes: { importance: 'medium' } });
-  const invoicing = el({ type: 'capability', name: 'Invoicing', domainId: finance.id, parentId: billing.id });
+  const custMgmt = el({
+    type: 'capability',
+    name: 'Customer Management',
+    domainId: customer.id,
+    attributes: { importance: 'high', maturity: 3 },
+  });
+  const onboarding = el({
+    type: 'capability',
+    name: 'Customer Onboarding',
+    domainId: customer.id,
+    parentId: custMgmt.id,
+  });
+  const billing = el({
+    type: 'capability',
+    name: 'Billing',
+    domainId: finance.id,
+    attributes: { importance: 'medium' },
+  });
+  const invoicing = el({
+    type: 'capability',
+    name: 'Invoicing',
+    domainId: finance.id,
+    parentId: billing.id,
+  });
 
   const crm = el({
     type: 'application',
@@ -95,14 +119,34 @@ export function sampleModel(): ExportModel {
     lifecycle: 'phase_out',
     lifecycleDates: { active: '2015-01-01', phase_out: '2026-06-30' },
     classification: 'confidential',
-    attributes: { vendor: 'In-house', hosting: 'on_premise', annual_cost: 85000.5, time: 'migrate', technical_fit: 2 },
+    attributes: {
+      vendor: 'In-house',
+      hosting: 'on_premise',
+      annual_cost: 85000.5,
+      time: 'migrate',
+      technical_fit: 2,
+    },
     quality: 64,
     health: 'act',
   });
-  const portal = el({ type: 'application', name: 'Legacy Portal', lifecycle: 'retired', quality: 30 });
+  const portal = el({
+    type: 'application',
+    name: 'Legacy Portal',
+    lifecycle: 'retired',
+    quality: 30,
+  });
 
-  const api = el({ type: 'interface', name: 'Customer API', lifecycle: 'active', attributes: { protocol: 'rest', frequency: 'realtime' } });
-  const invoice = el({ type: 'data_object', name: 'Invoice', attributes: { sensitivity: 'financial' } });
+  const api = el({
+    type: 'interface',
+    name: 'Customer API',
+    lifecycle: 'active',
+    attributes: { protocol: 'rest', frequency: 'realtime' },
+  });
+  const invoice = el({
+    type: 'data_object',
+    name: 'Invoice',
+    attributes: { sensitivity: 'financial' },
+  });
   const pg = el({
     type: 'technology',
     name: 'PostgreSQL 16',
@@ -120,12 +164,31 @@ export function sampleModel(): ExportModel {
   const program = el({
     type: 'initiative',
     name: 'Billing Modernisation',
-    attributes: { status: 'running', start_date: '2026-01-01', end_date: '2027-06-30', budget: 1500000, progress: 40 },
+    attributes: {
+      status: 'running',
+      start_date: '2026-01-01',
+      end_date: '2027-06-30',
+      budget: 1500000,
+      progress: 40,
+    },
   });
 
   const elements = [
-    customer, finance, squad, custMgmt, onboarding, billing, invoicing,
-    crm, billingEngine, portal, api, invoice, pg, java, program,
+    customer,
+    finance,
+    squad,
+    custMgmt,
+    onboarding,
+    billing,
+    invoicing,
+    crm,
+    billingEngine,
+    portal,
+    api,
+    invoice,
+    pg,
+    java,
+    program,
   ];
   const relations = [
     rel('supports', crm, onboarding),

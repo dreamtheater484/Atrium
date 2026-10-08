@@ -14,8 +14,9 @@ import { useNavigate } from '@tanstack/react-router';
 import { Expand, Link2, MoreHorizontal, Network, Trash2, X, Zap } from 'lucide-react';
 import { Dialog as D } from 'radix-ui';
 import { useEffect, useMemo } from 'react';
+import { api } from '../lib/api';
 import { setViewing } from '../lib/live';
-import { useDeleteElement, useElement, useElements } from '../lib/queries';
+import { queryClient, useDeleteElement, useElement, useElements } from '../lib/queries';
 import { inspect, useUi } from '../lib/store';
 import {
   CoreFields,
@@ -208,8 +209,6 @@ export function Inspector() {
 }
 
 export async function undoLast(changesetId: string) {
-  const { api } = await import('../lib/api');
-  const { queryClient } = await import('../lib/queries');
   try {
     await api(`/changesets/${changesetId}/undo`, { method: 'POST' });
     toast.success('Undone');

@@ -1,0 +1,16 @@
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+.git
+.claude
+.data
+backups
+test-results
+playwright-report
+apps/videos
+docs
+e2e
+*.log
+.env
+.env.*

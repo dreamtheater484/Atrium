@@ -1,0 +1,42 @@
+# Atrium on one computer.
+#   docker compose -f deploy/docker-compose.yml up -d
+#   open http://localhost:7300
+# Solo mode: no login, only reachable from this computer. For a shared team server use
+# deploy/team/docker-compose.yml instead.
+name: atrium
+services:
+  atrium:
+    image: ${ATRIUM_IMAGE:-atrium:latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://atrium:${POSTGRES_PASSWORD:-atrium}@db:5432/atrium
+      ATRIUM_MODE: solo
+      ATRIUM_PUBLIC_URL: http://localhost:${ATRIUM_PORT:-7300}
+      # Set to "true" to fetch end-of-life dates from endoflife.date (otherwise a bundled snapshot is used).
+      ATRIUM_EOL_LOOKUP: ${ATRIUM_EOL_LOOKUP:-false}
+    ports:
+      - "127.0.0.1:${ATRIUM_PORT:-7300}:7300"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: atrium
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-atrium}
+      POSTGRES_DB: atrium
+    volumes:
+      - atrium-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atrium -d atrium"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+volumes:
+  atrium-db:

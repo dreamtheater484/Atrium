@@ -115,10 +115,21 @@ function addTitle(
   });
   const runs: TextRun[] = [{ text: title, options: { bold: true } }];
   if (page && page.of > 1) {
-    runs.push({ text: `   ${page.n} / ${page.of}`, options: { bold: false, color: PALETTE.faint, fontSize: 16 } });
+    runs.push({
+      text: `   ${page.n} / ${page.of}`,
+      options: { bold: false, color: PALETTE.faint, fontSize: 16 },
+    });
   }
   const size = title.length > 70 ? 20 : title.length > 50 ? 23 : 26;
-  text(slide, runs, { x: MX, y: 0.66, w: CW, h: 0.55, fontSize: size, valign: 'top', fit: 'shrink' });
+  text(slide, runs, {
+    x: MX,
+    y: 0.66,
+    w: CW,
+    h: 0.55,
+    fontSize: size,
+    valign: 'top',
+    fit: 'shrink',
+  });
   if (subtitle) {
     text(slide, subtitle, {
       x: MX,
@@ -189,11 +200,22 @@ function formatValue(v: number, format: ValueFormat, fraction: boolean): string 
 function titleSlide(ctx: Ctx, deck: DeckSpec) {
   const s = newSlide(ctx);
   const panelX = 8.75;
-  s.addShape('rect', { x: panelX, y: 0, w: W - panelX, h: H, fill: { color: tint(PALETTE.accent, 0.93) } });
+  s.addShape('rect', {
+    x: panelX,
+    y: 0,
+    w: W - panelX,
+    h: H,
+    fill: { color: tint(PALETTE.accent, 0.93) },
+  });
 
   // A small abstract capability map: native shapes, so it stays crisp and editable.
   const cols = [
-    [tint(PALETTE.good, 0.2), tint(PALETTE.accent, 0.55), tint(PALETTE.good, 0.45), PALETTE.unknown],
+    [
+      tint(PALETTE.good, 0.2),
+      tint(PALETTE.accent, 0.55),
+      tint(PALETTE.good, 0.45),
+      PALETTE.unknown,
+    ],
     [
       tint(PALETTE.accent, 0.55),
       tint(PALETTE.watch, 0.15),
@@ -281,7 +303,15 @@ function titleSlide(ctx: Ctx, deck: DeckSpec) {
       { text: deck.workspaceName, options: { bold: true, breakLine: true } },
       { text: formatDisplayDate(deck.date), options: { color: PALETTE.muted } },
     ],
-    { x: MX, y: 5.6, w: panelX - MX - 0.6, h: 0.75, fontSize: 13, valign: 'top', paraSpaceAfter: 3 },
+    {
+      x: MX,
+      y: 5.6,
+      w: panelX - MX - 0.6,
+      h: 0.75,
+      fontSize: 13,
+      valign: 'top',
+      paraSpaceAfter: 3,
+    },
   );
 }
 
@@ -459,7 +489,8 @@ function capabilityMapSlide(
       const color = box.textColor ? toHex(box.textColor, PALETTE.text) : readableText(fill);
       const showNote = !!box.note && boxH >= 0.42;
       let nameSize = clamp(Math.min((boxH * 72) / (showNote ? 3.1 : 2.3), boxW * 10.5), 6.5, 12);
-      if (box.name.length * nameSize * 0.0076 > boxW * 2.2) nameSize = Math.max(6.5, nameSize - 1.5);
+      if (box.name.length * nameSize * 0.0076 > boxW * 2.2)
+        nameSize = Math.max(6.5, nameSize - 1.5);
       const runs: TextRun[] = [{ text: box.name, options: { bold: true, breakLine: showNote } }];
       if (showNote) {
         runs.push({
@@ -506,7 +537,15 @@ function addLegend(slide: Slide, items: Array<{ label: string; color: string }>,
       fill: { color: toHex(it.color) },
       rectRadius: 0.04,
     });
-    text(slide, it.label, { x: x + 0.26, y: y - 0.02, w, h: 0.26, fontSize: size, color: PALETTE.muted, valign: 'middle' });
+    text(slide, it.label, {
+      x: x + 0.26,
+      y: y - 0.02,
+      w,
+      h: 0.26,
+      fontSize: size,
+      color: PALETTE.muted,
+      valign: 'middle',
+    });
     x += 0.26 + w + 0.24;
   }
 }
@@ -592,7 +631,10 @@ function doughnutChart(s: Slide, spec: ChartSlideSpec, top: number) {
   // More than ten slices is unreadable: keep the nine largest and fold the rest into "Other".
   if (labels.length > 10) {
     const order = values.map((v, i) => [v, i] as const).sort((a, b) => b[0] - a[0]);
-    const keep = order.slice(0, 9).map(([, i]) => i).sort((a, b) => a - b);
+    const keep = order
+      .slice(0, 9)
+      .map(([, i]) => i)
+      .sort((a, b) => a - b);
     const rest = order.slice(9).reduce((sum, [v]) => sum + v, 0);
     labels = [...keep.map((i) => labels[i]!), 'Other'];
     values = [...keep.map((i) => values[i]!), rest];
@@ -644,18 +686,14 @@ function doughnutChart(s: Slide, spec: ChartSlideSpec, top: number) {
     centreRuns[0]!.options!.breakLine = true;
     centreRuns.push({ text: 'Total', options: { fontSize: 12, color: PALETTE.muted } });
   }
-  text(
-    s,
-    centreRuns,
-    {
-      x: cx + size / 2 - 1.2,
-      y: cy + size / 2 - 0.5,
-      w: 2.4,
-      h: 1.0,
-      align: 'center',
-      valign: 'middle',
-    },
-  );
+  text(s, centreRuns, {
+    x: cx + size / 2 - 1.2,
+    y: cy + size / 2 - 0.5,
+    w: 2.4,
+    h: 1.0,
+    align: 'center',
+    valign: 'middle',
+  });
 
   // A legend with values, built from native shapes so it can be restyled freely.
   const lx = cx + size + 0.7;
@@ -673,7 +711,15 @@ function doughnutChart(s: Slide, spec: ChartSlideSpec, top: number) {
       h: 0.18,
       fill: { color: colors[i]! },
     });
-    text(s, label, { x: lx + 0.32, y, w: lw - 2.6, h: rowH, fontSize, valign: 'middle', fit: 'shrink' });
+    text(s, label, {
+      x: lx + 0.32,
+      y,
+      w: lw - 2.6,
+      h: rowH,
+      fontSize,
+      valign: 'middle',
+      fit: 'shrink',
+    });
     text(s, formatValue(values[i]!, format, fraction), {
       x: lx + lw - 2.25,
       y,
@@ -710,7 +756,8 @@ function doughnutChart(s: Slide, spec: ChartSlideSpec, top: number) {
 /* Tables                                                               */
 /* ------------------------------------------------------------------ */
 
-const cellText = (c: TableCellSpec | undefined) => (c === undefined ? '' : typeof c === 'string' ? c : c.text);
+const cellText = (c: TableCellSpec | undefined) =>
+  c === undefined ? '' : typeof c === 'string' ? c : c.text;
 const NUMERIC = /^[€$£]?\s?[-+]?[\d.,]+\s?(%|[KkMm]|bn)?$/;
 
 function tableSlides(ctx: Ctx, spec: TableSlideSpec) {
@@ -858,11 +905,15 @@ function roadmapSlides(ctx: Ctx, spec: RoadmapSlideSpec) {
       .sort((a, b) => a.s.getTime() - b.s.getTime());
     for (const { bar, s, e } of sorted) {
       const bx = xOf(new Date(Math.max(s.getTime(), from.getTime())));
-      const bw = Math.max(0.1, xOf(new Date(Math.min(Math.max(e.getTime(), s.getTime()), to.getTime()))) - bx);
+      const bw = Math.max(
+        0.1,
+        xOf(new Date(Math.min(Math.max(e.getTime(), s.getTime()), to.getTime()))) - bx,
+      );
       const lw = textWidth(bar.label, size, true) + 0.2;
       const inside = lw <= bw;
       let labelX = bx + 0.04;
-      if (!inside) labelX = bx + bw + 0.06 + lw <= x1 ? bx + bw + 0.06 : Math.max(x0, bx - 0.06 - lw);
+      if (!inside)
+        labelX = bx + bw + 0.06 + lw <= x1 ? bx + bw + 0.06 : Math.max(x0, bx - 0.06 - lw);
       const extStart = Math.min(bx, labelX);
       const extEnd = Math.max(bx + bw, inside ? bx + bw : labelX + lw);
       let row = rowsEnd.findIndex((endX) => endX + 0.05 <= extStart);
@@ -904,7 +955,8 @@ function roadmapSlides(ctx: Ctx, spec: RoadmapSlideSpec) {
     // Largest bar height (≤ 0.42") at which every lane still fits.
     let barH = 0.42;
     let placed = lanes.map((l) => placeLane(l, barH));
-    const fits = (pl: PlacedLane[], h: number) => pl.reduce((sum, l) => sum + laneNeed(l.rows, h), 0) <= avail;
+    const fits = (pl: PlacedLane[], h: number) =>
+      pl.reduce((sum, l) => sum + laneNeed(l.rows, h), 0) <= avail;
     while (barH > minBarH && !fits(placed, barH)) {
       barH = Math.max(minBarH, barH - 0.02);
       placed = lanes.map((l) => placeLane(l, barH));
@@ -918,7 +970,13 @@ function roadmapSlides(ctx: Ctx, spec: RoadmapSlideSpec) {
       const qx = xOf(q);
       const qw = xOf(addMonths(q, 3)) - qx;
       if (i % 2 === 1) {
-        s.addShape('rect', { x: qx, y: top + 0.3, w: qw, h: lanesH + laneTopOffset - 0.3, fill: { color: 'F7F8FB' } });
+        s.addShape('rect', {
+          x: qx,
+          y: top + 0.3,
+          w: qw,
+          h: lanesH + laneTopOffset - 0.3,
+          fill: { color: 'F7F8FB' },
+        });
       }
       if (showQuarterLabels) {
         text(s, `Q${Math.floor(q.getUTCMonth() / 3) + 1}`, {

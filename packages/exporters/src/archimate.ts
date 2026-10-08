@@ -1,6 +1,6 @@
 import {
-  type Element,
   ELEMENT_TYPE_DEFS,
+  type Element,
   type ElementType,
   enumLabel,
   LIFECYCLE_PHASES,
@@ -78,8 +78,9 @@ interface XmlNode {
 }
 
 // Characters that are not allowed in XML 1.0 documents.
-// biome-ignore lint/suspicious/noControlCharactersInRegex: stripping them is the point
-const INVALID_XML = /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+const INVALID_XML =
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: stripping them is the point
+  /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
 
 function clean(s: string): string {
   return s.replace(INVALID_XML, '');
@@ -133,7 +134,12 @@ function propertyBag(): PropertyBag {
     ref(label: string) {
       const known = defs.get(label);
       if (known) return known;
-      const base = `propid-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'property'}`;
+      const base = `propid-${
+        label
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '') || 'property'
+      }`;
       let id = base;
       for (let n = 2; ids.has(id); n++) id = `${base}-${n}`;
       ids.add(id);
@@ -162,7 +168,9 @@ function elementProperties(el: Element, props: PropertyBag): XmlNode[] {
     const value = el.attributes?.[attr.key];
     if (!isEmpty(value)) pairs.push([attr.label, attributeText(attr, value)]);
   }
-  for (const [key, value] of Object.entries(el.attributes ?? {}).sort(([a], [b]) => a.localeCompare(b))) {
+  for (const [key, value] of Object.entries(el.attributes ?? {}).sort(([a], [b]) =>
+    a.localeCompare(b),
+  )) {
     if (known.has(key) || key.startsWith('_') || isEmpty(value)) continue;
     pairs.push([humanizeKey(key), attributeText(undefined, value)]);
   }
@@ -190,10 +198,9 @@ interface OutRelationship {
 export function exportArchimate(model: ExportModel): string {
   const byId = indexById(model.elements);
   const props = propertyBag();
-  const byName = (a: Element, b: Element) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
-  const elements = [...model.elements].sort(
-    (a, b) => a.type.localeCompare(b.type) || byName(a, b),
-  );
+  const byName = (a: Element, b: Element) =>
+    a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
+  const elements = [...model.elements].sort((a, b) => a.type.localeCompare(b.type) || byName(a, b));
 
   const elementNodes: XmlNode[] = elements.map((el) => {
     const children: XmlNode[] = [lang('name', el.name)];
@@ -259,7 +266,9 @@ export function exportArchimate(model: ExportModel): string {
   // Archi-style folders.
   const folderItems: XmlNode[] = [];
   for (const folder of FOLDERS) {
-    const members = elements.filter((el) => folder.types.includes(ARCHIMATE_ELEMENT_TYPES[el.type]));
+    const members = elements.filter((el) =>
+      folder.types.includes(ARCHIMATE_ELEMENT_TYPES[el.type]),
+    );
     if (!members.length) continue;
     folderItems.push({
       tag: 'item',
@@ -287,7 +296,8 @@ export function exportArchimate(model: ExportModel): string {
     ),
   ];
   if (elementNodes.length) modelChildren.push({ tag: 'elements', children: elementNodes });
-  if (relationshipNodes.length) modelChildren.push({ tag: 'relationships', children: relationshipNodes });
+  if (relationshipNodes.length)
+    modelChildren.push({ tag: 'relationships', children: relationshipNodes });
   if (folderItems.length) modelChildren.push({ tag: 'organizations', children: folderItems });
   if (props.defs.size) {
     modelChildren.push({

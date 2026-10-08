@@ -1,0 +1,747 @@
+{
+  "scale": 2,
+  "shots": {
+    "first-run": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1.4,
+          "label": "/"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 734.453125,
+            "y": 1108
+          },
+          "click": false,
+          "focus": {
+            "x": 306,
+            "y": 637.5,
+            "w": 1302.65625,
+            "h": 602
+          },
+          "weight": 1.2,
+          "label": "/"
+        },
+        {
+          "file": "02.png",
+          "cursor": {
+            "x": 734.453125,
+            "y": 1108
+          },
+          "click": true,
+          "focus": null,
+          "weight": 2,
+          "label": "/explore?type=capability&view=map&overlay=health"
+        }
+      ]
+    },
+    "explore-map": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1.3,
+          "label": "/explore?type=capability&view=map&overlay=health"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 1285.84375,
+            "y": 373
+          },
+          "click": true,
+          "focus": null,
+          "weight": 0.8,
+          "label": "/explore?type=capability&view=map&overlay=health"
+        },
+        {
+          "file": "02.png",
+          "cursor": {
+            "x": 1286,
+            "y": 517.5
+          },
+          "click": true,
+          "focus": null,
+          "weight": 1.3,
+          "label": "/explore?type=capability&view=map&overlay=cost"
+        },
+        {
+          "file": "03.png",
+          "cursor": {
+            "x": 734.390625,
+            "y": 714
+          },
+          "click": true,
+          "focus": {
+            "x": 2304,
+            "y": 96,
+            "w": 912,
+            "h": 1720
+          },
+          "weight": 2,
+          "label": "/explore?type=capability&view=map&overlay=cost"
+        }
+      ]
+    },
+    "dashboard": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1.4,
+          "label": "/dashboards?id=portfolio"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 1816,
+            "y": 1264.5
+          },
+          "click": false,
+          "focus": {
+            "x": 0,
+            "y": 725,
+            "w": 3644,
+            "h": 1079
+          },
+          "weight": 1.4,
+          "label": "/dashboards?id=portfolio"
+        },
+        {
+          "file": "02.png",
+          "cursor": {
+            "x": 3067.984375,
+            "y": 192
+          },
+          "click": true,
+          "focus": null,
+          "weight": 0.8,
+          "label": "/dashboards?id=portfolio"
+        },
+        {
+          "file": "03.png",
+          "cursor": {
+            "x": 2928.125,
+            "y": 277.5
+          },
+          "click": false,
+          "focus": {
+            "x": 2584,
+            "y": 116,
+            "w": 688.25,
+            "h": 512
+          },
+          "weight": 1.2,
+          "label": "/dashboards?id=portfolio"
+        }
+      ]
+    },
+    "agent-connect": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1,
+          "label": "/settings?tab=agents"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 2642.609375,
+            "y": 242
+          },
+          "click": true,
+          "focus": {
+            "x": 908,
+            "y": 406,
+            "w": 1384,
+            "h": 988
+          },
+          "weight": 1.4,
+          "label": "/settings?tab=agents"
+        },
+        {
+          "file": "02.png",
+          "cursor": {
+            "x": 2069.625,
+            "y": 1300
+          },
+          "click": true,
+          "focus": {
+            "x": 908,
+            "y": 442,
+            "w": 1384,
+            "h": 916
+          },
+          "weight": 2,
+          "label": "/settings?tab=agents"
+        }
+      ]
+    },
+    "import": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 0.8,
+          "label": "/explore?type=application"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 3139,
+            "y": 55
+          },
+          "click": true,
+          "focus": null,
+          "weight": 0.6,
+          "label": "/explore?type=application"
+        },
+        {
+          "file": "02.png",
+          "cursor": {
+            "x": 2928,
+            "y": 160
+          },
+          "click": true,
+          "focus": {
+            "x": 800,
+            "y": 536.5,
+            "w": 1600,
+            "h": 727
+          },
+          "weight": 0.8,
+          "label": "/explore?type=application"
+        },
+        {
+          "file": "03.png",
+          "cursor": null,
+          "click": false,
+          "focus": {
+            "x": 800,
+            "y": 518,
+            "w": 1600,
+            "h": 764
+          },
+          "weight": 1.6,
+          "label": "/explore?type=application"
+        },
+        {
+          "file": "04.png",
+          "cursor": {
+            "x": 2185.328125,
+            "y": 1074
+          },
+          "click": true,
+          "focus": {
+            "x": 800,
+            "y": 138.5,
+            "w": 1600,
+            "h": 1523
+          },
+          "weight": 2,
+          "label": "/explore?type=application"
+        },
+        {
+          "file": "05.png",
+          "cursor": {
+            "x": 2212.46875,
+            "y": 1555.5
+          },
+          "click": true,
+          "focus": {
+            "x": 800,
+            "y": 648,
+            "w": 1600,
+            "h": 504
+          },
+          "weight": 1.4,
+          "label": "/explore?type=application"
+        }
+      ]
+    },
+    "autofill": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 0.8,
+          "label": "/explore?type=application&q=Rollout%20Tracker"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 677.453125,
+            "y": 525
+          },
+          "click": true,
+          "focus": {
+            "x": 2312,
+            "y": 104,
+            "w": 896,
+            "h": 1704
+          },
+          "weight": 2,
+          "label": "/explore?type=application&q=Rollout%20Tracker"
+        },
+        {
+          "file": "02.png",
+          "cursor": {
+            "x": 3065.109375,
+            "y": 774
+          },
+          "click": false,
+          "focus": {
+            "x": 2312,
+            "y": 104,
+            "w": 896,
+            "h": 1704
+          },
+          "weight": 1,
+          "label": "/explore?type=application&q=Rollout%20Tracker"
+        },
+        {
+          "file": "03.png",
+          "cursor": {
+            "x": 3065.109375,
+            "y": 774
+          },
+          "click": true,
+          "focus": {
+            "x": 2312,
+            "y": 104,
+            "w": 896,
+            "h": 1704
+          },
+          "weight": 1.6,
+          "label": "/explore?type=application&q=Rollout%20Tracker"
+        }
+      ]
+    },
+    "graph": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1.6,
+          "label": "/explore?type=application&view=graph"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 1686.9153442382812,
+            "y": 1102.6006469726562
+          },
+          "click": true,
+          "focus": null,
+          "weight": 1.6,
+          "label": "/explore?type=application&view=graph&domain=76c757be-a593-…"
+        },
+        {
+          "file": "02.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 2,
+          "label": "/explore?type=application&view=graph&focus=85956446-0818-4…"
+        }
+      ]
+    },
+    "scenario": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1,
+          "label": "/explore?type=capability&view=map"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 703.9375,
+            "y": 55
+          },
+          "click": true,
+          "focus": null,
+          "weight": 1.6,
+          "label": "/explore?type=capability&view=map"
+        },
+        {
+          "file": "02.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 0.2,
+          "label": "/explore?type=capability&view=map"
+        },
+        {
+          "file": "03.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1.6,
+          "label": "/roadmap"
+        }
+      ]
+    },
+    "review": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1,
+          "label": "/changes?tab=review"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 924,
+            "y": 412
+          },
+          "click": true,
+          "focus": {
+            "x": 400,
+            "y": 80,
+            "w": 2832,
+            "h": 1752
+          },
+          "weight": 2,
+          "label": "/changes?tab=review&id=97e3f064-d939-44dc-a9fd-a914224ebcfa"
+        },
+        {
+          "file": "02.png",
+          "cursor": {
+            "x": 1533,
+            "y": 1075.5
+          },
+          "click": false,
+          "focus": null,
+          "weight": 0.8,
+          "label": "/changes?tab=review&id=97e3f064-d939-44dc-a9fd-a914224ebcfa"
+        },
+        {
+          "file": "03.png",
+          "cursor": {
+            "x": 1533,
+            "y": 1075.5
+          },
+          "click": true,
+          "focus": null,
+          "weight": 1.4,
+          "label": "/changes?tab=review"
+        }
+      ]
+    },
+    "packs": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1,
+          "label": "/settings?tab=packs"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 1346.796875,
+            "y": 785
+          },
+          "click": true,
+          "focus": null,
+          "weight": 1,
+          "label": "/settings?tab=packs"
+        },
+        {
+          "file": "02.png",
+          "cursor": {
+            "x": 1605.3125,
+            "y": 785
+          },
+          "click": true,
+          "focus": {
+            "x": 916,
+            "y": 204.5,
+            "w": 1368,
+            "h": 1391
+          },
+          "weight": 2,
+          "label": "/settings?tab=packs"
+        },
+        {
+          "file": "03.png",
+          "cursor": {
+            "x": 2098.734375,
+            "y": 1509.5
+          },
+          "click": false,
+          "focus": {
+            "x": 916,
+            "y": 204.5,
+            "w": 1368,
+            "h": 1391
+          },
+          "weight": 1,
+          "label": "/settings?tab=packs"
+        }
+      ]
+    },
+    "drill": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1,
+          "label": "/dashboards?id=portfolio"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 2154,
+            "y": 310
+          },
+          "click": true,
+          "focus": null,
+          "weight": 1.5,
+          "label": "/explore?type=application&health=act"
+        },
+        {
+          "file": "02.png",
+          "cursor": {
+            "x": 662.453125,
+            "y": 1229
+          },
+          "click": true,
+          "focus": {
+            "x": 2312,
+            "y": 104,
+            "w": 896,
+            "h": 1704
+          },
+          "weight": 2,
+          "label": "/explore?type=application&health=act"
+        }
+      ]
+    },
+    "cost": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1.2,
+          "label": "/dashboards?id=cost"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 2492,
+            "y": 561.5
+          },
+          "click": false,
+          "focus": {
+            "x": 1266,
+            "y": 0,
+            "w": 2452,
+            "h": 1239
+          },
+          "weight": 2,
+          "label": "/dashboards?id=cost"
+        }
+      ]
+    },
+    "eol": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1.4,
+          "label": "/dashboards?id=technology"
+        },
+        {
+          "file": "01.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1.6,
+          "label": "/explore?type=technology&view=radar"
+        }
+      ]
+    },
+    "roadmap": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1.4,
+          "label": "/roadmap"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 1999.71875,
+            "y": 55
+          },
+          "click": true,
+          "focus": null,
+          "weight": 0.6,
+          "label": "/roadmap"
+        },
+        {
+          "file": "02.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 0.8,
+          "label": "/roadmap"
+        },
+        {
+          "file": "03.png",
+          "cursor": null,
+          "click": false,
+          "focus": {
+            "x": 960,
+            "y": 304,
+            "w": 1280,
+            "h": 1214
+          },
+          "weight": 2,
+          "label": "/roadmap"
+        }
+      ]
+    },
+    "present": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 1,
+          "label": "/dashboards?id=portfolio"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 3067.984375,
+            "y": 192
+          },
+          "click": true,
+          "focus": null,
+          "weight": 0.8,
+          "label": "/dashboards?id=portfolio"
+        },
+        {
+          "file": "02.png",
+          "cursor": {
+            "x": 2928.125,
+            "y": 277.5
+          },
+          "click": false,
+          "focus": {
+            "x": 2544,
+            "y": 76,
+            "w": 768.25,
+            "h": 592
+          },
+          "weight": 1.6,
+          "label": "/dashboards?id=portfolio"
+        }
+      ]
+    },
+    "engineer-home": {
+      "width": 3200,
+      "height": 1800,
+      "steps": [
+        {
+          "file": "00.png",
+          "cursor": null,
+          "click": false,
+          "focus": null,
+          "weight": 0.6,
+          "label": "/"
+        },
+        {
+          "file": "01.png",
+          "cursor": {
+            "x": 3001.875,
+            "y": 239
+          },
+          "click": true,
+          "focus": null,
+          "weight": 2.4,
+          "label": "/"
+        }
+      ]
+    }
+  },
+  "assets": {
+    "cli.init": "# atrium.yaml: how this service fits into the architecture.\n# Keep it next to the code; CI runs `atrium sync` to update the shared model in Atrium.\n# Reference: docs/atrium-yaml.md in the Atrium repository.\napiVersion: atrium/v1\nkind: Service\nmetadata:\n  key: loyalty-points\n  name: Loyalty Points\n  description: Points, tiers and rewards for MyAcme customers.\n  lifecycle: active\nspec:\n  technologies:\n    - name: Node.js\n      version: \"22\"\n    - name: Fastify\n    - name: PostgreSQL\n      version: \"16\"\n    - name: Apache Kafka\n      version: \"3.9\"\n",
+    "cli.check": "! warning Node.js 22 reaches end of life on 2027-04-30. Plan the upgrade now.\ni info    \"loyalty-points\" is not in the architecture model yet. Propose it with propose_change so others can find it.\ni info    Fastify is not on the technology radar yet.\n✓ 0 problems and 1 warning.",
+    "cli.sync": "✓ 6 changes would be made (dry run).",
+    "cli.context": "# Order Hub: architecture context\n\n> Generated by Atrium on 2026-10-08. The source of truth is http://localhost:7410/e/55858d96-282f-4c0e-9043-0fbffac33374.\n> Do not edit this file by hand. Change the model in Atrium, or propose a change with the `propose_change` tool or `atrium sync`.\n\n**Key:** `order-hub` · **Type:** Application · **Lifecycle:** Active · **Health:** Watch · **Domain:** Customer · **Owner:** Elena Rossi · **Team:** Commerce Squad · **Classification:** Confidential · **Criticality:** Mission critical · **TIME:** Invest\n\n## Purpose\n\nCentral order capture and orchestration for all consumer and business orders. Validates orders against the catalog, breaks them down and tracks fulfilment end to end.\n\n## Business capabilities it supports\n\n- Customer Order Management\n- Order Capture & Validation\n- Capture and Validate Order\n\n## Depends on (upstream)\n\n- Product Catalog (`product-catalog`)\n- Service Orchestrator (`service-orchestrator`)\n- Salesforce Service Cloud (`sf-service-cloud`)\n- Corvina Convergent Billing (`convergent-billing`) (replaced by Corvina Cloud BSS (`cloud-bss`))\n- Product Inventory (`product-inventory`)\n- Notification Hub (`notification-hub`)\n\n## Used by (downstream)\n\n_Changing this service can affect:_\n\n- Self-care Portal (`selfcare-portal`)\n- MyAcme App (`myacme-app`)\n- MyAcme Web (`myacme-web`)\n- Device Webshop (`device-webshop`)\n- Partner Portal (`partner-portal`)\n\n## Data flows\n\n- Sends data to Corvina Convergent Billing (`convergent-billing`)\n- Sends data to Data Lake (`data-lake`)\n- Sends data to Product Inventory (`product-inventory`)\n\n## Interfaces\n\n### Provides\n\n- **Product Ordering API (TMF622)** (`product-ordering-api`): REST, Real-time, docs: https://developer.acme-telco.example/apis/product-ordering-api. Used by Self-care Portal, MyAcme App, MyAcme Web, Device Webshop, Partner Portal, Salesforce Sales Cloud, Legacy CRM\n- **Order Events** (`order-events`): Event, Real-time. Used by Data Lake, Customer 360, Product Inventory, Notification Hub, Corvina Cloud BSS\n\n### Uses\n\n- **Product Catalog API (TMF620)** (`product-catalog-api`) from Product Catalog\n- **Customer Management API (TMF629)** (`customer-management-api`) from Salesforce Service Cloud\n- **Service Ordering API (TMF641)** (`service-ordering-api`) from Service Orchestrator\n- **Product Inventory API (TMF637)** (`product-inventory-api`) from Product Inventory\n- **Account Management API (TMF666)** (`account-management-api`) from Corvina Convergent Billing\n- **Quote Management API (TMF648)** (`quote-management-api`) from Quote Builder\n- **Appointment API (TMF646)** (`appointment-api`) from Field Service Manager\n- **Siebel Account Web Service** (`siebel-account-ws`) from Siebel CRM 8 (⚠ phase out)\n- **Notification API** (`notification-api`) from Notification Hub\n\n## Data it manages\n\n- Product Order: Personal data, confidential\n\n## Technology\n\n| Technology | Version | Radar | End of life |\n|---|---|---|---|\n| Java 17 | 17 | Adopt | 2027-10-31 |\n| Spring Boot 4.0 | 4.0 | Adopt | 2026-12-31 |\n| PostgreSQL 14 | 14 | Hold | 2026-11-12 |\n| Kubernetes 1.34 | 1.34 | Adopt | 2026-10-27 |\n\n## Standards and guardrails\n\n- **MUST: Java services run on Java 17 or 21**: Java services run on a supported long-term-support release: Java 21 for new services, Java 17 at minimum. _(Linked directly)_\n- **MUST: No new Java 8**: Java 8 must not be used for new systems or new releases of existing in-house systems. _(Applies to Java)_\n- **MUST: Encrypt data in transit and at rest**: All traffic uses TLS 1.2 or later, and all stored data classified confidential or higher is encrypted with managed keys. _(Applies to every service)_\n- **MUST: Customer and partner login uses Acme Identity**: Customer- and partner-facing applications authenticate users through Acme Identity (OpenID Connect). No local password stores. _(Applies to every service)_\n- **MUST: Personal data stays in the EU**: Personal data of customers and employees is stored and processed only in EU regions. Support access from outside the EU needs a data protection impact assessment. _(Applies to every service)_\n- **MUST: Tag cloud resources with owner and cost centre**: Every cloud resource carries the tags atrium-key, owner-team and cost-centre, so costs can be traced to applications. _(Applies to every service)_\n- **SHOULD: Containers run on the shared Kubernetes platforms**: Containerised workloads run on the shared private Kubernetes platform or on Amazon EKS, not on team-managed clusters. _(Linked directly)_\n- **SHOULD: Use PostgreSQL for relational data**: New systems that need a relational database use PostgreSQL (version 16 or later) from the Cloud Platform database service or Amazon RDS. _(Applies to PostgreSQL)_\n\n## Architecture decisions\n\n- **ADR-002: Kafka as the event backbone** (Accepted, 2022-01-20): Run a shared Event Streaming Platform on Apache Kafka with a schema registry, operated by the Integration Team.\n- **ADR-003: Expose BSS capabilities through TM Forum Open APIs** (Accepted, 2023-03-14): Order Hub, Product Catalog, Product Inventory, Service Orchestrator and Trouble Ticket Manager expose TMF620, 622, 637, 641 and 621 through the API Gateway.\n\n## Principles\n\n- **Follow open industry standards**: Use TM Forum Open APIs, the ODA component model and other open standards where they exist.\n- **Secure and private by design**: Security and privacy are designed in from the start, not added before go-live.\n- **One system of record per data object**: Each data object has exactly one system of record; other systems read from it or keep copies in sync.\n- **API first, events for change**: Systems share data through documented APIs and publish business events; no direct database access.\n- **Cloud first**: New systems run as SaaS or on public cloud unless there is a clear reason not to.\n- **Reuse before buy before build**: Use what we already have first, then buy a standard product, and only build when neither fits.\n\n## Known risks\n\n- Runs on Spring Boot 4.0, end of life 2026-12-31\n- Runs on PostgreSQL 14, end of life 2026-11-12\n- Uses PostgreSQL 14, which is on hold\n- Runs on Kubernetes 1.34, end of life 2026-10-27\n\n## Planned change\n\n- Cloud migration wave 2 (Running, 2026-01-12 to 2027-06-30)\n- Unified commerce (Planned, 2027-01-11 to 2028-12-31)\n\n## Keeping this up to date\n\n- Coding agents: call `check_against_standards` before proposing a design, and `propose_change` when the code changes what is described here.\n- CI: keep `atrium.yaml` in the repository and run `atrium sync` on merge.",
+    "api.elements": "{\n  \"items\": [\n    {\n      \"id\": \"e71eb421-ea05-43c9-8e58-e6d2e9a26480\",\n      \"type\": \"application\",\n      \"name\": \"5G Core Orchestrator\",\n      \"owner\": \"Erik Johansson\",\n      \"lifecycle\": \"build\",\n      \"health\": \"watch\",\n      \"attributes\": {\n        \"vendor\": \"Kestrel Networks\",\n        \"hosting\": \"private_cloud\"\n      }\n    },\n    {\n      \"id\": \"22659e1b-289d-4921-9264-5f8a6004416c\",\n      \"type\": \"application\",\n      \"name\": \"Acme Identity\",\n      \"owner\": \"Grace O'Neill\",\n      \"lifecycle\": \"active\",\n      \"health\": \"good\",\n      \"attributes\": {\n        \"vendor\": \"Acme Telco (in-house)\",\n        \"hosting\": \"private_cloud\"\n      }\n    }\n  ],\n  \"total\": \"…\"\n}",
+    "agent.context": "{\"prompt\":\"Add a cancellation flow to the order hub that refunds the payment.\",\"tool\":\"get_service_context\",\"args\":\"service: \\\"Order Hub\\\"\",\"result\":\"# Order Hub: architecture context\\n\\n> Generated by Atrium on 2026-10-08. The source of truth is http://localhost:7410/e/55858d96-282f-4c0e-9043-0fbffac33374.\\n> Do not edit this file by hand. Change the model in Atrium, or propose a change with the `propose_change` tool or `atrium sync`.\\n\\n**Key:** `order-hub` · **Type:** Application · **Lifecycle:** Active · **Health:** Watch · **Domain:** Customer · **Owner:** Elena Rossi · **Team:** Commerce Squad · **Classification:** Confidential · **Criticality:** Mission critical · **TIME:** Invest\\n\\n## Purpose\\n\\nCentral order capture and orchestration for all consumer and business orders. Validates orders against the catalog, breaks them down and tracks fulfilment end to end.\\n\\n## Business capabilities it supports\\n\\n- Customer Order Management\\n- Order Capture & Validation\\n- Capture and Validate Order\\n\\n## Depends on (upstream)\\n\\n- Product Catalog (`product-catalog`)\\n- Service Orchestrator (`service-orchestrator`)\\n- Salesforce Service Cloud (`sf-service-cloud`)\\n- Corvina Convergent Billing (`convergent-billing`) (replaced by Corvina Cloud BSS (`cloud-bss`))\\n- Product Inventory (`product-inventory`)\\n- Notification Hub (`notification-hub`)\\n\\n## Used by (downstream)\\n\\n_Changing this service can affect:_\\n\\n- Self-care Portal (`selfcare-portal`)\\n- MyAcme App (`myacme-app`)\\n- MyAcme Web (`myacme-web`)\\n- Device Webshop (`device-webshop`)\\n- Partner Portal (`partner-portal`)\\n\\n## Data flows\\n\\n- Sends data to Corvina Convergent Billing (`convergent-billing`)\\n- Sends data to Data Lake (`data-lake`)\\n- Sends data to Product Inventory (`product-inventory`)\\n\\n## Interfaces\\n\\n### Provides\\n\\n- **Product Ordering API (TMF622)** (`product-ordering-api`): REST, Real-time, docs: https://developer.acme-telco.example/apis/product-ordering-api. Used by Self-care Portal, MyAcme App, MyAcme Web, Device Webshop, Partner Portal, Salesforce Sales Cloud, Legacy CRM\\n- **Order Events** (`order-events`): Event, Real-time. Used by Data Lake, Customer 360, Product Inventory, Notification Hub, Corvina Cloud BSS\\n\\n### Uses\\n\\n- **Product Catalog API (TMF620)** (`product-catalog-api`) from Product Catalog\\n- **Customer Management API (TMF629)** (`customer-management-api`) from Salesforce Service Cloud\\n- **Service Ordering API (TMF641)** (`service-ordering-api`) from Service Orchestrator\\n- **Product Inventory API (TMF637)** (`product-inventory-api`) from Product Inventory\\n- **Account Management API (TMF666)** (`account-management-api`) from Corvina Convergent Billing\\n- **Quote Management API (TMF648)** (`quote-management-api`) from Quote Builder\\n- **Appointment API (TMF646)** (`appointment-api`) from Field Service Manager\\n- **Siebel Account Web Service** (`siebel-account-ws`) from Siebel CRM 8 (⚠ phase out)\\n- **Notification API** (`notification-api`) from Notification Hub\\n\\n## Data it manages\\n\\n- Product Order: Personal data, confidential\\n\\n## Technology\\n\\n| Technology | Version | Radar | End of life |\\n|---|---|---|---|\\n| Java 17 | 17 | Adopt | 2027-10-31 |\\n| Spring Boot 4.0 | 4.0 | Adopt | 2026-12-31 |\\n| PostgreSQL 14 | 14 | Hold | 2026-11-12 |\\n| Kubernetes 1.34 | 1.34 | Adopt | 2026-10-27 |\\n\\n## Standards and guardrails\\n\\n- **MUST: Java services run on Java 17 or 21**: Java services run on a supported long-term-support release: Java 21 for new services, Java 17 at minimum. _(Linked directly)_\\n- **MUST: No new Java 8**: Java 8 must not be used for new systems or new releases of existing in-house systems. _(Applies to Java)_\\n- **MUST: Encrypt data in transit and at rest**: All traffic uses TLS 1.2 or later, and all stored data classified confidential or higher is encrypted with managed keys. _(Applies to every service)_\\n- **MUST: Customer and partner login uses Acme Identity**: Customer- and partner-facing applications authenticate users through Acme Identity (OpenID Connect). No local password stores. _(Applies to every service)_\\n- **MUST: Personal data stays in the EU**: Personal data of customers and employees is stored and processed only in EU regions. Support access from outside the EU needs a data protection impact assessment. _(Applies to every service)_\\n- **MUST: Tag cloud resources with owner and cost centre**: Every cloud resource carries the tags atrium-key, owner-team and cost-centre, so costs can be traced to applications. _(Applies to every service)_\\n- **SHOULD: Containers run on the shared Kubernetes platforms**: Containerised workloads run on the shared private Kubernetes platform or on Amazon EKS, not on team-managed clusters. _(Linked directly)_\\n- **SHOULD: Use PostgreSQL for relational data**: New systems that need a relational database use PostgreSQL (version 16 or later) from the Cloud Platform database service or Amazon RDS. _(Applies to PostgreSQL)_\\n\\n## Architecture decisions\\n\\n- **ADR-002: Kafka as the event backbone** (Accepted, 2022-01-20): Run a shared Event Streaming Platform on Apache Kafka with a schema registry, operated by the Integration Team.\\n- **ADR-003: Expose BSS capabilities through TM Forum Open APIs** (Accepted, 2023-03-14): Order Hub, Product Catalog, Product Inventory, Service Orchestrator and Trouble Ticket Manager expose TMF620, 622, 637, 641 and 621 through the API Gateway.\\n\\n## Principles\\n\\n- **Follow open industry standards**: Use TM Forum Open APIs, the ODA component model and other open standards where they exist.\\n- **Secure and private by design**: Security and privacy are designed in from the start, not added before go-live.\\n- **One system of record per data object**: Each data object has exactly one system of record; other systems read from it or keep copies in sync.\\n- **API first, events for change**: Systems share data through documented APIs and publish business events; no direct database access.\\n- **Cloud first**: New systems run as SaaS or on public cloud unless there is a clear reason not to.\\n- **Reuse before buy before build**: Use what we already have first, then buy a standard product, and only build when neither fits.\\n\\n## Known risks\\n\\n- Runs on Spring Boot 4.0, end of life 2026-12-31\\n- Runs on PostgreSQL 14, end of life 2026-11-12\\n- Uses PostgreSQL 14, which is on hold\\n- Runs on Kubernetes 1.34, end of life 2026-10-27\\n\\n## Planned change\\n\\n- Cloud migration wave 2 (Running, 2026-01-12 to 2027-06-30)\\n- Unified commerce (Planned, 2027-01-11 to 2028-12-31)\\n\\n## Keeping this up to date\\n\\n- Coding agents: call `check_against_standards` before proposing a design, and `propose_change` when the code changes what is described here.\\n- CI: keep `atrium.yaml` in the repository and run `atrium sync` on merge.\",\"reply\":\"The Order Hub belongs to the Commerce Squad and is mission critical: five channels use its ordering API. I will keep that API unchanged and publish cancellations on the existing Order Events stream.\"}",
+    "agent.check": "{\"prompt\":\"Use the old Java 8 reporting library for the cancellation report.\",\"tool\":\"check_against_standards\",\"args\":\"technologies: [Java 8, PostgreSQL 16]\",\"result\":\"✗ Java 8 reached end of life on 2022-03-31. Use a supported version.\\n✗ Java 8 is not allowed: No new Java 8. Java 8 must not be used for new systems or new releases of existing in-house systems.\\n✗ Java 8 doesn't meet \\\"Java services run on Java 17 or 21\\\": use Java 17 or Java 21.\\n! Java 8 is on hold in the technology radar: don't use it for new work.\\n✓ 3 problems and 1 warning.\",\"reply\":\"Java 8 is past end of life and not allowed by your standards, so I will use Java 21 instead. PostgreSQL 16 is fine.\"}",
+    "agent.propose": "{\"prompt\":\"Done. Please make sure the architecture is up to date.\",\"tool\":\"propose_change\",\"args\":\"title: \\\"Order Hub publishes order-cancelled events\\\"\",\"result\":\"✓ Proposed 2 changes for review by an architect.\",\"reply\":\"I proposed the update. An architect will review it; nothing in the model changes until then.\"}"
+  }
+}

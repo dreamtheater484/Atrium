@@ -1,4 +1,4 @@
-import type { Changeset } from '@atrium/schema';
+import type { Changeset, Scenario } from '@atrium/schema';
 import { RELATION_TYPE_DEFS } from '@atrium/schema';
 import {
   Avatar,
@@ -10,6 +10,7 @@ import {
   Input,
   Skeleton,
   Tabs,
+  TabsContent,
   TabsList,
   TabsTrigger,
   Textarea,
@@ -284,6 +285,18 @@ function Detail({ id, onDone }: { id: string; onDone: () => void }) {
   );
 }
 
+function ScenarioStatus({ s }: { s: Scenario }) {
+  return s.reviewStatus === 'agreed' ? (
+    <Badge tone="good">
+      <Check /> Agreed
+    </Badge>
+  ) : s.reviewStatus === 'in_review' ? (
+    <Badge tone="primary">In review</Badge>
+  ) : (
+    <Badge>Draft</Badge>
+  );
+}
+
 function ScenarioPanel({ id }: { id: string }) {
   const ws = useWorkspace().data;
   const scenario = ws?.scenarios.find((s) => s.id === id);
@@ -301,6 +314,27 @@ function ScenarioPanel({ id }: { id: string }) {
     mutationFn: () => api(`/scenarios/${id}`, { method: 'PATCH', body: { isTarget: true } }),
     onSuccess: () => invalidate(),
   });
+  const me = useMe().data;
+  const reviewer = !!me && (me.mode === 'solo' || me.role === 'admin' || me.role === 'architect');
+  const [note, setNote] = useState('');
+  const review = useMutation({
+    mutationFn: (v: { kind: 'submit' | 'agree' | 'send_back' }) =>
+      v.kind === 'submit'
+        ? api(`/scenarios/${id}/submit`, { body: { note: note || undefined } })
+        : api(`/scenarios/${id}/review`, { body: { decision: v.kind, note: note || undefined } }),
+    onSuccess: (_, v) => {
+      invalidate();
+      setNote('');
+      toast.success(
+        v.kind === 'submit'
+          ? 'Sent for review'
+          : v.kind === 'agree'
+            ? 'Agreed. Today is unchanged until you apply it.'
+            : 'Sent back to the author',
+      );
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
   if (!scenario) return null;
   return (
     <div className="flex flex-col gap-4">
@@ -315,6 +349,65 @@ function ScenarioPanel({ id }: { id: string }) {
           </p>
         </div>
       </div>
+      <Card className="flex flex-col gap-2 p-3">
+        <div className="flex flex-wrap items-center gap-2 text-[13px]">
+          <ScenarioStatus s={scenario} />
+          <span className="text-muted-foreground">
+            {scenario.reviewStatus === 'in_review'
+              ? `Submitted by ${scenario.submittedBy ?? 'someone'} ${timeAgo(scenario.submittedAt)}`
+              : scenario.reviewStatus === 'agreed'
+                ? `Agreed by ${scenario.reviewedBy ?? 'a reviewer'} ${timeAgo(scenario.reviewedAt)}`
+                : scenario.reviewedBy
+                  ? `Sent back by ${scenario.reviewedBy} ${timeAgo(scenario.reviewedAt)}`
+                  : 'Not reviewed yet'}
+          </span>
+        </div>
+        {scenario.reviewNote && (
+          <p className="rounded-lg bg-surface-2 px-3 py-2 text-[13px]">{scenario.reviewNote}</p>
+        )}
+        {(scenario.reviewStatus === 'draft' ||
+          (scenario.reviewStatus === 'in_review' && reviewer)) && (
+          <>
+            <Textarea
+              rows={2}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={
+                scenario.reviewStatus === 'draft'
+                  ? 'What should reviewers look at? (optional)'
+                  : 'Note for the author (optional)'
+              }
+            />
+            <div className="flex gap-2">
+              {scenario.reviewStatus === 'draft' ? (
+                <Button
+                  variant="primary"
+                  disabled={!scenario.changeCount || review.isPending}
+                  onClick={() => review.mutate({ kind: 'submit' })}
+                >
+                  <GitPullRequestArrow /> Submit for review
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="primary"
+                    disabled={review.isPending}
+                    onClick={() => review.mutate({ kind: 'agree' })}
+                  >
+                    <Check /> Agree
+                  </Button>
+                  <Button
+                    disabled={review.isPending}
+                    onClick={() => review.mutate({ kind: 'send_back' })}
+                  >
+                    <Undo2 /> Send back
+                  </Button>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </Card>
       <div className="flex flex-wrap gap-2">
         <Button
           variant="primary"
@@ -357,6 +450,7 @@ export function ChangesPage() {
         : { status: 'applied', limit: 200 };
   const list = useChangesets(filter);
   const selected = search.id;
+  const waitingScenarios = (ws?.scenarios ?? []).filter((s) => s.reviewStatus === 'in_review');
 
   return (
     <div className="mx-auto flex h-full max-w-[1320px] flex-col px-6 py-6">
@@ -366,7 +460,11 @@ export function ChangesPage() {
           Suggestions waiting for review, your own drafts, and everything that changed.
         </p>
       </div>
-      <Tabs value={tab} onValueChange={(t) => navigate({ search: { tab: t } })}>
+      <Tabs
+        className="flex min-h-0 flex-1 flex-col"
+        value={tab}
+        onValueChange={(t) => navigate({ search: { tab: t } })}
+      >
         <TabsList>
           <TabsTrigger value="review">
             <Inbox /> Waiting for review{' '}
@@ -387,94 +485,126 @@ export function ChangesPage() {
             <FlaskConical /> Scenarios
           </TabsTrigger>
         </TabsList>
-      </Tabs>
-      <div className="mt-4 grid min-h-0 flex-1 gap-5 lg:grid-cols-[380px_1fr]">
-        <div className="flex min-h-0 flex-col gap-1 overflow-y-auto">
-          {tab === 'scenarios'
-            ? (ws?.scenarios ?? []).map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => navigate({ search: { tab, id: s.id } })}
-                  className={cn(
-                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-surface-2',
-                    selected === s.id && 'bg-surface-2',
-                  )}
-                >
-                  {s.isTarget ? (
-                    <Target className="size-4 text-primary" />
-                  ) : (
-                    <FlaskConical className="size-4 text-muted-foreground" />
-                  )}
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-medium">{s.name}</span>
-                    <span className="block text-[11px] text-muted-foreground">
-                      {s.changeCount} differences from today
-                    </span>
-                  </span>
-                </button>
-              ))
-            : list.isLoading
-              ? [0, 1, 2].map((i) => <Skeleton key={i} className="h-14" />)
-              : (list.data ?? []).map((c) => (
+        <TabsContent
+          value={tab}
+          className="mt-4 grid min-h-0 flex-1 gap-5 lg:grid-cols-[380px_1fr]"
+        >
+          <div className="flex min-h-0 flex-col gap-1 overflow-y-auto">
+            {tab === 'scenarios'
+              ? (ws?.scenarios ?? []).map((s) => (
                   <button
-                    key={c.id}
+                    key={s.id}
                     type="button"
-                    onClick={() => navigate({ search: { tab, id: c.id } })}
+                    onClick={() => navigate({ search: { tab, id: s.id } })}
                     className={cn(
                       'flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-surface-2',
-                      selected === c.id && 'bg-surface-2',
+                      selected === s.id && 'bg-surface-2',
                     )}
                   >
-                    <AuthorAvatar c={c} />
+                    {s.isTarget ? (
+                      <Target className="size-4 text-primary" />
+                    ) : (
+                      <FlaskConical className="size-4 text-muted-foreground" />
+                    )}
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-medium">{c.title}</span>
-                      <span className="block truncate text-[11px] text-muted-foreground">
-                        {c.authorName} · {timeAgo(c.decidedAt ?? c.submittedAt ?? c.createdAt)} ·{' '}
-                        {c.changeCount}
+                      <span className="block truncate text-[13px] font-medium">{s.name}</span>
+                      <span className="block text-[11px] text-muted-foreground">
+                        {s.changeCount} differences from today
                       </span>
                     </span>
-                    {tab !== 'history' && <StatusBadge c={c} />}
+                    {s.reviewStatus !== 'draft' && <ScenarioStatus s={s} />}
                   </button>
-                ))}
-          {tab !== 'scenarios' && !list.isLoading && !list.data?.length && (
-            <EmptyState
-              icon={tab === 'review' ? <Inbox /> : <History />}
-              title={
-                tab === 'review'
-                  ? 'Nothing to review'
-                  : tab === 'mine'
-                    ? 'No suggestions'
-                    : 'No history yet'
-              }
-            >
-              {tab === 'review'
-                ? "When people or agents suggest changes, they'll appear here."
-                : tab === 'mine'
-                  ? 'When you edit something you don’t own, your edits collect here until you submit them.'
-                  : ''}
-            </EmptyState>
-          )}
-        </div>
-        <div className="min-h-0 overflow-y-auto pb-10">
-          {selected ? (
-            tab === 'scenarios' ? (
-              <ScenarioPanel id={selected} />
+                ))
+              : list.isLoading
+                ? [0, 1, 2].map((i) => <Skeleton key={i} className="h-14" />)
+                : [
+                    ...(tab === 'review' ? waitingScenarios : []).map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => navigate({ search: { tab: 'scenarios', id: s.id } })}
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-surface-2"
+                      >
+                        <span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-primary">
+                          {s.isTarget ? (
+                            <Target className="size-3.5" />
+                          ) : (
+                            <FlaskConical className="size-3.5" />
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[13px] font-medium">{s.name}</span>
+                          <span className="block truncate text-[11px] text-muted-foreground">
+                            {s.submittedBy} · {timeAgo(s.submittedAt)} · {s.changeCount} differences
+                          </span>
+                        </span>
+                        <Badge tone="primary">Scenario</Badge>
+                      </button>
+                    )),
+                    ...(list.data ?? []).map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => navigate({ search: { tab, id: c.id } })}
+                        className={cn(
+                          'flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-surface-2',
+                          selected === c.id && 'bg-surface-2',
+                        )}
+                      >
+                        <AuthorAvatar c={c} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[13px] font-medium">{c.title}</span>
+                          <span className="block truncate text-[11px] text-muted-foreground">
+                            {c.authorName} · {timeAgo(c.decidedAt ?? c.submittedAt ?? c.createdAt)}{' '}
+                            · {c.changeCount}
+                          </span>
+                        </span>
+                        {tab !== 'history' && <StatusBadge c={c} />}
+                      </button>
+                    )),
+                  ]}
+            {tab !== 'scenarios' &&
+              !list.isLoading &&
+              !list.data?.length &&
+              !(tab === 'review' && waitingScenarios.length) && (
+                <EmptyState
+                  icon={tab === 'review' ? <Inbox /> : <History />}
+                  title={
+                    tab === 'review'
+                      ? 'Nothing to review'
+                      : tab === 'mine'
+                        ? 'No suggestions'
+                        : 'No history yet'
+                  }
+                >
+                  {tab === 'review'
+                    ? "When people or agents suggest changes, they'll appear here."
+                    : tab === 'mine'
+                      ? 'When you edit something you don’t own, your edits collect here until you submit them.'
+                      : ''}
+                </EmptyState>
+              )}
+          </div>
+          <div className="min-h-0 overflow-y-auto pb-10">
+            {selected ? (
+              tab === 'scenarios' ? (
+                <ScenarioPanel id={selected} />
+              ) : (
+                <Detail id={selected} onDone={() => navigate({ search: { tab } })} />
+              )
             ) : (
-              <Detail id={selected} onDone={() => navigate({ search: { tab } })} />
-            )
-          ) : (
-            <EmptyState
-              icon={<GitPullRequestArrow />}
-              title="Pick something on the left"
-              className="mt-16"
-            >
-              Every change shows exactly what was different, field by field.{' '}
-              {RELATION_TYPE_DEFS.supports ? '' : ''}
-            </EmptyState>
-          )}
-        </div>
-      </div>
+              <EmptyState
+                icon={<GitPullRequestArrow />}
+                title="Pick something on the left"
+                className="mt-16"
+              >
+                Every change shows exactly what was different, field by field.{' '}
+                {RELATION_TYPE_DEFS.supports ? '' : ''}
+              </EmptyState>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

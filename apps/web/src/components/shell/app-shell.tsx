@@ -209,7 +209,7 @@ function TopBar() {
         <button
           type="button"
           onClick={() => ui.set({ commandOpen: true })}
-          className="flex h-9 w-full max-w-[440px] items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3 text-[13px] text-subtle-foreground transition hover:border-border-strong hover:bg-surface-2"
+          className="flex h-9 w-full max-w-[440px] items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3 text-[13px] text-muted-foreground transition hover:border-border-strong hover:bg-surface-2"
         >
           <Search className="size-4" />
           <span className="flex-1 truncate text-left">Search or ask a question…</span>

@@ -81,7 +81,9 @@ export function EChart({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-apply option after theme change
   useEffect(() => {
-    chart.current?.setOption({ animationDuration: 500, ...option }, true);
+    // People who ask for less motion (and screenshot tests) get charts without animation.
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    chart.current?.setOption({ animation: !still, animationDuration: 500, ...option }, true);
   }, [option, resolved]);
 
   return (

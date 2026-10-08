@@ -72,6 +72,8 @@ export async function scenarioWorkset(
     select id from changesets
     where scenario_id = ${scenarioId} and kind = 'scenario' and status = 'draft'
     order by created_at limit 1`;
+  // Editing a scenario that was submitted or agreed puts it back to draft: it changed since.
+  await db`update scenarios set review_status = 'draft' where id = ${scenarioId} and review_status <> 'draft'`;
   if (existing) return existing.id as string;
   return openChangeset(db, ctx, {
     kind: 'scenario',

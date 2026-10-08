@@ -1,0 +1,28 @@
+{
+  "name": "@atrium/videos",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Atrium demo videos: scripts, screen capture, voiceover and Remotion compositions.",
+  "scripts": {
+    "capture": "tsx capture/capture.ts",
+    "voice": "tsx voice/generate.ts",
+    "studio": "remotion studio src/index.ts",
+    "render": "tsx render.ts",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.527",
+    "@remotion/google-fonts": "4.0.527",
+    "kokoro-js": "1.2.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "4.0.527",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0"
+  }
+}

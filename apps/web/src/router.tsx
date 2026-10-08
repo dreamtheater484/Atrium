@@ -20,6 +20,8 @@ export interface ExploreSearch {
   overlay?: MapOverlay;
   domain?: string;
   focus?: string;
+  /** Graph mode to open with, e.g. impact when coming from "Impact". */
+  mode?: 'impact';
   gaps?: boolean;
   health?: string;
   layer?: 'org' | 'reference';
@@ -45,6 +47,7 @@ const exploreRoute = createRoute({
     overlay: str(s.overlay) as MapOverlay | undefined,
     domain: str(s.domain),
     focus: str(s.focus),
+    mode: s.mode === 'impact' ? 'impact' : undefined,
     gaps: s.gaps === true || s.gaps === 'true' ? true : undefined,
     health: str(s.health),
     layer: s.layer === 'reference' ? 'reference' : undefined,

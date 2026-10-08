@@ -9,6 +9,7 @@ import { refreshAllDerived } from './services/derived';
 import { EolService } from './services/eol';
 import { RealtimeHub } from './services/realtime';
 import { ModelStore } from './services/store';
+import { startWebhooks } from './services/webhooks';
 
 const config = loadConfig();
 const sql = createDb({ url: config.databaseUrl });
@@ -41,6 +42,8 @@ const refresh = async () => {
 };
 await refresh();
 setInterval(() => void refresh().catch((e) => console.error(e)), 24 * 3600 * 1000).unref();
+
+startWebhooks(sql, deps.hub);
 
 const app = await buildApp({ deps, soloUser: () => soloUser, extraRoutes: allRoutes });
 

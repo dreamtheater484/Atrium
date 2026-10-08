@@ -1,0 +1,1095 @@
+[
+  {
+    "id": "tour",
+    "title": "Atrium in two minutes",
+    "audience": "Everyone",
+    "scenes": [
+      {
+        "id": "problem",
+        "visual": {
+          "kind": "title",
+          "title": "Your architecture lives in a hundred places",
+          "subtitle": "spreadsheets · diagrams · slide decks · people's heads"
+        },
+        "narration": "Ask five people how your systems fit together and you get five spreadsheets, three diagrams and a slide deck from last year. None of them agree, and none of them are current.",
+        "duration": 12.2,
+        "audio": "voice/tour/problem.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Ask five people how your systems fit together and you get five spreadsheets, three diagrams and a slide deck from last year.",
+            "start": 0.45,
+            "end": 8.226878612716762
+          },
+          {
+            "text": "None of them agree, and none of them are current.",
+            "start": 8.226878612716762,
+            "end": 11.299999999999999
+          }
+        ]
+      },
+      {
+        "id": "idea",
+        "visual": {
+          "kind": "diagram",
+          "name": "one-map"
+        },
+        "narration": "Atrium gives your organisation one living map. Capabilities, applications, data and technology, and how they connect. Architects keep it right. Managers use it to decide. Engineers, and their AI coding assistants, build with it.",
+        "duration": 17.2,
+        "audio": "voice/tour/idea.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Atrium gives your organisation one living map.",
+            "start": 0.45,
+            "end": 3.704910714285714
+          },
+          {
+            "text": "Capabilities, applications, data and technology, and how they connect.",
+            "start": 3.704910714285714,
+            "end": 8.658035714285713
+          },
+          {
+            "text": "Architects keep it right.",
+            "start": 8.658035714285713,
+            "end": 10.427008928571428
+          },
+          {
+            "text": "Managers use it to decide.",
+            "start": 10.427008928571428,
+            "end": 12.266741071428571
+          },
+          {
+            "text": "Engineers, and their AI coding assistants, build with it.",
+            "start": 12.266741071428571,
+            "end": 16.3
+          }
+        ]
+      },
+      {
+        "id": "first-run",
+        "visual": {
+          "kind": "shot",
+          "name": "first-run"
+        },
+        "narration": "Getting started takes a minute. Load a sample, or drop in the spreadsheet you already have. Atrium recognises the columns, fills in what it can work out, and draws your first capability map.",
+        "duration": 13.375,
+        "audio": "voice/tour/first-run.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Getting started takes a minute.",
+            "start": 0.45,
+            "end": 2.432845744680851
+          },
+          {
+            "text": "Load a sample, or drop in the spreadsheet you already have.",
+            "start": 2.432845744680851,
+            "end": 6.206648936170213
+          },
+          {
+            "text": "Atrium recognises the columns, fills in what it can work out, and draws your first capability map.",
+            "start": 6.206648936170213,
+            "end": 12.475000000000001
+          }
+        ]
+      },
+      {
+        "id": "explore",
+        "visual": {
+          "kind": "shot",
+          "name": "explore-map"
+        },
+        "narration": "Click anything to see what it supports, what it depends on and who owns it. Colour the map by health or cost, and switch between today and the target state you are working towards.",
+        "duration": 12.299999999999999,
+        "audio": "voice/tour/explore.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Click anything to see what it supports, what it depends on and who owns it.",
+            "start": 0.45,
+            "end": 5.037988826815642
+          },
+          {
+            "text": "Colour the map by health or cost, and switch between today and the target state you are working towards.",
+            "start": 5.037988826815642,
+            "end": 11.399999999999999
+          }
+        ]
+      },
+      {
+        "id": "decide",
+        "visual": {
+          "kind": "shot",
+          "name": "dashboard"
+        },
+        "narration": "Managers get answers without the archaeology. What it costs, what is at risk, what reaches end of life, and where the money goes. One click turns a dashboard into an editable presentation.",
+        "duration": 13.6,
+        "audio": "voice/tour/decide.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Managers get answers without the archaeology.",
+            "start": 0.45,
+            "end": 3.413709677419355
+          },
+          {
+            "text": "What it costs, what is at risk, what reaches end of life, and where the money goes.",
+            "start": 3.413709677419355,
+            "end": 8.88010752688172
+          },
+          {
+            "text": "One click turns a dashboard into an editable presentation.",
+            "start": 8.88010752688172,
+            "end": 12.7
+          }
+        ]
+      },
+      {
+        "id": "build",
+        "visual": {
+          "kind": "shot",
+          "name": "agent-connect"
+        },
+        "narration": "Engineers connect their coding assistant with one command. It reads the architecture and the standards while it writes code, and suggests updates for an architect to approve.",
+        "duration": 12.125,
+        "audio": "voice/tour/build.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Engineers connect their coding assistant with one command.",
+            "start": 0.45,
+            "end": 4.06242774566474
+          },
+          {
+            "text": "It reads the architecture and the standards while it writes code, and suggests updates for an architect to approve.",
+            "start": 4.06242774566474,
+            "end": 11.225
+          }
+        ]
+      },
+      {
+        "id": "close",
+        "visual": {
+          "kind": "end",
+          "tagline": "One shared map, kept current by the people and tools that change it."
+        },
+        "narration": "One shared map, kept current by the people and the tools that change it. That's Atrium.",
+        "duration": 7.050000000000001,
+        "audio": "voice/tour/close.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "One shared map, kept current by the people and the tools that change it.",
+            "start": 0.45,
+            "end": 5.222093023255814
+          },
+          {
+            "text": "That's Atrium.",
+            "start": 5.222093023255814,
+            "end": 6.15
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "architects",
+    "title": "From spreadsheet to target state",
+    "audience": "Architects",
+    "scenes": [
+      {
+        "id": "intro",
+        "visual": {
+          "kind": "title",
+          "title": "From spreadsheet to target state",
+          "subtitle": "for architects"
+        },
+        "narration": "You already know your landscape. It's just spread over spreadsheets, wikis and diagrams that went stale the day they were drawn. Here is how Atrium turns that into one model you can trust, in an afternoon.",
+        "duration": 14.174999999999999,
+        "audio": "voice/architects/intro.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "You already know your landscape.",
+            "start": 0.45,
+            "end": 2.471674876847291
+          },
+          {
+            "text": "It's just spread over spreadsheets, wikis and diagrams that went stale the day they were drawn.",
+            "start": 2.471674876847291,
+            "end": 8.473522167487683
+          },
+          {
+            "text": "Here is how Atrium turns that into one model you can trust, in an afternoon.",
+            "start": 8.473522167487683,
+            "end": 13.274999999999999
+          }
+        ]
+      },
+      {
+        "id": "import",
+        "visual": {
+          "kind": "shot",
+          "name": "import"
+        },
+        "narration": "Start with what you have. Drop in an export from your CMDB, an Excel list or an ArchiMate file. Atrium works out what each column means, matches rows to what is already there so nothing is duplicated, and shows exactly what will change before you click Import. Next time, it remembers the layout.",
+        "duration": 20.95,
+        "audio": "voice/architects/import.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Start with what you have.",
+            "start": 0.45,
+            "end": 2.122354948805461
+          },
+          {
+            "text": "Drop in an export from your CMDB, an Excel list or an ArchiMate file.",
+            "start": 2.122354948805461,
+            "end": 6.738054607508532
+          },
+          {
+            "text": "Atrium works out what each column means, matches rows to what is already there so nothing is duplicated, and shows exactly what will change before you click Import.",
+            "start": 6.738054607508532,
+            "end": 17.708703071672353
+          },
+          {
+            "text": "Next time, it remembers the layout.",
+            "start": 17.708703071672353,
+            "end": 20.049999999999997
+          }
+        ]
+      },
+      {
+        "id": "autofill",
+        "visual": {
+          "kind": "shot",
+          "name": "autofill"
+        },
+        "narration": "Fields that can be worked out are filled in for you: versions and end-of-life dates for technology, owners and domains inherited from their parents, and likely links between applications and capabilities. Suggestions stay grey until you accept them, one at a time or all at once.",
+        "duration": 19.499999999999996,
+        "audio": "voice/architects/autofill.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Fields that can be worked out are filled in for you: versions and end-of-life dates for technology, owners and domains inherited from their parents, and likely links between applications and capabilities.",
+            "start": 0.45,
+            "end": 13.768705035971221
+          },
+          {
+            "text": "Suggestions stay grey until you accept them, one at a time or all at once.",
+            "start": 13.768705035971221,
+            "end": 18.599999999999998
+          }
+        ]
+      },
+      {
+        "id": "map",
+        "visual": {
+          "kind": "shot",
+          "name": "explore-map"
+        },
+        "narration": "Now the picture. The capability map shows which applications support what, coloured by health, cost, lifecycle or fit. Click any box and the inspector opens beside it, so you can edit in place without losing your view.",
+        "duration": 15.825,
+        "audio": "voice/architects/map.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Now the picture.",
+            "start": 0.45,
+            "end": 1.5222222222222221
+          },
+          {
+            "text": "The capability map shows which applications support what, coloured by health, cost, lifecycle or fit.",
+            "start": 1.5222222222222221,
+            "end": 8.290625
+          },
+          {
+            "text": "Click any box and the inspector opens beside it, so you can edit in place without losing your view.",
+            "start": 8.290625,
+            "end": 14.925
+          }
+        ]
+      },
+      {
+        "id": "graph",
+        "visual": {
+          "kind": "shot",
+          "name": "graph"
+        },
+        "narration": "The dependency graph starts with the big picture: your domains and how much they talk to each other. Drill into one, or centre on a single application and ask what breaks if it goes.",
+        "duration": 13.174999999999999,
+        "audio": "voice/architects/graph.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "The dependency graph starts with the big picture: your domains and how much they talk to each other.",
+            "start": 0.45,
+            "end": 6.9831491712707185
+          },
+          {
+            "text": "Drill into one, or centre on a single application and ask what breaks if it goes.",
+            "start": 6.9831491712707185,
+            "end": 12.275
+          }
+        ]
+      },
+      {
+        "id": "target",
+        "visual": {
+          "kind": "shot",
+          "name": "scenario"
+        },
+        "narration": "Then plan the future. Switch to the target state and simply edit: retire a system, add a new platform, move a capability. Every change is tracked as a difference from today. The time slider and the roadmap show when it all happens.",
+        "duration": 16.275,
+        "audio": "voice/architects/target.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Then plan the future.",
+            "start": 0.45,
+            "end": 1.8246710526315788
+          },
+          {
+            "text": "Switch to the target state and simply edit: retire a system, add a new platform, move a capability.",
+            "start": 1.8246710526315788,
+            "end": 8.305263157894737
+          },
+          {
+            "text": "Every change is tracked as a difference from today.",
+            "start": 8.305263157894737,
+            "end": 11.64375
+          },
+          {
+            "text": "The time slider and the roadmap show when it all happens.",
+            "start": 11.64375,
+            "end": 15.375
+          }
+        ]
+      },
+      {
+        "id": "review",
+        "visual": {
+          "kind": "shot",
+          "name": "review"
+        },
+        "narration": "Nothing changes behind your back. Edits from colleagues outside their area, and from coding agents, arrive as suggestions with a clear before and after. Approve in two clicks, and undo if you change your mind.",
+        "duration": 15.125,
+        "audio": "voice/architects/review.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Nothing changes behind your back.",
+            "start": 0.45,
+            "end": 2.6460144927536233
+          },
+          {
+            "text": "Edits from colleagues outside their area, and from coding agents, arrive as suggestions with a clear before and after.",
+            "start": 2.6460144927536233,
+            "end": 10.498429951690822
+          },
+          {
+            "text": "Approve in two clicks, and undo if you change your mind.",
+            "start": 10.498429951690822,
+            "end": 14.225000000000001
+          }
+        ]
+      },
+      {
+        "id": "reference",
+        "visual": {
+          "kind": "shot",
+          "name": "packs"
+        },
+        "narration": "Industry reference models plug in as a separate layer. Install a pack, and Atrium suggests how your capabilities map to it. Accept the good matches in one go and see where you differ from the standard. The telecom pack for TM Forum's frameworks uses the same mechanism.",
+        "duration": 19.749999999999996,
+        "audio": "voice/architects/reference.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Industry reference models plug in as a separate layer.",
+            "start": 0.45,
+            "end": 4.185338345864661
+          },
+          {
+            "text": "Install a pack, and Atrium suggests how your capabilities map to it.",
+            "start": 4.185338345864661,
+            "end": 8.889097744360901
+          },
+          {
+            "text": "Accept the good matches in one go and see where you differ from the standard.",
+            "start": 8.889097744360901,
+            "end": 14.215413533834585
+          },
+          {
+            "text": "The telecom pack for TM Forum's frameworks uses the same mechanism.",
+            "start": 14.215413533834585,
+            "end": 18.849999999999998
+          }
+        ]
+      },
+      {
+        "id": "close",
+        "visual": {
+          "kind": "end",
+          "tagline": "Your model, current and trusted, without the busywork."
+        },
+        "narration": "Import what you have, let Atrium fill the gaps, plan the target, and keep it honest with reviews. Your model, current and trusted, without the busywork.",
+        "duration": 11.1,
+        "audio": "voice/architects/close.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Import what you have, let Atrium fill the gaps, plan the target, and keep it honest with reviews.",
+            "start": 0.45,
+            "end": 6.713245033112583
+          },
+          {
+            "text": "Your model, current and trusted, without the busywork.",
+            "start": 6.713245033112583,
+            "end": 10.2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "managers",
+    "title": "Decisions in three clicks",
+    "audience": "Managers",
+    "scenes": [
+      {
+        "id": "intro",
+        "visual": {
+          "kind": "title",
+          "title": "Decisions in three clicks",
+          "subtitle": "for managers with a technical background"
+        },
+        "narration": "You need straight answers. What do we run, what does it cost, where is the risk, and are we moving in the right direction? Atrium puts those answers one click from the landing page.",
+        "duration": 12.299999999999999,
+        "audio": "voice/managers/intro.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "You need straight answers.",
+            "start": 0.45,
+            "end": 2.0405027932960893
+          },
+          {
+            "text": "What do we run, what does it cost, where is the risk, and are we moving in the right direction?",
+            "start": 2.0405027932960893,
+            "end": 7.85195530726257
+          },
+          {
+            "text": "Atrium puts those answers one click from the landing page.",
+            "start": 7.85195530726257,
+            "end": 11.4
+          }
+        ]
+      },
+      {
+        "id": "health",
+        "visual": {
+          "kind": "shot",
+          "name": "dashboard"
+        },
+        "narration": "The portfolio dashboard shows how healthy your applications are, where the money goes per domain, and which systems to invest in, tolerate, migrate or eliminate. Health is worked out from fit ratings and technology lifecycles, so it stays current without anyone updating a slide.",
+        "duration": 19.674999999999997,
+        "audio": "voice/managers/health.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "The portfolio dashboard shows how healthy your applications are, where the money goes per domain, and which systems to invest in, tolerate, migrate or eliminate.",
+            "start": 0.45,
+            "end": 11.062679856115105
+          },
+          {
+            "text": "Health is worked out from fit ratings and technology lifecycles, so it stays current without anyone updating a slide.",
+            "start": 11.062679856115105,
+            "end": 18.775
+          }
+        ]
+      },
+      {
+        "id": "drill",
+        "visual": {
+          "kind": "shot",
+          "name": "drill"
+        },
+        "narration": "Every number is a door. Click the share that needs action and you see the applications behind it, with the reasons: unsupported technology, poor fit, or a platform being phased out.",
+        "duration": 13.424999999999999,
+        "audio": "voice/managers/drill.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Every number is a door.",
+            "start": 0.45,
+            "end": 1.9929166666666664
+          },
+          {
+            "text": "Click the share that needs action and you see the applications behind it, with the reasons: unsupported technology, poor fit, or a platform being phased out.",
+            "start": 1.9929166666666664,
+            "end": 12.524999999999999
+          }
+        ]
+      },
+      {
+        "id": "cost",
+        "visual": {
+          "kind": "shot",
+          "name": "cost"
+        },
+        "narration": "Cost per capability shows what the business actually pays for each thing it does, not just per system. It is the fastest way to spot duplication: three applications doing the same job.",
+        "duration": 13.525,
+        "audio": "voice/managers/cost.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Cost per capability shows what the business actually pays for each thing it does, not just per system.",
+            "start": 0.45,
+            "end": 7.2360655737704915
+          },
+          {
+            "text": "It is the fastest way to spot duplication: three applications doing the same job.",
+            "start": 7.2360655737704915,
+            "end": 12.625
+          }
+        ]
+      },
+      {
+        "id": "risk",
+        "visual": {
+          "kind": "shot",
+          "name": "eol"
+        },
+        "narration": "End-of-life exposure lists the technologies that are out of support, or soon will be, and which applications rely on them. That is your risk register, built from facts.",
+        "duration": 12.325,
+        "audio": "voice/managers/risk.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "End-of-life exposure lists the technologies that are out of support, or soon will be, and which applications rely on them.",
+            "start": 0.45,
+            "end": 8.467664670658682
+          },
+          {
+            "text": "That is your risk register, built from facts.",
+            "start": 8.467664670658682,
+            "end": 11.424999999999999
+          }
+        ]
+      },
+      {
+        "id": "roadmap",
+        "visual": {
+          "kind": "shot",
+          "name": "roadmap"
+        },
+        "narration": "The roadmap shows initiatives and system lifecycles on one timeline. Ask a question in plain words, such as what breaks if we retire the legacy CRM, and get the answer straight away.",
+        "duration": 13.924999999999999,
+        "audio": "voice/managers/roadmap.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "The roadmap shows initiatives and system lifecycles on one timeline.",
+            "start": 0.45,
+            "end": 5.174309392265193
+          },
+          {
+            "text": "Ask a question in plain words, such as what breaks if we retire the legacy CRM, and get the answer straight away.",
+            "start": 5.174309392265193,
+            "end": 13.024999999999999
+          }
+        ]
+      },
+      {
+        "id": "present",
+        "visual": {
+          "kind": "shot",
+          "name": "present"
+        },
+        "narration": "When it is time to present, click Share and choose PowerPoint. You get real, editable charts in your own deck, not screenshots. The same data is always one click away as Excel.",
+        "duration": 13.15,
+        "audio": "voice/managers/present.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "When it is time to present, click Share and choose PowerPoint.",
+            "start": 0.45,
+            "end": 4.6545977011494255
+          },
+          {
+            "text": "You get real, editable charts in your own deck, not screenshots.",
+            "start": 4.6545977011494255,
+            "end": 8.994827586206897
+          },
+          {
+            "text": "The same data is always one click away as Excel.",
+            "start": 8.994827586206897,
+            "end": 12.25
+          }
+        ]
+      },
+      {
+        "id": "close",
+        "visual": {
+          "kind": "end",
+          "tagline": "Answers you can trust, in the time it takes to ask."
+        },
+        "narration": "Current numbers, clear risks and a roadmap you can defend. Answers you can trust, in the time it takes to ask.",
+        "duration": 8.55,
+        "audio": "voice/managers/close.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Current numbers, clear risks and a roadmap you can defend.",
+            "start": 0.45,
+            "end": 4.281192660550459
+          },
+          {
+            "text": "Answers you can trust, in the time it takes to ask.",
+            "start": 4.281192660550459,
+            "end": 7.65
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "engineers",
+    "title": "Architecture where you work",
+    "audience": "Engineers",
+    "scenes": [
+      {
+        "id": "intro",
+        "visual": {
+          "kind": "title",
+          "title": "Architecture where you work",
+          "subtitle": "for engineering teams"
+        },
+        "narration": "Architecture documentation usually lives far from the code, so it goes stale. Atrium meets you where you work: in your repository, your pipeline and your terminal.",
+        "duration": 12.15,
+        "audio": "voice/engineers/intro.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Architecture documentation usually lives far from the code, so it goes stale.",
+            "start": 0.45,
+            "end": 5.583333333333334
+          },
+          {
+            "text": "Atrium meets you where you work: in your repository, your pipeline and your terminal.",
+            "start": 5.583333333333334,
+            "end": 11.25
+          }
+        ]
+      },
+      {
+        "id": "home",
+        "visual": {
+          "kind": "shot",
+          "name": "engineer-home"
+        },
+        "narration": "Your home page shows your team's services, their health, and what needs attention: an end-of-life runtime, a missing owner, a suggestion waiting for you. Services your team owns, you can edit directly.",
+        "duration": 14.5,
+        "audio": "voice/engineers/home.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Your home page shows your team's services, their health, and what needs attention: an end-of-life runtime, a missing owner, a suggestion waiting for you.",
+            "start": 0.45,
+            "end": 10.50975
+          },
+          {
+            "text": "Services your team owns, you can edit directly.",
+            "start": 10.50975,
+            "end": 13.6
+          }
+        ]
+      },
+      {
+        "id": "yaml",
+        "visual": {
+          "kind": "code",
+          "name": "atrium-yaml"
+        },
+        "narration": "Each repository can describe itself in a small atrium.yaml file. You don't write it from scratch: one command, atrium init, reads your package files, Dockerfile and compose files and fills in the runtime, frameworks, databases and dependencies.",
+        "duration": 18.224999999999998,
+        "audio": "voice/engineers/yaml.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Each repository can describe itself in a small atrium.yaml file.",
+            "start": 0.45,
+            "end": 4.894444444444445
+          },
+          {
+            "text": "You don't write it from scratch: one command, atrium init, reads your package files, Dockerfile and compose files and fills in the runtime, frameworks, databases and dependencies.",
+            "start": 4.894444444444445,
+            "end": 17.325
+          }
+        ]
+      },
+      {
+        "id": "check",
+        "visual": {
+          "kind": "terminal",
+          "name": "check"
+        },
+        "narration": "Atrium check compares that against your organisation's standards and technology radar, and against end-of-life dates. It fails the build only for real problems, and explains each one in plain words.",
+        "duration": 14.799999999999999,
+        "audio": "voice/engineers/check.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Atrium check compares that against your organisation's standards and technology radar, and against end-of-life dates.",
+            "start": 0.45,
+            "end": 8.438071065989847
+          },
+          {
+            "text": "It fails the build only for real problems, and explains each one in plain words.",
+            "start": 8.438071065989847,
+            "end": 13.899999999999999
+          }
+        ]
+      },
+      {
+        "id": "sync",
+        "visual": {
+          "kind": "terminal",
+          "name": "sync"
+        },
+        "narration": "In your pipeline, atrium sync keeps the model in step with the code. Changes to services your team owns are applied straight away. Anything else becomes a suggestion for an architect.",
+        "duration": 13.225,
+        "audio": "voice/engineers/sync.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "In your pipeline, atrium sync keeps the model in step with the code.",
+            "start": 0.45,
+            "end": 4.9113259668508285
+          },
+          {
+            "text": "Changes to services your team owns are applied straight away.",
+            "start": 4.9113259668508285,
+            "end": 8.91339779005525
+          },
+          {
+            "text": "Anything else becomes a suggestion for an architect.",
+            "start": 8.91339779005525,
+            "end": 12.325000000000001
+          }
+        ]
+      },
+      {
+        "id": "context",
+        "visual": {
+          "kind": "code",
+          "name": "architecture-md"
+        },
+        "narration": "Atrium context writes an ARCHITECTURE.md for your service: what it supports, what it depends on, who uses it, and the standards that apply. It is always generated from the live model, so it is never out of date.",
+        "duration": 15.174999999999999,
+        "audio": "voice/engineers/context.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Atrium context writes an ARCHITECTURE.md for your service: what it supports, what it depends on, who uses it, and the standards that apply.",
+            "start": 0.45,
+            "end": 9.600833333333332
+          },
+          {
+            "text": "It is always generated from the live model, so it is never out of date.",
+            "start": 9.600833333333332,
+            "end": 14.274999999999999
+          }
+        ]
+      },
+      {
+        "id": "api",
+        "visual": {
+          "kind": "code",
+          "name": "api"
+        },
+        "narration": "Everything you see is also available through a documented REST API, and webhooks tell your other tools the moment something changes. Build on it however you like.",
+        "duration": 12.125,
+        "audio": "voice/engineers/api.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Everything you see is also available through a documented REST API, and webhooks tell your other tools the moment something changes.",
+            "start": 0.45,
+            "end": 9.28416149068323
+          },
+          {
+            "text": "Build on it however you like.",
+            "start": 9.28416149068323,
+            "end": 11.225000000000001
+          }
+        ]
+      },
+      {
+        "id": "close",
+        "visual": {
+          "kind": "end",
+          "tagline": "Less documentation work. Better documentation."
+        },
+        "narration": "Describe your service once, let the pipeline keep it current, and get guidance before you merge. Less documentation work, better documentation.",
+        "duration": 10.725,
+        "audio": "voice/engineers/close.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Describe your service once, let the pipeline keep it current, and get guidance before you merge.",
+            "start": 0.45,
+            "end": 6.788028169014084
+          },
+          {
+            "text": "Less documentation work, better documentation.",
+            "start": 6.788028169014084,
+            "end": 9.825
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "agents",
+    "title": "Architecture-aware AI coding",
+    "audience": "Engineers and architects",
+    "scenes": [
+      {
+        "id": "intro",
+        "visual": {
+          "kind": "title",
+          "title": "Architecture-aware AI coding",
+          "subtitle": "for engineers and architects"
+        },
+        "narration": "AI coding assistants are fast, but they don't know your architecture. They pick libraries your organisation has retired, call services that are being phased out, and quietly make your documentation wrong. Atrium fixes that.",
+        "duration": 15.975,
+        "audio": "voice/agents/intro.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "AI coding assistants are fast, but they don't know your architecture.",
+            "start": 0.45,
+            "end": 5.016176470588236
+          },
+          {
+            "text": "They pick libraries your organisation has retired, call services that are being phased out, and quietly make your documentation wrong.",
+            "start": 5.016176470588236,
+            "end": 13.883823529411764
+          },
+          {
+            "text": "Atrium fixes that.",
+            "start": 13.883823529411764,
+            "end": 15.075
+          }
+        ]
+      },
+      {
+        "id": "connect",
+        "visual": {
+          "kind": "shot",
+          "name": "agent-connect"
+        },
+        "narration": "Connect an assistant from the app. Choose your tool, decide what it may see, and copy one command. For Claude Code, Cursor, VS Code or any tool that speaks the Model Context Protocol.",
+        "duration": 13.799999999999999,
+        "audio": "voice/agents/connect.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Connect an assistant from the app.",
+            "start": 0.45,
+            "end": 2.7886740331491713
+          },
+          {
+            "text": "Choose your tool, decide what it may see, and copy one command.",
+            "start": 2.7886740331491713,
+            "end": 7.122099447513811
+          },
+          {
+            "text": "For Claude Code, Cursor, VS Code or any tool that speaks the Model Context Protocol.",
+            "start": 7.122099447513811,
+            "end": 12.899999999999999
+          }
+        ]
+      },
+      {
+        "id": "loop",
+        "visual": {
+          "kind": "diagram",
+          "name": "agent-loop"
+        },
+        "narration": "From then on the assistant can ask Atrium questions while it works. What is this service, what does it depend on, who uses it, which standards apply, and what would break if I change it.",
+        "duration": 12.85,
+        "audio": "voice/agents/loop.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "From then on the assistant can ask Atrium questions while it works.",
+            "start": 0.45,
+            "end": 4.614864864864865
+          },
+          {
+            "text": "What is this service, what does it depend on, who uses it, which standards apply, and what would break if I change it.",
+            "start": 4.614864864864865,
+            "end": 11.95
+          }
+        ]
+      },
+      {
+        "id": "context",
+        "visual": {
+          "kind": "agent",
+          "name": "context"
+        },
+        "narration": "Here, the assistant is about to change the payment gateway. It asks for the service context, and gets the purpose, owners, dependencies, consumers and the standards that apply, in a form it can use straight away.",
+        "duration": 14.9,
+        "audio": "voice/agents/context.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Here, the assistant is about to change the payment gateway.",
+            "start": 0.45,
+            "end": 4.238862559241706
+          },
+          {
+            "text": "It asks for the service context, and gets the purpose, owners, dependencies, consumers and the standards that apply, in a form it can use straight away.",
+            "start": 4.238862559241706,
+            "end": 14
+          }
+        ]
+      },
+      {
+        "id": "check",
+        "visual": {
+          "kind": "agent",
+          "name": "check"
+        },
+        "narration": "Before choosing a library, it checks its plan against your standards. Java 8 is past end of life and on hold, so the assistant changes course before writing a single line.",
+        "duration": 12.75,
+        "audio": "voice/agents/check.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Before choosing a library, it checks its plan against your standards.",
+            "start": 0.45,
+            "end": 5.077058823529412
+          },
+          {
+            "text": "Java 8 is past end of life and on hold, so the assistant changes course before writing a single line.",
+            "start": 5.077058823529412,
+            "end": 11.850000000000001
+          }
+        ]
+      },
+      {
+        "id": "propose",
+        "visual": {
+          "kind": "agent",
+          "name": "propose"
+        },
+        "narration": "When the code changes the architecture, the assistant proposes an update to the model: a new dependency, an upgraded runtime. Nothing changes yet.",
+        "duration": 11.525,
+        "audio": "voice/agents/propose.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "When the code changes the architecture, the assistant proposes an update to the model: a new dependency, an upgraded runtime.",
+            "start": 0.45,
+            "end": 9.22155172413793
+          },
+          {
+            "text": "Nothing changes yet.",
+            "start": 9.22155172413793,
+            "end": 10.624999999999998
+          }
+        ]
+      },
+      {
+        "id": "approve",
+        "visual": {
+          "kind": "shot",
+          "name": "review"
+        },
+        "narration": "An architect sees the suggestion with a clear before and after, and the agent's reasons. One click approves it, and the map is current again.",
+        "duration": 10.375,
+        "audio": "voice/agents/approve.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "An architect sees the suggestion with a clear before and after, and the agent's reasons.",
+            "start": 0.45,
+            "end": 6.122857142857143
+          },
+          {
+            "text": "One click approves it, and the map is current again.",
+            "start": 6.122857142857143,
+            "end": 9.475
+          }
+        ]
+      },
+      {
+        "id": "security",
+        "visual": {
+          "kind": "diagram",
+          "name": "security"
+        },
+        "narration": "This is built to be safe. Each connection has its own token that you can revoke at any time. It only sees information up to the level you choose, enforced twice, including by the database itself. Agents can only suggest, never change. Everything they return is marked as data, not instructions, and every request is logged.",
+        "duration": 22.799999999999997,
+        "audio": "voice/agents/security.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "This is built to be safe.",
+            "start": 0.45,
+            "end": 2.1310344827586207
+          },
+          {
+            "text": "Each connection has its own token that you can revoke at any time.",
+            "start": 2.1310344827586207,
+            "end": 6.568965517241379
+          },
+          {
+            "text": "It only sees information up to the level you choose, enforced twice, including by the database itself.",
+            "start": 6.568965517241379,
+            "end": 13.427586206896551
+          },
+          {
+            "text": "Agents can only suggest, never change.",
+            "start": 13.427586206896551,
+            "end": 15.982758620689655
+          },
+          {
+            "text": "Everything they return is marked as data, not instructions, and every request is logged.",
+            "start": 15.982758620689655,
+            "end": 21.9
+          }
+        ]
+      },
+      {
+        "id": "close",
+        "visual": {
+          "kind": "end",
+          "tagline": "Agents that follow your architecture, and keep it current."
+        },
+        "narration": "Your architecture becomes context for every assistant, and every assistant helps keep it current. Safely, and under your control.",
+        "duration": 9.799999999999999,
+        "audio": "voice/agents/close.wav",
+        "leadIn": 0.45,
+        "captions": [
+          {
+            "text": "Your architecture becomes context for every assistant, and every assistant helps keep it current.",
+            "start": 0.45,
+            "end": 6.853515625
+          },
+          {
+            "text": "Safely, and under your control.",
+            "start": 6.853515625,
+            "end": 8.9
+          }
+        ]
+      }
+    ]
+  }
+]

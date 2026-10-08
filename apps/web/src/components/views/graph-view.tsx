@@ -462,19 +462,21 @@ export function GraphView({
   onFocus,
   domain,
   onDomain,
+  initialMode,
 }: {
   type: ElementType;
+  initialMode?: 'impact';
   focus?: string;
   onFocus: (id: string | undefined) => void;
   domain?: string;
   onDomain: (id: string | undefined) => void;
 }) {
-  const [mode, setMode] = useState<Mode>(focus ? 'context' : 'dependencies');
+  const [mode, setMode] = useState<Mode>(focus ? (initialMode ?? 'context') : 'dependencies');
   const [depth, setDepth] = useState(focus ? 1 : 1);
   const notation = useUi((s) => s.notation);
   useEffect(() => {
-    if (focus && mode === 'dependencies') setMode('context');
-  }, [focus, mode]);
+    if (focus && mode === 'dependencies') setMode(initialMode ?? 'context');
+  }, [focus, mode, initialMode]);
   const types: ElementType[] | undefined = focus
     ? undefined
     : type === 'application'

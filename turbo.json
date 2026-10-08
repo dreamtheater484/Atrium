@@ -3,36 +3,23 @@
   "ui": "stream",
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
     },
     "typecheck": {
       "dependsOn": []
     },
     "test": {
       "dependsOn": [],
-      "env": [
-        "DATABASE_URL",
-        "ATRIUM_*"
-      ]
+      "env": ["DATABASE_URL", "ATRIUM_*"]
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "@atrium/server#build": {
-      "dependsOn": [
-        "^build",
-        "@atrium/web#build",
-        "@atrium/cli#build"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["^build", "@atrium/web#build", "@atrium/cli#build"],
+      "outputs": ["dist/**"]
     }
   }
 }

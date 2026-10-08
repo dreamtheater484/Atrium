@@ -52,12 +52,16 @@ export async function changesSummary(deps: Deps, ctx: RequestContext) {
   const [row] = await deps.sql`
     select
       (select count(*)::int from changesets where status = 'open' and scenario_id is null) as waiting,
+      (select count(*)::int from scenarios where review_status = 'in_review' and archived_at is null) as scenarios_waiting,
       (select count(*)::int from changes c join changesets s on s.id = c.changeset_id
         where s.author_id = ${ctx.userId} and s.kind = 'suggestion' and s.status = 'draft') as draft_changes,
       (select id from changesets where author_id = ${ctx.userId} and kind = 'suggestion' and status = 'draft' limit 1) as draft_id,
       (select count(*)::int from changesets where author_id = ${ctx.userId} and status = 'open') as my_open`;
   return {
-    waitingForReview: canReview(ctx) ? Number(row?.waiting ?? 0) : 0,
+    waitingForReview: canReview(ctx)
+      ? Number(row?.waiting ?? 0) + Number(row?.scenariosWaiting ?? 0)
+      : 0,
+    scenariosInReview: canReview(ctx) ? Number(row?.scenariosWaiting ?? 0) : 0,
     myDraftChanges: Number(row?.draftChanges ?? 0),
     myDraftId: (row?.draftId as string) ?? null,
     myOpen: Number(row?.myOpen ?? 0),
@@ -215,6 +219,22 @@ async function notify(
       tx`insert into notifications (user_id, kind, title, body, link) values (${userId}, 'review', ${title}, ${body}, ${link})`,
   );
   deps.hub.broadcast({ type: 'notification', userId, title });
+}
+
+/** Tells every architect and admin (except the person asking) that something needs a review. */
+export async function notifyReviewers(
+  deps: Deps,
+  ctx: RequestContext,
+  title: string,
+  body: string,
+  link: string,
+) {
+  const reviewers = await asSystem(
+    deps.sql,
+    (tx) =>
+      tx`select id from users where role in ('admin', 'architect') and not disabled and id is distinct from ${ctx.userId}`,
+  );
+  for (const r of reviewers) await notify(deps, r.id as string, title, body, link);
 }
 
 export async function submitDraft(

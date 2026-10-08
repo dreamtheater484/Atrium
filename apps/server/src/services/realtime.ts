@@ -84,7 +84,16 @@ export class RealtimeHub {
     this.broadcast({ type: 'presence', people: this.presence() });
   }
 
+  private listeners = new Set<(event: RealtimeEvent) => void>();
+
+  /** Server-side listeners (webhooks) hear the same events as browsers. */
+  subscribe(fn: (event: RealtimeEvent) => void): () => void {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  }
+
   broadcast(event: RealtimeEvent) {
+    for (const fn of this.listeners) fn(event);
     const data = JSON.stringify(event);
     for (const c of this.clients) {
       if (event.type === 'notification' && event.userId !== c.userId) continue;

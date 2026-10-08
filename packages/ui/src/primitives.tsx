@@ -180,16 +180,21 @@ export function Progress({
   value,
   className,
   tone = 'primary',
+  label = 'Progress',
 }: {
   value: number;
   className?: string;
   tone?: 'primary' | 'good' | 'watch' | 'act';
+  /** What the bar measures, for screen readers. */
+  label?: string;
 }) {
   const color = { primary: 'bg-primary', good: 'bg-good', watch: 'bg-watch', act: 'bg-act' }[tone];
   return (
     <div
       className={cn('h-1.5 w-full overflow-hidden rounded-full bg-surface-3', className)}
       role="progressbar"
+      aria-label={label}
+      aria-valuetext={`${Math.round(value)}%`}
       aria-valuenow={value}
       aria-valuemin={0}
       aria-valuemax={100}

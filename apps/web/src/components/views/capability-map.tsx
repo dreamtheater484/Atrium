@@ -193,7 +193,7 @@ function Leaf({
             {cell.apps.slice(0, 10).map((a) => (
               <HealthDot key={a.id} health={a.health} className="size-1.5" />
             ))}
-            <span className="ml-1 text-[10px] font-normal opacity-70">{cell.apps.length}</span>
+            <span className="ml-1 text-[10px] font-normal">{cell.apps.length}</span>
           </span>
         )}
       </button>

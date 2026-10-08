@@ -18,10 +18,11 @@ import {
 } from '@atrium/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { FileUp, Map as MapIcon, Package, Trash2 } from 'lucide-react';
+import { FileUp, Link2, Map as MapIcon, Package, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { api } from '../../lib/api';
 import { useInvalidateModel } from '../../lib/queries';
+import { MapToPackDialog } from './map-to-pack-dialog';
 
 interface Pack {
   id: string;
@@ -58,6 +59,7 @@ export function PacksPanel() {
   const [version, setVersion] = useState('');
   const [preview, setPreview] = useState<FilesPreview | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [mapping, setMapping] = useState<Pack | null>(null);
 
   const refresh = () => {
     invalidate();
@@ -102,6 +104,7 @@ export function PacksPanel() {
 
   return (
     <div className="flex flex-col gap-4">
+      <MapToPackDialog pack={mapping} onOpenChange={(o) => !o && setMapping(null)} />
       <Card className="p-5">
         <h2 className="text-[14px] font-semibold">Industry reference packs</h2>
         <p className="mt-1 max-w-2xl text-[13px] text-muted-foreground">
@@ -162,6 +165,9 @@ export function PacksPanel() {
             )}
             {p.installed && (
               <>
+                <Button variant="primary" onClick={() => setMapping(p)}>
+                  <Link2 /> Map your model
+                </Button>
                 <Button
                   onClick={() => {
                     const fw = p.frameworks.find((f) => f.elementType === 'capability');

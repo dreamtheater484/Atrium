@@ -189,7 +189,7 @@ export function RoadmapPage() {
           {y}
           <div className="absolute bottom-0 left-0 flex w-full">
             {['Q1', 'Q2', 'Q3', 'Q4'].map((q) => (
-              <span key={q} className="flex-1 pl-1 text-[9px] text-subtle-foreground">
+              <span key={q} className="flex-1 pl-1 text-[10px] text-muted-foreground">
                 {Number(span) <= 5 ? q : ''}
               </span>
             ))}
@@ -284,7 +284,7 @@ export function RoadmapPage() {
                       >
                         {i.progress ? (
                           <span
-                            className="absolute inset-y-0 left-0 bg-white/20"
+                            className="absolute bottom-0 left-0 h-[3px] bg-current opacity-60"
                             style={{ width: `${i.progress}%` }}
                           />
                         ) : null}
@@ -386,6 +386,7 @@ export function RoadmapPage() {
                     >
                       <button
                         type="button"
+                        aria-label={`${t.name}: end of life ${formatDate(t.dates.retired)}`}
                         onClick={() => inspect(t.id)}
                         className="absolute flex -translate-x-1/2 flex-col items-center"
                         style={{ left: `${pct(t.dates.retired, start)}%`, top: i % 2 ? 22 : 4 }}

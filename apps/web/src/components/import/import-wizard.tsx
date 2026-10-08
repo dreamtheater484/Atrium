@@ -366,6 +366,7 @@ export function ImportWizard() {
     },
     onError: (e) => setError(e instanceof ApiError ? e.message : 'The file could not be read.'),
   });
+  const changes = preview ? preview.totals.create + preview.totals.update : 0;
   const apply = useMutation({
     mutationFn: () => api<Result>(`/import/${preview!.importId}/apply`, { body: {} }),
     onSuccess: (r) => {
@@ -521,10 +522,18 @@ export function ImportWizard() {
               <Button variant="ghost" onClick={() => setPreview(null)}>
                 Choose another file
               </Button>
-              <Button variant="primary" onClick={() => apply.mutate()} disabled={apply.isPending}>
+              <Button
+                variant="primary"
+                onClick={() => apply.mutate()}
+                disabled={apply.isPending || !(changes || preview.totals.relations)}
+              >
                 {apply.isPending
                   ? 'Importing…'
-                  : `Import ${preview.totals.create + preview.totals.update} items`}
+                  : changes
+                    ? `Import ${changes} ${changes === 1 ? 'item' : 'items'}`
+                    : preview.totals.relations
+                      ? `Add ${preview.totals.relations} links`
+                      : 'Nothing new to import'}
               </Button>
             </div>
           </div>

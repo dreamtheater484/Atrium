@@ -46,6 +46,22 @@ export function words(text: string): Set<string> {
   );
 }
 
+// Reference models name things plainly ("Data management"), so only true filler is ignored.
+const MAP_STOP = new Set(
+  'a an and the of for to in on with by from or is are be as at it its this that management'.split(
+    ' ',
+  ),
+);
+
+function nameWords(text: string): Set<string> {
+  return new Set(
+    normalizeName(text.replace(/&/g, ' and '))
+      .split(' ')
+      .filter((w) => w.length > 1 && !MAP_STOP.has(w))
+      .map(stem),
+  );
+}
+
 function overlap(a: Set<string>, b: Set<string>): number {
   if (!a.size || !b.size) return 0;
   let n = 0;
@@ -218,17 +234,40 @@ export class RuleBasedAssistant implements AiProvider {
 
   suggestMappings(el: Element, index: ModelIndex, limit = 3): Match[] {
     const mapped = new Set(index.outgoing(el.id, 'maps_to').map((r) => r.targetId));
-    const mine = words(`${el.name} ${el.description}`);
+    const plain = (s: string) => normalizeName(s.replace(/&/g, ' and '));
+    const name = nameWords(el.name);
+    const desc = words(el.description);
     const matches: Match[] = [];
     for (const t of index.ofType(el.type, 'reference')) {
       if (mapped.has(t.id)) continue;
-      const score = Math.max(overlap(mine, words(t.name)), similarity(el.name, t.name) * 1.1);
+      const theirs = nameWords(t.name);
+      let shared = 0;
+      for (const w of name) if (theirs.has(w)) shared++;
+      const union = name.size + theirs.size - shared;
+      const jaccard = union ? shared / union : 0;
+      const covered = theirs.size ? shared / theirs.size : 0;
+      const raw = similarity(plain(el.name), plain(t.name));
+      // Spelling similarity alone ("Partner management" vs "Order management") is weak evidence.
+      const sim = shared > 0 || raw >= 0.85 ? raw : raw * 0.6;
+      // Names decide; descriptions only nudge. A tiny share of the similarity breaks ties.
+      const exact = plain(el.name) === plain(t.name);
+      const score = exact
+        ? 1
+        : Math.min(
+            0.97,
+            Math.max(sim, 0.45 * jaccard + 0.45 * covered) +
+              0.1 * overlap(desc, theirs) +
+              0.1 * overlap(name, words(t.description)) +
+              0.05 * sim,
+          );
       if (score >= 0.5) {
         matches.push({
           id: t.id,
           name: t.name,
-          confidence: Math.min(0.95, score),
-          reason: `Closest match in ${t.pack ?? 'the reference model'}`,
+          confidence: score,
+          reason: exact
+            ? `Same name in ${t.pack ?? 'the reference model'}`
+            : `Closest match in ${t.pack ?? 'the reference model'}`,
         });
       }
     }

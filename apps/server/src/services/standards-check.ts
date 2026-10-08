@@ -105,19 +105,23 @@ export async function checkAgainstStandards(
   const soon = addDaysIso(today, 365);
 
   // Technologies: from the request, or the service's current ones.
-  const techs: Array<{ name: string; version?: string; element?: Element }> = input.technologies
-    ?.length
-    ? input.technologies.map((t) => ({
-        ...t,
-        element: bestMatch(index, `${t.name} ${t.version ?? ''}`.trim(), ['technology']),
-      }))
-    : service
-      ? index.targets(service.id, 'uses').map((t) => ({
-          name: t.name,
-          version: t.attributes.version as string | undefined,
-          element: t,
-        }))
-      : [];
+  const techs: Array<{ name: string; version?: string; element?: Element; family?: Element }> =
+    input.technologies?.length
+      ? input.technologies.map((t) => {
+          const match = bestMatch(index, `${t.name} ${t.version ?? ''}`.trim(), ['technology']);
+          // "PostgreSQL" without a version must not inherit the radar ring or end-of-life date
+          // of one particular version in the model.
+          const versionless = !t.version && !inferVersion(t.name);
+          const exact = !!match && normalizeName(match.name) === normalizeName(t.name);
+          return { ...t, element: versionless && !exact ? undefined : match, family: match };
+        })
+      : service
+        ? index.targets(service.id, 'uses').map((t) => ({
+            name: t.name,
+            version: t.attributes.version as string | undefined,
+            element: t,
+          }))
+        : [];
 
   const standards = index.ofType('standard');
   for (const t of techs) {
@@ -158,6 +162,12 @@ export async function checkAgainstStandards(
         level: 'info',
         rule: 'radar-assess',
         message: `${label} is still being assessed. Check with the architects before relying on it.`,
+      });
+    else if (!t.element && t.family)
+      findings.push({
+        level: 'info',
+        rule: 'version-missing',
+        message: `No version given for ${label}, so its end-of-life date and radar ring can't be checked. Add the version.`,
       });
     else if (!t.element)
       findings.push({

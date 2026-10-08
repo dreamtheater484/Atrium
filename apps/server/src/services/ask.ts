@@ -183,7 +183,10 @@ export async function ask(
         `Impact of changing or retiring ${e.name}`,
         result.summary,
         result.nodes.map((n) => index.get(n.element.id)!),
-        { label: 'Show the impact graph', to: `/explore?view=graph&focus=${e.id}&type=${e.type}` },
+        {
+          label: 'Show the impact graph',
+          to: `/explore?view=graph&focus=${e.id}&type=${e.type}&mode=impact`,
+        },
       );
     }
   }

@@ -1,6 +1,6 @@
 # Atrium: implementation plan
 
-*Atrium (enterprise architecture toolkit) · Draft 2 · 2026-10-08*
+*Atrium (enterprise architecture toolkit) · Draft 3 · 2026-10-08*
 
 ---
 
@@ -24,6 +24,8 @@ A web app where an organization keeps **one shared, always-current map of how it
 **Also included:** five short, polished demo videos: an overview, one each for architects, managers and engineers, and one on AI-assisted development. They're generated from the real app, so they stay up to date.
 
 **How we build it:** in six phases plus one extension. Each phase ends with something you can use and demo.
+
+**Status (2026-10-08):** phases 0–5 are built and tested; the TM Forum extension has its groundwork. See [section 18](#18-status-and-deviations).
 
 ---
 
@@ -367,3 +369,45 @@ atrium/
 - **AI:** rule-based auto-fill and a mock provider first. Real AI is switched on later.
 - **Video tooling:** Remotion, used only for the demo videos and not part of the app.
 - **Voiceover:** a free, open-source text-to-speech model, with the final render on an RTX 5090.
+
+---
+
+## 18. Status and deviations
+
+*As of 2026-10-08.* Phases 0–5 are built and committed in the local repository (not pushed).
+
+**Verified**
+- **57 end-to-end tests** against the production build, on fresh databases in solo and team mode:
+  - journeys J1–J10 within their click budgets
+  - WCAG AA (axe) on 10 pages in light and dark mode
+  - screenshot comparisons of 5 screens in both themes
+  - roles, suggestions, invites, and token scoping enforced by row-level security
+- **About 280 unit tests:** metamodel and derivation rules, importers, exporters, demo data, MCP tools and pack updates.
+- **Excel and ArchiMate round trips are exact:** exporting and importing again finds nothing to change.
+- **Deployment:**
+  - The Docker image (about 290 MB) runs with Compose in solo mode and in team mode with Caddy.
+  - The Azure and AWS Terraform examples validate.
+- **Demo videos:** all five are generated from the real app, with a Kokoro voiceover and captions.
+- **CI:** a GitHub Actions workflow runs lint, typecheck, unit tests, build, dependency audit, the end-to-end tests and a Docker build. It hasn't run yet, because there's no remote.
+
+**Where the build differs from the plan**
+
+| Plan | Built | Why |
+|---|---|---|
+| Drizzle ORM | Hand-written SQL migrations and queries (postgres.js) | Row-level security, recursive queries and full-text search are SQL anyway. One less layer. |
+| Better Auth | A small session layer (scrypt, HTTP-only cookies) plus openid-client for SSO | Solo mode, local accounts and OIDC are all that's needed. Fewer moving parts. |
+| MCP over OAuth | Scoped bearer tokens from the "Connect coding agent" flow | Works with every agent and CLI today. OAuth can be added later. |
+| pg-boss and LISTEN/NOTIFY | An in-process real-time hub, with no job queue | One server process is enough. Both are needed only when running several instances. |
+| PDF and PNG via Playwright on the server | PDF through the browser's print layout; PNG and SVG of diagrams in the browser; native PowerPoint | No browser inside the container, so the image stays small. |
+| CLI published to npm | The server hands out the CLI at `/cli/atrium.mjs` | It always matches the server version, and needs no npm name (§17). |
+| Videos recorded with Playwright | Sharp 2× screenshots, animated in Remotion | Deterministic, crisp at 1080p, and quick to re-render. |
+| — | Webhooks (signed, batched), added in phase 5 | Lets CI and chat tools react to model changes. |
+
+**Not done yet**
+- **Performance targets** (50,000 elements, 2,000-node views under 1 second, search under 200 ms): designed for, but not load-tested.
+- **Real AI and a local model:** the provider interface, the mock and the rule-based fallbacks are in place. Switching one on is configuration.
+- **Team server:** no SAML yet. No scheduled backups: backups are bundle exports, made by hand or by script. Migrations run automatically on start, but without a backup first, so take a backup before you update.
+- **Dashboard PowerPoint export:** the KPI slide layout needs polish.
+- **Video voiceover:** Kokoro on the CPU is final quality. A GPU is only needed to try other voices (see `apps/videos/voice/README.md`).
+- **Server code** is covered by the end-to-end tests rather than its own unit tests.
+

@@ -1,0 +1,9 @@
+Application Name,Business Owner,Domain,Status,Yearly Cost (EUR),Vendor,Hosting,Depends on
+Field Force Mobile,Anna Berg,Service,Production,240000,ServiceMax,SaaS,Field Service Manager
+Churn Predictor,Aisha Bello,Intelligence,Pilot,90000,In-house,Public cloud,Data Lake
+Store Locator,Ben Carter,Customer,Production,35000,In-house,Public cloud,API Gateway
+Contract Vault,Laura Bianchi,Partner,Production,120000,DocuStore,SaaS,
+Fibre Planner,Erik Johansson,Resource,Production,410000,GeoNet,On-premise,Network Inventory
+Siebel CRM 8,Hannah Schmidt,Customer,Phasing out,1200000,Oracle,On-premise,
+Payment Gateway,Julia Novak,Customer,Production,210000,Payvana,SaaS,
+Promotions Engine,Elena Rossi,Product,Planned,180000,In-house,Public cloud,Product Catalog

@@ -15,6 +15,7 @@ import type { Deps } from '../services/deps';
 import { isAdmin } from '../services/policy';
 import { clearModel, loadDataset } from '../services/seed';
 import { getSetting, getWorkspace, setSetting, updateWorkspace } from '../services/workspace';
+import { toScenario } from './scenarios';
 
 interface Prefs {
   homeRole: string | null;
@@ -67,17 +68,7 @@ export function systemRoutes(deps: Deps) {
           version: config.version,
           elementCount: orgCount,
           hasData: orgCount > 0,
-          scenarios: scenarios.map((s) => ({
-            id: s.id as string,
-            name: s.name as string,
-            description: s.description as string,
-            isTarget: s.isTarget as boolean,
-            targetDate: (s.targetDate as string) ?? null,
-            createdBy: (s.createdBy as string) ?? null,
-            createdAt: new Date(s.createdAt as string).toISOString(),
-            updatedAt: new Date(s.updatedAt as string).toISOString(),
-            changeCount: Number(s.changeCount ?? 0),
-          })),
+          scenarios: scenarios.map(toScenario),
           features: {
             ai: deps.ai.name === 'off' ? 'off' : 'mock',
             eolLookup: config.eolLookup,

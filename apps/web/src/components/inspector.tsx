@@ -84,7 +84,7 @@ export function Inspector() {
                   onClick={() =>
                     navigate({
                       to: '/explore',
-                      search: { view: 'graph', focus: el.id, type: el.type },
+                      search: { view: 'graph', focus: el.id, type: el.type, mode: 'impact' },
                     })
                   }
                 >

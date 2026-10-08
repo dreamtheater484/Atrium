@@ -5,9 +5,11 @@ import { route } from '../http/route';
 import { exportBundle, restoreBundle } from '../services/bundle';
 import type { Deps } from '../services/deps';
 import {
+  applyMappings,
   installBundled,
   installPack,
   listPacks,
+  mappingSuggestions,
   packFromFiles,
   previewPack,
   uninstallPack,
@@ -122,6 +124,31 @@ export function packRoutes(deps: Deps) {
         if (!isAdmin(ctx)) throw forbidden('Only admins can remove reference packs.');
         return uninstallPack(deps, ctx, params.id);
       },
+    }),
+    route({
+      method: 'GET',
+      url: '/api/v1/packs/:id/mapping-suggestions',
+      summary:
+        'Closest reference element for each of your elements that is not mapped to this pack yet',
+      tag: 'Reference packs',
+      access: 'any',
+      params: z.object({ id: z.string() }),
+      handler: async ({ params, ctx }) => mappingSuggestions(deps, ctx, params.id),
+    }),
+    route({
+      method: 'POST',
+      url: '/api/v1/packs/:id/mappings',
+      summary: 'Add many "maps to" links at once',
+      tag: 'Reference packs',
+      access: 'any',
+      params: z.object({ id: z.string() }),
+      body: z.object({
+        pairs: z
+          .array(z.object({ sourceId: z.string().uuid(), targetId: z.string().uuid() }))
+          .min(1)
+          .max(2000),
+      }),
+      handler: async ({ params, body, ctx }) => applyMappings(deps, ctx, params.id, body.pairs),
     }),
     route({
       method: 'GET',

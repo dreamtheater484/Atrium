@@ -36,15 +36,15 @@ export function StateSwitch() {
     );
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: a toggle group; a fieldset would add a border and legend
     <div
       className="flex items-center gap-0.5 rounded-lg bg-surface-2 p-0.5"
-      role="tablist"
+      role="group"
       aria-label="Model version"
     >
       <button
         type="button"
-        role="tab"
-        aria-selected={scenario === 'today'}
+        aria-pressed={scenario === 'today'}
         className={pill(scenario === 'today')}
         onClick={() => ui.set({ scenario: 'today', at: null })}
       >
@@ -60,8 +60,7 @@ export function StateSwitch() {
         >
           <button
             type="button"
-            role="tab"
-            aria-selected={scenario === 'target' || current?.isTarget}
+            aria-pressed={scenario === 'target' || !!current?.isTarget}
             className={pill(scenario === 'target' || !!current?.isTarget)}
             onClick={() => ui.set({ scenario: 'target', at: null })}
           >

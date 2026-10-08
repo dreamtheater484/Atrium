@@ -1,3 +1,5 @@
+// biome-ignore-all lint/a11y/useSemanticElements: a virtualised grid needs divs; ARIA grid roles keep it a table for screen readers
+// biome-ignore-all lint/a11y/useFocusableInteractive: rows and sortable headers that act are focusable; the rest need not be
 import {
   type AttributeDef,
   ELEMENT_TYPE_DEFS,
@@ -208,7 +210,7 @@ export function TableView({
                   )}
                 </span>
                 {r.key && (
-                  <span className="block truncate font-mono text-[10px] text-subtle-foreground">
+                  <span className="block truncate font-mono text-[10px] text-muted-foreground">
                     {r.key}
                   </span>
                 )}
@@ -438,11 +440,30 @@ export function TableView({
       }}
     >
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto" tabIndex={-1}>
-        <div style={{ minWidth: width }} className="text-[13px]">
-          <div className="sticky top-0 z-10 flex border-b border-border bg-surface-2/90 backdrop-blur">
+        {/* A virtualised grid: ARIA roles keep it a real table for screen readers. */}
+        <div
+          style={{ minWidth: width }}
+          className="text-[13px]"
+          role="grid"
+          aria-label={def?.plural ?? 'Elements'}
+          aria-rowcount={rows.length + 1}
+        >
+          <div
+            role="row"
+            aria-rowindex={1}
+            className="sticky top-0 z-10 flex border-b border-border bg-surface-2/90 backdrop-blur"
+          >
             {table.getHeaderGroups()[0]!.headers.map((h) => (
               <div
                 key={h.id}
+                role="columnheader"
+                aria-sort={
+                  h.column.getIsSorted() === 'asc'
+                    ? 'ascending'
+                    : h.column.getIsSorted() === 'desc'
+                      ? 'descending'
+                      : undefined
+                }
                 style={{
                   width: h.getSize(),
                   flex: h.column.id === 'name' ? `1 0 ${h.getSize()}px` : undefined,
@@ -452,26 +473,41 @@ export function TableView({
                   h.column.getCanSort() && 'cursor-pointer select-none hover:text-foreground',
                 )}
                 onClick={h.column.getToggleSortingHandler()}
+                tabIndex={h.column.getCanSort() ? 0 : undefined}
+                onKeyDown={(e) => {
+                  if (h.column.getCanSort() && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    h.column.toggleSorting();
+                  }
+                }}
               >
                 {flexRender(h.column.columnDef.header, h.getContext())}
                 <SortIcon dir={h.column.getIsSorted()} />
               </div>
             ))}
           </div>
-          <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+          <div role="rowgroup" style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
             {virtualizer.getVirtualItems().map((vi) => {
               const row = rows[vi.index]!;
               return (
                 <div
                   key={row.id}
+                  role="row"
+                  aria-rowindex={vi.index + 2}
+                  aria-selected={row.getIsSelected()}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.target === e.currentTarget) inspect(row.original.id);
+                  }}
                   data-state={row.getIsSelected() ? 'selected' : undefined}
-                  className="group absolute left-0 flex w-full cursor-default border-b border-border transition-colors hover:bg-surface-2/60 data-[state=selected]:bg-primary-soft/50"
+                  className="group absolute left-0 flex w-full cursor-default border-b border-border outline-none transition-colors hover:bg-surface-2/60 focus-visible:bg-surface-2 data-[state=selected]:bg-primary-soft/50"
                   style={{ height: vi.size, transform: `translateY(${vi.start}px)` }}
                   onClick={() => inspect(row.original.id)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <div
                       key={cell.id}
+                      role="gridcell"
                       style={{
                         width: cell.column.getSize(),
                         flex:

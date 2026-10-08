@@ -151,7 +151,8 @@ export function ConnectAgentDialog() {
   const qc = useQueryClient();
   const [client, setClient] = useState<Client>('claude-code');
   const [canPropose, setCanPropose] = useState(true);
-  const [maxClassification, setMax] = useState('internal');
+  // Most architecture information is confidential; restricted stays an explicit choice.
+  const [maxClassification, setMax] = useState('confidential');
   const [token, setToken] = useState<string | null>(null);
   const create = useMutation({
     mutationFn: () =>

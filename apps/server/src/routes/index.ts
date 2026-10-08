@@ -10,6 +10,7 @@ import { packRoutes } from './packs';
 import { peopleRoutes } from './people';
 import { scenarioRoutes } from './scenarios';
 import { viewRoutes } from './views';
+import { webhookRoutes } from './webhooks';
 
 /** Route groups beyond the core model and system routes. */
 export function allRoutes(deps: Deps): AnyRoute[] {
@@ -24,5 +25,6 @@ export function allRoutes(deps: Deps): AnyRoute[] {
     ...importRoutes(deps),
     ...packRoutes(deps),
     ...exportRoutes(deps),
+    ...webhookRoutes(deps),
   ];
 }

@@ -7,11 +7,13 @@ import { idParams } from '../http/query';
 import { route } from '../http/route';
 import { audit } from '../services/audit';
 import type { Deps } from '../services/deps';
-import { canEditScenarios } from '../services/policy';
-import { approve } from '../services/review';
+import { canEditScenarios, canReview } from '../services/policy';
+import { approve, notifyReviewers } from '../services/review';
+
+const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : null);
 
 // biome-ignore lint/suspicious/noExplicitAny: database row
-function toScenario(s: any): Scenario {
+export function toScenario(s: any): Scenario {
   return {
     id: s.id,
     name: s.name,
@@ -22,6 +24,12 @@ function toScenario(s: any): Scenario {
     createdAt: new Date(s.createdAt).toISOString(),
     updatedAt: new Date(s.updatedAt).toISOString(),
     changeCount: Number(s.changeCount ?? 0),
+    reviewStatus: s.reviewStatus ?? 'draft',
+    submittedBy: s.submittedBy ?? null,
+    submittedAt: iso(s.submittedAt),
+    reviewedBy: s.reviewedBy ?? null,
+    reviewedAt: iso(s.reviewedAt),
+    reviewNote: s.reviewNote ?? null,
   };
 }
 
@@ -99,6 +107,56 @@ export function scenarioRoutes(deps: Deps) {
         await sql`update scenarios set archived_at = now(), is_target = false where id = ${params.id}`;
         await audit(sql, ctx, 'scenario.archive', { type: 'scenario', id: params.id });
         return { ok: true };
+      },
+    }),
+    route({
+      method: 'POST',
+      url: '/api/v1/scenarios/:id/submit',
+      summary: 'Put a scenario or the target state up for review',
+      tag: 'Scenarios',
+      access: 'user',
+      params: idParams,
+      body: z.object({ note: z.string().max(2000).optional() }),
+      handler: async ({ params, body, ctx }) => {
+        if (!canEditScenarios(ctx)) throw forbidden();
+        const [s] = await sql`
+          update scenarios set review_status = 'in_review', submitted_by = ${ctx.name}, submitted_at = now(),
+            review_note = ${body.note ?? null}, reviewed_by = null, reviewed_at = null, updated_at = now()
+          where id = ${params.id} and archived_at is null returning *`;
+        if (!s) throw notFound('That scenario');
+        await notifyReviewers(
+          deps,
+          ctx,
+          `${ctx.name} asks you to review “${s.name}”`,
+          body.note ?? '',
+          `/changes?tab=scenarios&id=${params.id}`,
+        );
+        await audit(sql, ctx, 'scenario.submit', { type: 'scenario', id: params.id });
+        deps.hub.broadcast({ type: 'model.changed', ids: [], by: ctx.name });
+        return toScenario(s);
+      },
+    }),
+    route({
+      method: 'POST',
+      url: '/api/v1/scenarios/:id/review',
+      summary: 'Agree to a scenario, or send it back with a note (does not change today)',
+      tag: 'Scenarios',
+      access: 'user',
+      params: idParams,
+      body: z.object({
+        decision: z.enum(['agree', 'send_back']),
+        note: z.string().max(2000).optional(),
+      }),
+      handler: async ({ params, body, ctx }) => {
+        if (!canReview(ctx)) throw forbidden('Only architects can review scenarios.');
+        const [s] = await sql`
+          update scenarios set review_status = ${body.decision === 'agree' ? 'agreed' : 'draft'},
+            reviewed_by = ${ctx.name}, reviewed_at = now(), review_note = ${body.note ?? null}, updated_at = now()
+          where id = ${params.id} and archived_at is null returning *`;
+        if (!s) throw notFound('That scenario');
+        await audit(sql, ctx, `scenario.${body.decision}`, { type: 'scenario', id: params.id });
+        deps.hub.broadcast({ type: 'model.changed', ids: [], by: ctx.name });
+        return toScenario(s);
       },
     }),
     route({

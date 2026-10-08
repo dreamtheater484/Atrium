@@ -104,7 +104,9 @@ export async function buildApp({
 
   // The web app (single-page) is served from the same origin.
   if (config.webDist && existsSync(join(config.webDist, 'index.html'))) {
-    await app.register(fastifyStatic, { root: config.webDist, wildcard: false, index: false });
+    // serve: false — files are only sent by the public route below, so the login page and its
+    // scripts load before anyone signs in (static's own routes would default to 'user' access).
+    await app.register(fastifyStatic, { root: config.webDist, serve: false });
     app.get('/*', { config: { access: 'public' } }, (req, reply) => {
       const url = req.url.split('?')[0]!;
       if (url.startsWith('/api/'))
@@ -116,10 +118,10 @@ export async function buildApp({
           'Cache-Control',
           immutable ? 'public, max-age=31536000, immutable' : 'no-cache',
         );
-        return reply.sendFile(file);
+        return reply.sendFile(file, { cacheControl: false });
       }
       reply.header('Cache-Control', 'no-cache');
-      return reply.sendFile('index.html');
+      return reply.sendFile('index.html', { cacheControl: false });
     });
   } else {
     app.get('/', { config: { access: 'public' } }, async () => ({

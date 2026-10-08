@@ -71,6 +71,13 @@ export const scenarioSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   changeCount: z.number(),
+  /** Review of the scenario as a whole; agreeing does not apply it to today. */
+  reviewStatus: z.enum(['draft', 'in_review', 'agreed']),
+  submittedBy: z.string().nullable(),
+  submittedAt: z.string().nullable(),
+  reviewedBy: z.string().nullable(),
+  reviewedAt: z.string().nullable(),
+  reviewNote: z.string().nullable(),
 });
 export type Scenario = z.infer<typeof scenarioSchema>;
 

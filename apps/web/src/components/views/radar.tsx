@@ -217,8 +217,11 @@ export function RadarView({ q }: { q?: string }) {
                         )}
                       >
                         <span
-                          className="flex size-4 items-center justify-center rounded-full text-[9px] font-bold text-white"
-                          style={{ background: blipColor(p.t) }}
+                          className="flex size-4 items-center justify-center rounded-full text-[9px] font-bold text-foreground"
+                          style={{
+                            background: `color-mix(in oklch, ${blipColor(p.t)} 28%, var(--surface))`,
+                            boxShadow: `inset 0 0 0 1.5px ${blipColor(p.t)}`,
+                          }}
                         >
                           {p.n}
                         </span>

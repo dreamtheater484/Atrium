@@ -204,7 +204,7 @@ export function ExplorePage() {
                   >
                     <TypeIcon type={t} size="xs" className={cn(!active && 'opacity-80')} />
                     {d.plural}
-                    <span className="text-[11px] tabular opacity-70">{counts[t] ?? 0}</span>
+                    <span className="text-[11px] font-normal tabular">{counts[t] ?? 0}</span>
                   </button>
                 );
               })}
@@ -299,6 +299,7 @@ export function ExplorePage() {
             onFocus={(id) => set({ focus: id })}
             domain={search.domain}
             onDomain={(id) => set({ domain: id })}
+            initialMode={search.mode}
           />
         )}
         {view === 'landscape' && (

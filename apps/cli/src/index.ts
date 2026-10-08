@@ -67,7 +67,7 @@ program
     const yaml = [
       '# atrium.yaml: how this service fits into the architecture.',
       '# Keep it next to the code; CI runs `atrium sync` to update the shared model in Atrium.',
-      '# Docs: https://github.com/ (see docs/agents.md in the Atrium repository)',
+      '# Reference: docs/atrium-yaml.md in the Atrium repository.',
       stringify(JSON.parse(JSON.stringify(doc)), { lineWidth: 0 }),
     ].join('\n');
     writeFileSync(out, yaml);

@@ -17,10 +17,14 @@ import type { RequestContext } from '../auth/context';
 import { SYSTEM } from '../auth/context';
 import { badRequest, notFound } from '../http/errors';
 import { audit } from './audit';
+import { ChangeBuilder } from './builder';
 import { applyChangeToBase, openChangeset, recordChange } from './changesets';
 import type { Deps } from './deps';
 import { refreshDerived } from './derived';
+import { ModelIndex } from './model-index';
+import { canEditDirectly } from './policy';
 import { ELEMENT_COLUMNS, rowToElement } from './rows';
+import { resolveState } from './store';
 
 interface FrameworkConfig {
   id: string;
@@ -444,4 +448,94 @@ export async function uninstallPack(deps: Deps, ctx: RequestContext, packId: str
   deps.store.bump();
   deps.hub.broadcast({ type: 'model.changed', ids: [], by: ctx.name });
   return { ok: true };
+}
+
+/* ------------------------------------------------------------------ */
+/* Bulk mapping to a reference pack                                     */
+/* ------------------------------------------------------------------ */
+
+export interface MappingSuggestion {
+  element: { id: string; name: string; type: ElementType; domainName: string | null };
+  match: {
+    id: string;
+    name: string;
+    parentName: string | null;
+    confidence: number;
+    reason: string;
+  };
+}
+
+/** For each of your elements not yet mapped to this pack, its closest reference element. */
+export async function mappingSuggestions(deps: Deps, ctx: RequestContext, packId: string) {
+  const state = await resolveState(deps.store, deps.sql, ctx, {});
+  const index = new ModelIndex(state);
+  const refs = [...state.elements.values()].filter(
+    (e) => e.layer === 'reference' && e.pack === packId,
+  );
+  if (!refs.length) throw notFound('That pack (install it first)');
+  const types = new Set(refs.map((r) => r.type));
+  const inPack = new Set(refs.map((r) => r.id));
+  const suggestions: MappingSuggestion[] = [];
+  let mapped = 0;
+  let candidates = 0;
+  for (const el of state.elements.values()) {
+    if (el.layer !== 'org' || !types.has(el.type)) continue;
+    candidates++;
+    if (index.outgoing(el.id, 'maps_to').some((r) => inPack.has(r.targetId))) {
+      mapped++;
+      continue;
+    }
+    const best = deps.ai.suggestMappings(el, index, 8).find((m) => inPack.has(m.id));
+    if (!best) continue;
+    const target = index.get(best.id)!;
+    suggestions.push({
+      element: { id: el.id, name: el.name, type: el.type, domainName: index.domainName(el) },
+      match: {
+        id: best.id,
+        name: best.name,
+        parentName: target.parentId ? (index.get(target.parentId)?.name ?? null) : null,
+        confidence: best.confidence,
+        reason: best.reason,
+      },
+    });
+  }
+  suggestions.sort((a, b) => b.match.confidence - a.match.confidence);
+  const covered = new Set(
+    [...state.relations.values()]
+      .filter((r) => r.type === 'maps_to' && inPack.has(r.targetId))
+      .map((r) => r.targetId),
+  );
+  return {
+    suggestions,
+    mapped,
+    candidates,
+    referenceCount: refs.length,
+    referenceCovered: covered.size,
+  };
+}
+
+/** Adds the chosen "maps to" links in one change (a suggestion when the person can't edit directly). */
+export async function applyMappings(
+  deps: Deps,
+  ctx: RequestContext,
+  packId: string,
+  pairs: Array<{ sourceId: string; targetId: string }>,
+) {
+  const state = await resolveState(deps.store, deps.sql, ctx, {});
+  const b = new ChangeBuilder(deps, ctx, state);
+  let linked = 0;
+  for (const p of pairs) {
+    const target = state.elements.get(p.targetId);
+    const source = state.elements.get(p.sourceId);
+    if (source?.layer !== 'org' || target?.layer !== 'reference' || target.pack !== packId)
+      continue;
+    if (b.link('maps_to', p.sourceId, p.targetId)) linked++;
+  }
+  const direct = ctx.kind === 'user' && canEditDirectly(ctx, null, b.index);
+  const res = await b.commit({
+    kind: 'pack',
+    mode: direct ? 'direct' : 'suggestion',
+    title: `Mapped ${linked} element${linked === 1 ? '' : 's'} to ${packId}`,
+  });
+  return { ...res, linked };
 }

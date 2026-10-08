@@ -50,6 +50,14 @@ export function CommandPalette() {
     mutationFn: (question: string) => api<AskAnswer>('/ask', { body: { q: question, scenario } }),
   });
   const isQuestion = QUESTION.test(q.trim()) && q.trim().split(/\s+/).length >= 2;
+  const hits = search.data ?? [];
+  // Offer to ask only once the search is done, so a quick Enter opens the top result rather
+  // than asking a question while results are still on their way.
+  const settled = !search.isFetching && !search.isPlaceholderData;
+  const offerAsk = !!q && (isQuestion || (settled && hits.length === 0));
+  const top = isQuestion || !hits.length ? (offerAsk ? '__ask' : '') : hits[0]!.id;
+  const [selected, setSelected] = useState('');
+  useEffect(() => setSelected(top), [top]);
 
   useEffect(() => {
     if (!open) {
@@ -71,7 +79,12 @@ export function CommandPalette() {
         hideClose
       >
         <DialogTitle className="sr-only">Search or ask</DialogTitle>
-        <Command shouldFilter={false} loop>
+        <Command
+          shouldFilter={false}
+          loop
+          value={q ? selected : undefined}
+          onValueChange={setSelected}
+        >
           <CommandInput
             value={q}
             onValueChange={(v) => {
@@ -114,7 +127,7 @@ export function CommandPalette() {
               {q && !search.isFetching && !isQuestion && (
                 <CommandEmpty>No matches. Try fewer words, or ask a question.</CommandEmpty>
               )}
-              {q && (isQuestion || (search.data?.length ?? 0) === 0) && (
+              {offerAsk && (
                 <CommandGroup heading="Ask Atrium">
                   <CommandItem value="__ask" onSelect={() => ask.mutate(q)}>
                     <Sparkles className="text-primary" />
@@ -123,9 +136,9 @@ export function CommandPalette() {
                   </CommandItem>
                 </CommandGroup>
               )}
-              {q && (search.data?.length ?? 0) > 0 && (
+              {q && hits.length > 0 && (
                 <CommandGroup heading="Results">
-                  {search.data!.map((h) => (
+                  {hits.map((h) => (
                     <CommandItem key={h.id} value={h.id} onSelect={() => go(() => inspect(h.id))}>
                       <TypeIcon type={h.type} size="sm" />
                       <span className="flex min-w-0 flex-1 flex-col">

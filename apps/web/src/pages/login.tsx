@@ -72,14 +72,22 @@ export function LoginPage() {
   });
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const done = () => window.location.assign('/');
+  // Errors show next to the form, so skip the default error toast.
+  const inline = () => {};
   const login = useMutation({
     mutationFn: () => post('/api/auth/login', { email: form.email, password: form.password }),
     onSuccess: done,
+    onError: inline,
   });
-  const setup = useMutation({ mutationFn: () => post('/api/auth/setup', form), onSuccess: done });
+  const setup = useMutation({
+    mutationFn: () => post('/api/auth/setup', form),
+    onSuccess: done,
+    onError: inline,
+  });
   const accept = useMutation({
     mutationFn: () => post(`/api/auth/invite/${inviteToken}`, { password: form.password }),
     onSuccess: done,
+    onError: inline,
   });
   const error = (login.error ?? setup.error ?? accept.error) as Error | null;
 

@@ -435,16 +435,18 @@ function PeopleTab() {
               }}
             >
               <div className="grid gap-1.5">
-                <Label>Name</Label>
+                <Label htmlFor="person-name">Name</Label>
                 <Input
+                  id="person-name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   autoFocus
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label>Email</Label>
+                <Label htmlFor="person-email">Email</Label>
                 <Input
+                  id="person-email"
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -453,6 +455,7 @@ function PeopleTab() {
               <div className="grid gap-1.5">
                 <Label>Role</Label>
                 <Select
+                  aria-label="Role"
                   value={form.role}
                   onValueChange={(v) => v && setForm({ ...form, role: v as Role })}
                   options={ROLES.map((r) => ({ value: r, label: enumLabel(r) }))}
@@ -468,6 +471,105 @@ function PeopleTab() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+interface WebhookRow {
+  id: string;
+  url: string;
+  secret: string;
+  createdAt: string;
+  createdBy: string;
+  lastDelivery: { at: string; status: number | null; error?: string } | null;
+}
+
+/** Tell other tools when the model changes: a signed POST per batch of changes. */
+function WebhooksCard() {
+  const qc = useQueryClient();
+  const hooks = useQuery({ queryKey: ['webhooks'], queryFn: () => api<WebhookRow[]>('/webhooks') });
+  const [url, setUrl] = useState('');
+  const [secret, setSecret] = useState<string | null>(null);
+  const refresh = () => qc.invalidateQueries({ queryKey: ['webhooks'] });
+  const add = useMutation({
+    mutationFn: () => api<WebhookRow>('/webhooks', { body: { url } }),
+    onSuccess: (h) => {
+      setSecret(h.secret);
+      setUrl('');
+      void refresh();
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  const test = useMutation({
+    mutationFn: (id: string) =>
+      api<{ status: number | null; error?: string }>(`/webhooks/${id}/test`, { body: {} }),
+    onSuccess: (r) => {
+      void refresh();
+      if (r.status && r.status < 300) toast.success(`Delivered (HTTP ${r.status})`);
+      else toast.error(r.error ?? `The address answered HTTP ${r.status}`);
+    },
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => api(`/webhooks/${id}`, { method: 'DELETE' }),
+    onSuccess: () => void refresh(),
+  });
+  return (
+    <Section
+      title="Webhooks"
+      description="Atrium posts a small JSON message to these addresses when the model changes, signed with a secret so you can trust it. Use it to update a CMDB, a wiki or a chat channel."
+    >
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          add.mutate();
+        }}
+      >
+        <Input
+          aria-label="Webhook address"
+          placeholder="https://example.com/hooks/atrium"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+        />
+        <Button type="submit" disabled={!url || add.isPending}>
+          <Plus /> Add
+        </Button>
+      </form>
+      {secret && (
+        <div className="mt-3 rounded-lg border border-watch/40 bg-watch-soft p-3 text-[13px] text-watch-foreground">
+          Signing secret (shown once): <code className="font-mono">{secret}</code>. Check the{' '}
+          <code className="font-mono">x-atrium-signature</code> header: sha256 HMAC of the body.
+        </div>
+      )}
+      <div className="mt-3 flex flex-col divide-y divide-border">
+        {(hooks.data ?? []).map((h) => (
+          <div key={h.id} className="flex items-center gap-3 py-2.5 text-[13px]">
+            <Link2 className="size-4 shrink-0 text-muted-foreground" />
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-medium">{h.url}</div>
+              <div className="text-xs text-muted-foreground">
+                {h.lastDelivery
+                  ? `Last delivery ${timeAgo(h.lastDelivery.at)}: ${h.lastDelivery.status ? `HTTP ${h.lastDelivery.status}` : (h.lastDelivery.error ?? 'failed')}`
+                  : `Added by ${h.createdBy} ${timeAgo(h.createdAt)}, nothing sent yet`}
+              </div>
+            </div>
+            <Button size="sm" onClick={() => test.mutate(h.id)} disabled={test.isPending}>
+              Send a test
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label={`Remove ${h.url}`}
+              onClick={() => remove.mutate(h.id)}
+            >
+              <Trash2 />
+            </Button>
+          </div>
+        ))}
+        {hooks.data?.length === 0 && (
+          <p className="py-2 text-[13px] text-muted-foreground">No webhooks yet.</p>
+        )}
+      </div>
+    </Section>
   );
 }
 
@@ -553,6 +655,7 @@ function AgentsTab() {
           </div>
         )}
       </Section>
+      {admin && <WebhooksCard />}
       {audit.data && (
         <Section
           title="Agent activity"

@@ -11,7 +11,7 @@
     "dev": "tsx src/index.ts",
     "build": "node build.mjs",
     "typecheck": "tsc --noEmit -p .",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@atrium/schema": "workspace:*",

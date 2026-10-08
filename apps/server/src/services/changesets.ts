@@ -20,7 +20,11 @@ export interface OpenChangesetOptions {
   scenarioId?: string | null;
 }
 
-export async function openChangeset(db: Db, ctx: RequestContext, o: OpenChangesetOptions): Promise<string> {
+export async function openChangeset(
+  db: Db,
+  ctx: RequestContext,
+  o: OpenChangesetOptions,
+): Promise<string> {
   const id = randomUUID();
   await db`
     insert into changesets (id, kind, status, title, description, scenario_id, author_id, author_name,
@@ -51,21 +55,35 @@ export async function draftSuggestion(db: Db, ctx: RequestContext): Promise<stri
     where author_id = ${ctx.userId} and kind = 'suggestion' and status = 'draft'
     order by created_at desc limit 1`;
   if (existing) return existing.id as string;
-  return openChangeset(db, ctx, { kind: 'suggestion', status: 'draft', title: 'Suggested changes' });
+  return openChangeset(db, ctx, {
+    kind: 'suggestion',
+    status: 'draft',
+    title: 'Suggested changes',
+  });
 }
 
 /** The shared working set of a scenario. */
-export async function scenarioWorkset(db: Db, ctx: RequestContext, scenarioId: string): Promise<string> {
+export async function scenarioWorkset(
+  db: Db,
+  ctx: RequestContext,
+  scenarioId: string,
+): Promise<string> {
   const [existing] = await db`
     select id from changesets
     where scenario_id = ${scenarioId} and kind = 'scenario' and status = 'draft'
     order by created_at limit 1`;
   if (existing) return existing.id as string;
-  return openChangeset(db, ctx, { kind: 'scenario', status: 'draft', title: 'Scenario changes', scenarioId });
+  return openChangeset(db, ctx, {
+    kind: 'scenario',
+    status: 'draft',
+    title: 'Scenario changes',
+    scenarioId,
+  });
 }
 
 async function nextSeq(db: Db, changesetId: string): Promise<number> {
-  const [r] = await db`select coalesce(max(seq), 0) + 1 as n from changes where changeset_id = ${changesetId}`;
+  const [r] =
+    await db`select coalesce(max(seq), 0) + 1 as n from changes where changeset_id = ${changesetId}`;
   return Number(r?.n ?? 1);
 }
 
@@ -97,7 +115,10 @@ export async function recordChange(
       }
       const mergedOp: ChangeOp = prevOp === 'create' ? 'create' : op;
       const mergedBefore = prev.before ?? null;
-      if (mergedOp === 'update' && JSON.stringify(stripMeta(mergedBefore)) === JSON.stringify(stripMeta(after))) {
+      if (
+        mergedOp === 'update' &&
+        JSON.stringify(stripMeta(mergedBefore)) === JSON.stringify(stripMeta(after))
+      ) {
         await db`delete from changes where id = ${prev.id}`; // back to where it started
         return;
       }
@@ -114,10 +135,21 @@ export async function recordChange(
             ${before ? db.json(before as never) : null}, ${after ? db.json(after as never) : null})`;
 }
 
-const META = new Set(['updatedAt', 'updatedBy', 'version', 'quality', 'health', 'healthReasons', 'createdAt', 'createdBy']);
+const META = new Set([
+  'updatedAt',
+  'updatedBy',
+  'version',
+  'quality',
+  'health',
+  'healthReasons',
+  'createdAt',
+  'createdBy',
+]);
 function stripMeta(v: unknown): unknown {
   if (!v || typeof v !== 'object') return v;
-  return Object.fromEntries(Object.entries(v as Record<string, unknown>).filter(([k]) => !META.has(k)));
+  return Object.fromEntries(
+    Object.entries(v as Record<string, unknown>).filter(([k]) => !META.has(k)),
+  );
 }
 
 const ELEMENT_FIELDS = [
@@ -142,7 +174,13 @@ const ELEMENT_FIELDS = [
  */
 export async function applyChangeToBase(
   db: Db,
-  ch: { op: ChangeOp; entity: 'element' | 'relation'; entityId: string; before: unknown; after: unknown },
+  ch: {
+    op: ChangeOp;
+    entity: 'element' | 'relation';
+    entityId: string;
+    before: unknown;
+    after: unknown;
+  },
   by: string,
 ): Promise<{ touched: string[]; skipped?: string }> {
   const now = new Date().toISOString();
@@ -154,7 +192,12 @@ export async function applyChangeToBase(
       const rels = await db`update relations set deleted_at = now()
         where (source_id = ${ch.entityId} or target_id = ${ch.entityId}) and deleted_at is null
         returning source_id, target_id`;
-      return { touched: [ch.entityId, ...rels.flatMap((r) => [r.sourceId as string, r.targetId as string])] };
+      return {
+        touched: [
+          ch.entityId,
+          ...rels.flatMap((r) => [r.sourceId as string, r.targetId as string]),
+        ],
+      };
     }
     const after = ch.after as Element;
     if (ch.op === 'create' || !current) {
@@ -193,7 +236,9 @@ export async function applyChangeToBase(
       where deleted_at is null and (id = ${ch.entityId}
         or (type = ${rel.type} and source_id = ${rel.sourceId} and target_id = ${rel.targetId}))
       returning id`;
-    return rows.length ? { touched: [rel.sourceId, rel.targetId] } : { touched: [], skipped: 'already removed' };
+    return rows.length
+      ? { touched: [rel.sourceId, rel.targetId] }
+      : { touched: [], skipped: 'already removed' };
   }
   const [exists] = await db`
     select id from relations where deleted_at is null and type = ${rel.type}

@@ -27,9 +27,9 @@ import {
   Rating,
   Skeleton,
   TimeBadge,
-  toast,
   Tooltip,
   TypeIcon,
+  toast,
 } from '@atrium/ui';
 import {
   type ColumnDef,
@@ -49,7 +49,8 @@ import { ElementPicker } from '../element-picker';
 import { AttributeField, InlineText } from '../fields';
 
 function attrCell(def: AttributeDef, value: unknown) {
-  if (value === undefined || value === null || value === '') return <span className="text-subtle-foreground">—</span>;
+  if (value === undefined || value === null || value === '')
+    return <span className="text-subtle-foreground">—</span>;
   switch (def.kind) {
     case 'currency':
       return <span className="tabular">{formatMoney(Number(value))}</span>;
@@ -62,9 +63,15 @@ function attrCell(def: AttributeDef, value: unknown) {
     case 'number':
       return <span className="tabular">{Number(value).toLocaleString('en-GB')}</span>;
     case 'list':
-      return <span className="truncate">{Array.isArray(value) ? value.join(', ') : String(value)}</span>;
+      return (
+        <span className="truncate">{Array.isArray(value) ? value.join(', ') : String(value)}</span>
+      );
     case 'enum':
-      return def.key === 'time' ? <TimeBadge value={value as string} /> : <span>{enumLabel(value as string)}</span>;
+      return def.key === 'time' ? (
+        <TimeBadge value={value as string} />
+      ) : (
+        <span>{enumLabel(value as string)}</span>
+      );
     default:
       return <span className="truncate">{String(value)}</span>;
   }
@@ -76,17 +83,33 @@ function EditableCell({ row, def }: { row: ElementRow; def: AttributeDef }) {
   const update = useUpdateElement();
   if (row.layer === 'reference') return attrCell(def, row.attributes[def.key]);
   if (def.kind === 'rating') {
-    return <Rating value={row.attributes[def.key] as number} onChange={(v) => update.mutate({ id: row.id, patch: { attributes: { [def.key]: v } } })} />;
+    return (
+      <Rating
+        value={row.attributes[def.key] as number}
+        onChange={(v) => update.mutate({ id: row.id, patch: { attributes: { [def.key]: v } } })}
+      />
+    );
   }
   if (!editing) {
     return (
-      <button type="button" className="flex h-full w-full items-center truncate text-left" onClick={(e) => { e.stopPropagation(); setEditing(true); }}>
+      <button
+        type="button"
+        className="flex h-full w-full items-center truncate text-left"
+        onClick={(e) => {
+          e.stopPropagation();
+          setEditing(true);
+        }}
+      >
         {attrCell(def, row.attributes[def.key])}
       </button>
     );
   }
   return (
-    <div onClick={(e) => e.stopPropagation()} onBlur={() => setTimeout(() => setEditing(false), 150)} className="w-full">
+    <div
+      onClick={(e) => e.stopPropagation()}
+      onBlur={() => setTimeout(() => setEditing(false), 150)}
+      className="w-full"
+    >
       <AttributeField
         def={def}
         value={row.attributes[def.key]}
@@ -109,15 +132,17 @@ export function TableView({
   q,
   gaps,
   health,
+  layer,
 }: {
   type?: ElementType;
   q?: string;
   gaps?: boolean;
   health?: string;
+  layer?: 'org' | 'reference';
   onToggleGaps?: () => void;
 }) {
   const at = useUi((s) => s.at) ?? undefined;
-  const { data, isLoading } = useElements({ type, q, gaps, health, at, limit: 5000 });
+  const { data, isLoading } = useElements({ type, q, gaps, health, at, layer, limit: 5000 });
   const update = useUpdateElement();
   const remove = useDeleteElement();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -132,12 +157,23 @@ export function TableView({
         header: ({ table }) => (
           <Checkbox
             aria-label="Select all"
-            checked={table.getIsAllRowsSelected() ? true : table.getIsSomeRowsSelected() ? 'indeterminate' : false}
+            checked={
+              table.getIsAllRowsSelected()
+                ? true
+                : table.getIsSomeRowsSelected()
+                  ? 'indeterminate'
+                  : false
+            }
             onCheckedChange={(c) => table.toggleAllRowsSelected(!!c)}
           />
         ),
         cell: ({ row }) => (
-          <Checkbox aria-label={`Select ${row.original.name}`} checked={row.getIsSelected()} onCheckedChange={(c) => row.toggleSelected(!!c)} onClick={(e) => e.stopPropagation()} />
+          <Checkbox
+            aria-label={`Select ${row.original.name}`}
+            checked={row.getIsSelected()}
+            onCheckedChange={(c) => row.toggleSelected(!!c)}
+            onClick={(e) => e.stopPropagation()}
+          />
         ),
         enableSorting: false,
       },
@@ -149,17 +185,33 @@ export function TableView({
         cell: ({ row }) => {
           const r = row.original;
           return (
-            <button type="button" className="flex min-w-0 items-center gap-2 text-left" onClick={(e) => { e.stopPropagation(); inspect(r.id); }}>
+            <button
+              type="button"
+              className="flex min-w-0 items-center gap-2 text-left"
+              onClick={(e) => {
+                e.stopPropagation();
+                inspect(r.id);
+              }}
+            >
               <TypeIcon type={r.type} size="sm" />
               <span className="min-w-0">
                 <span className="flex items-center gap-1.5">
-                  <span className="truncate font-medium hover:underline" style={{ paddingLeft: typeDef(r.type).hierarchical ? (r.level - 1) * 12 : 0 }}>
+                  <span
+                    className="truncate font-medium hover:underline"
+                    style={{ paddingLeft: typeDef(r.type).hierarchical ? (r.level - 1) * 12 : 0 }}
+                  >
                     {r.name}
                   </span>
                   <MarkBadge mark={r.mark} />
-                  {Object.keys(r.suggestions ?? {}).length > 0 && <Sparkles className="size-3 text-primary" />}
+                  {Object.keys(r.suggestions ?? {}).length > 0 && (
+                    <Sparkles className="size-3 text-primary" />
+                  )}
                 </span>
-                {r.key && <span className="block truncate font-mono text-[10px] text-subtle-foreground">{r.key}</span>}
+                {r.key && (
+                  <span className="block truncate font-mono text-[10px] text-subtle-foreground">
+                    {r.key}
+                  </span>
+                )}
               </span>
             </button>
           );
@@ -167,7 +219,15 @@ export function TableView({
       },
     ];
     if (!type || type !== 'domain') {
-      cols.push({ id: 'domain', accessorKey: 'domainName', header: 'Domain', size: 140, cell: ({ getValue }) => <span className="truncate text-muted-foreground">{(getValue() as string) ?? '—'}</span> });
+      cols.push({
+        id: 'domain',
+        accessorKey: 'domainName',
+        header: 'Domain',
+        size: 140,
+        cell: ({ getValue }) => (
+          <span className="truncate text-muted-foreground">{(getValue() as string) ?? '—'}</span>
+        ),
+      });
     }
     cols.push({
       id: 'owner',
@@ -179,7 +239,12 @@ export function TableView({
           <span className="text-muted-foreground">—</span>
         ) : (
           <div onClick={(e) => e.stopPropagation()} className="w-full">
-            <InlineText value={row.original.owner} placeholder="Add owner" onSave={(owner) => update.mutate({ id: row.original.id, patch: { owner } })} className="-mx-1.5" />
+            <InlineText
+              value={row.original.owner}
+              placeholder="Add owner"
+              onSave={(owner) => update.mutate({ id: row.original.id, patch: { owner } })}
+              className="-mx-1.5"
+            />
           </div>
         ),
     });
@@ -189,7 +254,9 @@ export function TableView({
         accessorKey: 'lifecycle',
         header: 'Lifecycle',
         size: 110,
-        sortingFn: (a, b) => LIFECYCLE_PHASES.indexOf(a.original.lifecycle as never) - LIFECYCLE_PHASES.indexOf(b.original.lifecycle as never),
+        sortingFn: (a, b) =>
+          LIFECYCLE_PHASES.indexOf(a.original.lifecycle as never) -
+          LIFECYCLE_PHASES.indexOf(b.original.lifecycle as never),
         cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -199,7 +266,10 @@ export function TableView({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-36">
               {LIFECYCLE_PHASES.map((p) => (
-                <DropdownMenuItem key={p} onSelect={() => update.mutate({ id: row.original.id, patch: { lifecycle: p } })}>
+                <DropdownMenuItem
+                  key={p}
+                  onSelect={() => update.mutate({ id: row.original.id, patch: { lifecycle: p } })}
+                >
                   <LifecycleBadge lifecycle={p} />
                 </DropdownMenuItem>
               ))}
@@ -214,7 +284,9 @@ export function TableView({
         accessorKey: 'health',
         header: 'Health',
         size: 100,
-        sortingFn: (a, b) => ['act', 'watch', 'good', null].indexOf(a.original.health) - ['act', 'watch', 'good', null].indexOf(b.original.health),
+        sortingFn: (a, b) =>
+          ['act', 'watch', 'good', null].indexOf(a.original.health) -
+          ['act', 'watch', 'good', null].indexOf(b.original.health),
         cell: ({ row }) => (
           <Tooltip content={row.original.healthReasons.join(' · ') || null}>
             <span>
@@ -241,14 +313,22 @@ export function TableView({
         accessorFn: (r) => r.capabilityNames.join(', '),
         header: 'Supports',
         size: 200,
-        cell: ({ row }) => <span className="truncate text-muted-foreground">{row.original.capabilityNames.join(', ') || '—'}</span>,
+        cell: ({ row }) => (
+          <span className="truncate text-muted-foreground">
+            {row.original.capabilityNames.join(', ') || '—'}
+          </span>
+        ),
       });
       cols.push({
         id: 'teams',
         accessorFn: (r) => r.teamNames.join(', '),
         header: 'Team',
         size: 140,
-        cell: ({ row }) => <span className="truncate text-muted-foreground">{row.original.teamNames.join(', ') || '—'}</span>,
+        cell: ({ row }) => (
+          <span className="truncate text-muted-foreground">
+            {row.original.teamNames.join(', ') || '—'}
+          </span>
+        ),
       });
     }
     cols.push({
@@ -259,8 +339,15 @@ export function TableView({
       cell: ({ row }) =>
         row.original.layer === 'reference' ? null : (
           <span className="flex w-full items-center gap-2">
-            <Progress value={row.original.quality} tone={row.original.quality >= 85 ? 'good' : row.original.quality >= 60 ? 'watch' : 'act'} />
-            <span className="w-8 text-right text-[11px] text-muted-foreground tabular">{row.original.quality}%</span>
+            <Progress
+              value={row.original.quality}
+              tone={
+                row.original.quality >= 85 ? 'good' : row.original.quality >= 60 ? 'watch' : 'act'
+              }
+            />
+            <span className="w-8 text-right text-[11px] text-muted-foreground tabular">
+              {row.original.quality}%
+            </span>
           </span>
         ),
     });
@@ -281,7 +368,12 @@ export function TableView({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const rows = table.getRowModel().rows;
-  const virtualizer = useVirtualizer({ count: rows.length, getScrollElement: () => scrollRef.current, estimateSize: () => 44, overscan: 12 });
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 44,
+    overscan: 12,
+  });
   const selected = Object.keys(selection).filter((k) => selection[k]);
   const width = table.getTotalSize();
 
@@ -305,10 +397,15 @@ export function TableView({
     return (
       <EmptyState
         icon={<Plus />}
-        title={q || gaps || health ? 'Nothing matches' : `No ${def?.plural.toLowerCase() ?? 'elements'} yet`}
+        title={
+          q || gaps || health
+            ? 'Nothing matches'
+            : `No ${def?.plural.toLowerCase() ?? 'elements'} yet`
+        }
         className="mt-16"
         action={
-          !q && !gaps && (
+          !q &&
+          !gaps && (
             <div className="flex gap-2">
               <Button variant="primary" onClick={() => openAdd(type ?? null)}>
                 Add {def?.label.toLowerCase() ?? 'something'}
@@ -318,7 +415,9 @@ export function TableView({
           )
         }
       >
-        {q || gaps || health ? 'Try a different filter.' : 'Add them one by one, import a spreadsheet, or paste rows straight from Excel.'}
+        {q || gaps || health
+          ? 'Try a different filter.'
+          : 'Add them one by one, import a spreadsheet, or paste rows straight from Excel.'}
       </EmptyState>
     );
   }
@@ -332,7 +431,9 @@ export function TableView({
         const text = e.clipboardData.getData('text/plain');
         if (text.includes('\t') && text.includes('\n')) {
           e.preventDefault();
-          openImport([new File([text], `pasted-${type ?? 'rows'}.tsv`, { type: 'text/tab-separated-values' })]);
+          openImport([
+            new File([text], `pasted-${type ?? 'rows'}.tsv`, { type: 'text/tab-separated-values' }),
+          ]);
         }
       }}
     >
@@ -342,8 +443,14 @@ export function TableView({
             {table.getHeaderGroups()[0]!.headers.map((h) => (
               <div
                 key={h.id}
-                style={{ width: h.getSize(), flex: h.column.id === 'name' ? `1 0 ${h.getSize()}px` : undefined }}
-                className={cn('flex h-9 shrink-0 items-center gap-1 px-3 text-xs font-medium text-muted-foreground', h.column.getCanSort() && 'cursor-pointer select-none hover:text-foreground')}
+                style={{
+                  width: h.getSize(),
+                  flex: h.column.id === 'name' ? `1 0 ${h.getSize()}px` : undefined,
+                }}
+                className={cn(
+                  'flex h-9 shrink-0 items-center gap-1 px-3 text-xs font-medium text-muted-foreground',
+                  h.column.getCanSort() && 'cursor-pointer select-none hover:text-foreground',
+                )}
                 onClick={h.column.getToggleSortingHandler()}
               >
                 {flexRender(h.column.columnDef.header, h.getContext())}
@@ -365,7 +472,11 @@ export function TableView({
                   {row.getVisibleCells().map((cell) => (
                     <div
                       key={cell.id}
-                      style={{ width: cell.column.getSize(), flex: cell.column.id === 'name' ? `1 0 ${cell.column.getSize()}px` : undefined }}
+                      style={{
+                        width: cell.column.getSize(),
+                        flex:
+                          cell.column.id === 'name' ? `1 0 ${cell.column.getSize()}px` : undefined,
+                      }}
                       className="flex shrink-0 items-center overflow-hidden px-3"
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -379,7 +490,10 @@ export function TableView({
       </div>
       <div className="flex h-9 shrink-0 items-center gap-2 border-t border-border bg-surface px-4 text-xs text-muted-foreground">
         <span className="tabular">
-          {rows.length.toLocaleString('en-GB')} {rows.length === 1 ? (def?.label.toLowerCase() ?? 'item') : (def?.plural.toLowerCase() ?? 'items')}
+          {rows.length.toLocaleString('en-GB')}{' '}
+          {rows.length === 1
+            ? (def?.label.toLowerCase() ?? 'item')
+            : (def?.plural.toLowerCase() ?? 'items')}
         </span>
         <span className="hidden items-center gap-1 md:flex">
           · <ClipboardPaste className="size-3" /> Paste rows from Excel to add them
@@ -387,18 +501,26 @@ export function TableView({
       </div>
       {selected.length > 0 && (
         <div className="absolute bottom-12 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-border bg-surface p-1.5 shadow-lg">
-          <Badge tone="primary" className="mx-1">{selected.length} selected</Badge>
+          <Badge tone="primary" className="mx-1">
+            {selected.length} selected
+          </Badge>
           {type !== 'domain' && (
             <ElementPicker
               types={['domain']}
               onChange={(v) => v && bulk({ domainId: v.id })}
-              trigger={<Button size="sm" variant="ghost">Set domain</Button>}
+              trigger={
+                <Button size="sm" variant="ghost">
+                  Set domain
+                </Button>
+              }
             />
           )}
           {(!def || def.hasLifecycle) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="ghost">Set lifecycle</Button>
+                <Button size="sm" variant="ghost">
+                  Set lifecycle
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuLabel>Lifecycle</DropdownMenuLabel>
@@ -416,13 +538,20 @@ export function TableView({
             className="text-act-foreground"
             onClick={() => {
               for (const id of selected) remove.mutate(id);
-              toast(`Removed ${selected.length} item${selected.length === 1 ? '' : 's'}`, { description: 'Undo from Changes → History.' });
+              toast(`Removed ${selected.length} item${selected.length === 1 ? '' : 's'}`, {
+                description: 'Undo from Changes → History.',
+              });
               setSelection({});
             }}
           >
             <Trash2 /> Remove
           </Button>
-          <Button size="icon-sm" variant="ghost" onClick={() => setSelection({})} aria-label="Clear selection">
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={() => setSelection({})}
+            aria-label="Clear selection"
+          >
             <X />
           </Button>
         </div>

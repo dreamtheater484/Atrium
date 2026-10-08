@@ -17,8 +17,8 @@ import {
   Segmented,
   Skeleton,
   Stat,
-  timeAgo,
   TypeIcon,
+  timeAgo,
 } from '@atrium/ui';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
@@ -64,7 +64,9 @@ export function HomePage() {
     <div className="mx-auto flex max-w-[1320px] flex-col gap-6 px-6 py-7">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[13px] text-muted-foreground">{formatDate(new Date().toISOString())} · {ws?.name}</p>
+          <p className="text-[13px] text-muted-foreground">
+            {formatDate(new Date().toISOString())} · {ws?.name}
+          </p>
           <h1 className="text-2xl font-semibold tracking-tight">
             {greeting()}
             {firstName ? `, ${firstName}` : ''}
@@ -120,10 +122,13 @@ function Onboarding() {
           <Badge tone="primary" className="mb-3">
             <Sparkles /> Welcome to Atrium
           </Badge>
-          <h2 className="text-xl font-semibold tracking-tight">One living map of how your organization works</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            One living map of how your organization works
+          </h2>
           <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
-            Capabilities, applications, data and technology, and how they connect. Architects keep it right, managers use it to decide,
-            and engineers and their AI assistants build with it. Pick a way to start; you can always change your mind.
+            Capabilities, applications, data and technology, and how they connect. Architects keep
+            it right, managers use it to decide, and engineers and their AI assistants build with
+            it. Pick a way to start; you can always change your mind.
           </p>
         </div>
       </div>
@@ -166,7 +171,9 @@ function Onboarding() {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-semibold">Using an AI coding assistant?</p>
-          <p className="text-[13px] text-muted-foreground">Connect it so it can read your architecture and standards while it writes code.</p>
+          <p className="text-[13px] text-muted-foreground">
+            Connect it so it can read your architecture and standards while it writes code.
+          </p>
         </div>
         <Button onClick={() => ui.set({ connectAgentOpen: true })}>Connect coding agent</Button>
       </Card>
@@ -174,11 +181,30 @@ function Onboarding() {
   );
 }
 
-function StartCard({ icon, title, text, action, recommended }: { icon: React.ReactNode; title: string; text: string; action: React.ReactNode; recommended?: boolean }) {
+function StartCard({
+  icon,
+  title,
+  text,
+  action,
+  recommended,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+  action: React.ReactNode;
+  recommended?: boolean;
+}) {
   return (
-    <Card className={cn('flex flex-col gap-3 p-5', recommended && 'border-primary/40 ring-1 ring-primary/20')}>
+    <Card
+      className={cn(
+        'flex flex-col gap-3 p-5',
+        recommended && 'border-primary/40 ring-1 ring-primary/20',
+      )}
+    >
       <div className="flex items-center justify-between">
-        <span className="flex size-10 items-center justify-center rounded-xl bg-surface-2 text-foreground [&_svg]:size-5">{icon}</span>
+        <span className="flex size-10 items-center justify-center rounded-xl bg-surface-2 text-foreground [&_svg]:size-5">
+          {icon}
+        </span>
         {recommended && <Badge tone="primary">Quickest</Badge>}
       </div>
       <div className="flex-1">
@@ -194,7 +220,19 @@ function StartCard({ icon, title, text, action, recommended }: { icon: React.Rea
 /* Shared bits                                                          */
 /* ------------------------------------------------------------------ */
 
-function Section({ title, description, action, children, className }: { title: string; description?: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
+function Section({
+  title,
+  description,
+  action,
+  children,
+  className,
+}: {
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <Card className={className}>
       <CardHeader>
@@ -211,7 +249,11 @@ function Section({ title, description, action, children, className }: { title: s
 
 function ListRow({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-surface-2">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-surface-2"
+    >
       {children}
     </button>
   );
@@ -235,14 +277,24 @@ function GapsList({ data }: { data: Overview }) {
           <TypeIcon type={g.type} size="sm" />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-medium">{g.name}</span>
-            <span className="block truncate text-[11px] text-muted-foreground">Missing {g.missing.slice(0, 3).join(', ').toLowerCase()}{g.missing.length > 3 ? ` and ${g.missing.length - 3} more` : ''}</span>
+            <span className="block truncate text-[11px] text-muted-foreground">
+              Missing {g.missing.slice(0, 3).join(', ').toLowerCase()}
+              {g.missing.length > 3 ? ` and ${g.missing.length - 3} more` : ''}
+            </span>
           </span>
           <span className="w-20">
-            <Progress value={g.quality} tone={g.quality >= 85 ? 'good' : g.quality >= 60 ? 'watch' : 'act'} />
+            <Progress
+              value={g.quality}
+              tone={g.quality >= 85 ? 'good' : g.quality >= 60 ? 'watch' : 'act'}
+            />
           </span>
         </ListRow>
       ))}
-      {data.quality.gaps.length === 0 && <p className="py-4 text-center text-[13px] text-muted-foreground">Everything is complete. Nicely done.</p>}
+      {data.quality.gaps.length === 0 && (
+        <p className="py-4 text-center text-[13px] text-muted-foreground">
+          Everything is complete. Nicely done.
+        </p>
+      )}
     </div>
   );
 }
@@ -255,12 +307,18 @@ function RiskList({ data, limit = 6 }: { data: Overview; limit?: number }) {
           <HealthDot health={r.health} className="size-2.5" />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-medium">{r.name}</span>
-            <span className="block truncate text-[11px] text-muted-foreground">{r.reasons[0] ?? 'Needs attention'}</span>
+            <span className="block truncate text-[11px] text-muted-foreground">
+              {r.reasons[0] ?? 'Needs attention'}
+            </span>
           </span>
-          <span className="text-xs text-muted-foreground tabular">{r.cost ? formatMoney(r.cost) : ''}</span>
+          <span className="text-xs text-muted-foreground tabular">
+            {r.cost ? formatMoney(r.cost) : ''}
+          </span>
         </ListRow>
       ))}
-      {data.risks.length === 0 && <p className="py-4 text-center text-[13px] text-muted-foreground">No risks found.</p>}
+      {data.risks.length === 0 && (
+        <p className="py-4 text-center text-[13px] text-muted-foreground">No risks found.</p>
+      )}
     </div>
   );
 }
@@ -274,13 +332,23 @@ function EolList({ data, limit = 6 }: { data: Overview; limit?: number }) {
           <span className="min-w-0 flex-1">
             <span className="block truncate font-medium">{t.name}</span>
             <span className="block truncate text-[11px] text-muted-foreground">
-              {t.apps.length} application{t.apps.length === 1 ? '' : 's'}: {t.apps.slice(0, 3).map((a) => a.name).join(', ')}
+              {t.apps.length} application{t.apps.length === 1 ? '' : 's'}:{' '}
+              {t.apps
+                .slice(0, 3)
+                .map((a) => a.name)
+                .join(', ')}
             </span>
           </span>
-          <Badge tone={t.past ? 'act' : 'watch'}>{t.past ? 'Ended' : 'Ends'} {formatDate(t.eolDate)}</Badge>
+          <Badge tone={t.past ? 'act' : 'watch'}>
+            {t.past ? 'Ended' : 'Ends'} {formatDate(t.eolDate)}
+          </Badge>
         </ListRow>
       ))}
-      {data.eol.length === 0 && <p className="py-4 text-center text-[13px] text-muted-foreground">Nothing reaches end of life within a year.</p>}
+      {data.eol.length === 0 && (
+        <p className="py-4 text-center text-[13px] text-muted-foreground">
+          Nothing reaches end of life within a year.
+        </p>
+      )}
     </div>
   );
 }
@@ -300,7 +368,13 @@ function ArchitectHome() {
   return (
     <>
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="In the model" value={total.toLocaleString('en-GB')} hint={`${data.counts.application ?? 0} applications, ${data.counts.capability ?? 0} capabilities`} icon={<Layers3 />} onClick={() => navigate({ to: '/explore' })} />
+        <Stat
+          label="In the model"
+          value={total.toLocaleString('en-GB')}
+          hint={`${data.counts.application ?? 0} applications, ${data.counts.capability ?? 0} capabilities`}
+          icon={<Layers3 />}
+          onClick={() => navigate({ to: '/explore' })}
+        />
         <Stat
           label="Data quality"
           value={`${data.quality.average}%`}
@@ -309,8 +383,24 @@ function ArchitectHome() {
           icon={<ListChecks />}
           onClick={() => navigate({ to: '/explore', search: { gaps: true, type: 'application' } })}
         />
-        <Stat label="Waiting for review" value={summary?.waitingForReview ?? 0} hint="Suggestions from people and agents" icon={<Sparkles />} tone={summary?.waitingForReview ? 'primary' : undefined} onClick={() => navigate({ to: '/changes' })} />
-        <Stat label="Need attention" value={data.applications.health.act} hint={`${data.applications.health.watch} more to watch`} tone="act" icon={<TriangleAlert />} onClick={() => navigate({ to: '/explore', search: { type: 'application', health: 'act' } })} />
+        <Stat
+          label="Waiting for review"
+          value={summary?.waitingForReview ?? 0}
+          hint="Suggestions from people and agents"
+          icon={<Sparkles />}
+          tone={summary?.waitingForReview ? 'primary' : undefined}
+          onClick={() => navigate({ to: '/changes' })}
+        />
+        <Stat
+          label="Need attention"
+          value={data.applications.health.act}
+          hint={`${data.applications.health.watch} more to watch`}
+          tone="act"
+          icon={<TriangleAlert />}
+          onClick={() =>
+            navigate({ to: '/explore', search: { type: 'application', health: 'act' } })
+          }
+        />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
         <Section
@@ -318,43 +408,73 @@ function ArchitectHome() {
           description="The elements missing the most information"
           className="lg:col-span-2"
           action={
-            <Button size="sm" variant="soft" onClick={() => navigate({ to: '/explore', search: { gaps: true, type: 'application' } })}>
+            <Button
+              size="sm"
+              variant="soft"
+              onClick={() =>
+                navigate({ to: '/explore', search: { gaps: true, type: 'application' } })
+              }
+            >
               Fill the gaps <ArrowRight />
             </Button>
           }
         >
           <GapsList data={data} />
         </Section>
-        <Section title="Waiting for review" action={<Button size="sm" variant="ghost" onClick={() => navigate({ to: '/changes' })}>All</Button>}>
+        <Section
+          title="Waiting for review"
+          action={
+            <Button size="sm" variant="ghost" onClick={() => navigate({ to: '/changes' })}>
+              All
+            </Button>
+          }
+        >
           <div className="flex flex-col">
             {open.map((c) => (
-              <ListRow key={c.id} onClick={() => navigate({ to: '/changes', search: { id: c.id } })}>
+              <ListRow
+                key={c.id}
+                onClick={() => navigate({ to: '/changes', search: { id: c.id } })}
+              >
                 {c.authorKind === 'agent' ? (
-                  <span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-primary"><Bot className="size-3.5" /></span>
+                  <span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-primary">
+                    <Bot className="size-3.5" />
+                  </span>
                 ) : (
                   <Avatar name={c.authorName ?? '?'} />
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{c.title}</span>
                   <span className="block truncate text-[11px] text-muted-foreground">
-                    {c.authorName} · {c.changeCount} change{c.changeCount === 1 ? '' : 's'} · {timeAgo(c.submittedAt ?? c.createdAt)}
+                    {c.authorName} · {c.changeCount} change{c.changeCount === 1 ? '' : 's'} ·{' '}
+                    {timeAgo(c.submittedAt ?? c.createdAt)}
                   </span>
                 </span>
               </ListRow>
             ))}
-            {open.length === 0 && <p className="py-4 text-center text-[13px] text-muted-foreground">Nothing to review.</p>}
+            {open.length === 0 && (
+              <p className="py-4 text-center text-[13px] text-muted-foreground">
+                Nothing to review.
+              </p>
+            )}
           </div>
         </Section>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
-        <Section title="Capability coverage" description="Capabilities without an application, and possible overlap">
+        <Section
+          title="Capability coverage"
+          description="Capabilities without an application, and possible overlap"
+        >
           <div className="mb-3 grid grid-cols-2 gap-3">
             <div className="rounded-lg bg-surface-2 p-3">
-              <div className="text-xl font-semibold tabular">{data.capabilities.withoutApps.length}</div>
+              <div className="text-xl font-semibold tabular">
+                {data.capabilities.withoutApps.length}
+              </div>
               <div className="text-xs text-muted-foreground">Gaps</div>
             </div>
             <div className="rounded-lg bg-surface-2 p-3">
-              <div className="text-xl font-semibold tabular">{data.capabilities.overlaps.length}</div>
+              <div className="text-xl font-semibold tabular">
+                {data.capabilities.overlaps.length}
+              </div>
               <div className="text-xs text-muted-foreground">3+ applications</div>
             </div>
           </div>
@@ -365,7 +485,17 @@ function ArchitectHome() {
               <Badge tone="watch">{o.apps.length} apps</Badge>
             </ListRow>
           ))}
-          <Button size="sm" variant="ghost" className="mt-2" onClick={() => navigate({ to: '/explore', search: { type: 'capability', view: 'map', overlay: 'coverage' } })}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="mt-2"
+            onClick={() =>
+              navigate({
+                to: '/explore',
+                search: { type: 'capability', view: 'map', overlay: 'coverage' },
+              })
+            }
+          >
             Open the capability map <ArrowRight />
           </Button>
         </Section>
@@ -375,13 +505,20 @@ function ArchitectHome() {
         <Section title="Recently changed">
           <div className="flex flex-col">
             {recent.map((c) => (
-              <ListRow key={c.id} onClick={() => navigate({ to: '/changes', search: { id: c.id, tab: 'history' } })}>
+              <ListRow
+                key={c.id}
+                onClick={() => navigate({ to: '/changes', search: { id: c.id, tab: 'history' } })}
+              >
                 <Avatar name={c.authorName ?? '?'} size="sm" />
                 <span className="min-w-0 flex-1 truncate">{c.title}</span>
-                <span className="text-[11px] text-muted-foreground">{timeAgo(c.decidedAt ?? c.createdAt)}</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {timeAgo(c.decidedAt ?? c.createdAt)}
+                </span>
               </ListRow>
             ))}
-            {recent.length === 0 && <p className="py-4 text-center text-[13px] text-muted-foreground">No changes yet.</p>}
+            {recent.length === 0 && (
+              <p className="py-4 text-center text-[13px] text-muted-foreground">No changes yet.</p>
+            )}
           </div>
         </Section>
       </div>
@@ -416,8 +553,19 @@ function ManagerHome() {
           radius: ['62%', '86%'],
           padAngle: 2,
           itemStyle: { borderRadius: 6 },
-          label: { show: true, position: 'center', formatter: () => `${Math.round((h.good / Math.max(1, data.applications.total)) * 100)}%\nhealthy`, fontSize: 18, fontWeight: 600, color: p.text, lineHeight: 22 },
-          data: items.filter((i) => i.value > 0).map((i) => ({ name: i.name, value: i.value, itemStyle: { color: color[i.key] } })),
+          label: {
+            show: true,
+            position: 'center',
+            formatter: () =>
+              `${Math.round((h.good / Math.max(1, data.applications.total)) * 100)}%\nhealthy`,
+            fontSize: 18,
+            fontWeight: 600,
+            color: p.text,
+            lineHeight: 22,
+          },
+          data: items
+            .filter((i) => i.value > 0)
+            .map((i) => ({ name: i.name, value: i.value, itemStyle: { color: color[i.key] } })),
         },
       ],
     };
@@ -428,7 +576,11 @@ function ManagerHome() {
     const rows = [...data.applications.byDomain].reverse();
     return {
       grid: { left: 8, right: 56, top: 4, bottom: 4, containLabel: true },
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: (v: number) => formatMoney(v) },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        valueFormatter: (v: number) => formatMoney(v),
+      },
       xAxis: { type: 'value', show: false },
       yAxis: { type: 'category', data: rows.map((r) => r.name), axisLabel: { color: p.muted } },
       series: [
@@ -437,7 +589,13 @@ function ManagerHome() {
           data: rows.map((r) => r.cost),
           barWidth: 14,
           itemStyle: { color: p.primary, borderRadius: [0, 6, 6, 0] },
-          label: { show: true, position: 'right', color: p.muted, fontSize: 11, formatter: (v: { value: number }) => formatMoney(v.value) },
+          label: {
+            show: true,
+            position: 'right',
+            color: p.muted,
+            fontSize: 11,
+            formatter: (v: { value: number }) => formatMoney(v.value),
+          },
         },
       ],
     };
@@ -445,7 +603,12 @@ function ManagerHome() {
 
   const fitOption = useMemo<EChartsOption | null>(() => {
     if (!data) return null;
-    const timeColor: Record<string, string> = { invest: p.good, tolerate: p.unknown, migrate: p.watch, eliminate: p.act };
+    const timeColor: Record<string, string> = {
+      invest: p.good,
+      tolerate: p.unknown,
+      migrate: p.watch,
+      eliminate: p.act,
+    };
     const maxCost = Math.max(1, ...data.applications.fitScatter.map((d) => d.cost));
     const jitter = (id: string) => ((id.charCodeAt(0) + id.charCodeAt(5)) % 7) / 20 - 0.15;
     return {
@@ -454,8 +617,24 @@ function ManagerHome() {
         formatter: (q: { data: { name: string; value: number[]; time: string } }) =>
           `<b>${q.data.name}</b><br/>Business fit ${Math.round(q.data.value[0]!)} · Technical fit ${Math.round(q.data.value[1]!)}<br/>${formatMoney(q.data.value[2]!)} · ${enumLabel(q.data.time) || 'No TIME rating'}`,
       },
-      xAxis: { type: 'value', min: 0.5, max: 5.5, name: 'Business fit', nameLocation: 'middle', nameGap: 24, interval: 1 },
-      yAxis: { type: 'value', min: 0.5, max: 5.5, name: 'Technical fit', nameLocation: 'middle', nameGap: 24, interval: 1 },
+      xAxis: {
+        type: 'value',
+        min: 0.5,
+        max: 5.5,
+        name: 'Business fit',
+        nameLocation: 'middle',
+        nameGap: 24,
+        interval: 1,
+      },
+      yAxis: {
+        type: 'value',
+        min: 0.5,
+        max: 5.5,
+        name: 'Technical fit',
+        nameLocation: 'middle',
+        nameGap: 24,
+        interval: 1,
+      },
       series: [
         {
           type: 'scatter',
@@ -465,72 +644,178 @@ function ManagerHome() {
             id: d.id,
             time: d.time,
             value: [d.business + jitter(d.id), d.technical + jitter(d.id.slice(3)), d.cost],
-            itemStyle: { color: timeColor[d.time ?? ''] ?? p.primary, opacity: 0.8, borderColor: p.surface, borderWidth: 1 },
+            itemStyle: {
+              color: timeColor[d.time ?? ''] ?? p.primary,
+              opacity: 0.8,
+              borderColor: p.surface,
+              borderWidth: 1,
+            },
           })),
-          markLine: { silent: true, symbol: 'none', lineStyle: { color: p.border, type: 'dashed' }, data: [{ xAxis: 3 }, { yAxis: 3 }], label: { show: false } },
+          markLine: {
+            silent: true,
+            symbol: 'none',
+            lineStyle: { color: p.border, type: 'dashed' },
+            data: [{ xAxis: 3 }, { yAxis: 3 }],
+            label: { show: false },
+          },
         },
       ],
     };
   }, [data, p]);
 
   if (!data) return <StatsSkeleton />;
-  const healthyPct = Math.round((data.applications.health.good / Math.max(1, data.applications.total)) * 100);
+  const healthyPct = Math.round(
+    (data.applications.health.good / Math.max(1, data.applications.total)) * 100,
+  );
   const eolPast = data.eol.filter((e) => e.past).length;
   return (
     <>
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Applications in use" value={data.applications.total} hint={`Across ${data.applications.byDomain.length} domains`} icon={<Layers3 />} onClick={() => navigate({ to: '/explore', search: { type: 'application' } })} />
-        <Stat label="Annual run cost" value={formatMoney(data.applications.cost)} hint="Sum of application costs" icon={<Wallet />} onClick={() => navigate({ to: '/dashboards' })} />
-        <Stat label="Healthy" value={`${healthyPct}%`} hint={`${data.applications.health.act} need action now`} tone={healthyPct >= 60 ? 'good' : 'watch'} icon={<Gauge />} onClick={() => navigate({ to: '/explore', search: { type: 'application', view: 'landscape', overlay: 'health' } })} />
-        <Stat label="End-of-life exposure" value={data.eol.length} hint={`${eolPast} already unsupported`} tone={eolPast ? 'act' : 'watch'} icon={<CircleAlert />} onClick={() => navigate({ to: '/explore', search: { type: 'technology', view: 'radar' } })} />
+        <Stat
+          label="Applications in use"
+          value={data.applications.total}
+          hint={`Across ${data.applications.byDomain.length} domains`}
+          icon={<Layers3 />}
+          onClick={() => navigate({ to: '/explore', search: { type: 'application' } })}
+        />
+        <Stat
+          label="Annual run cost"
+          value={formatMoney(data.applications.cost)}
+          hint="Sum of application costs"
+          icon={<Wallet />}
+          onClick={() => navigate({ to: '/dashboards' })}
+        />
+        <Stat
+          label="Healthy"
+          value={`${healthyPct}%`}
+          hint={`${data.applications.health.act} need action now`}
+          tone={healthyPct >= 60 ? 'good' : 'watch'}
+          icon={<Gauge />}
+          onClick={() =>
+            navigate({
+              to: '/explore',
+              search: { type: 'application', view: 'landscape', overlay: 'health' },
+            })
+          }
+        />
+        <Stat
+          label="End-of-life exposure"
+          value={data.eol.length}
+          hint={`${eolPast} already unsupported`}
+          tone={eolPast ? 'act' : 'watch'}
+          icon={<CircleAlert />}
+          onClick={() =>
+            navigate({ to: '/explore', search: { type: 'technology', view: 'radar' } })
+          }
+        />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
-        <Section title="Portfolio health" description="Worked out from fit, technology and lifecycle">
-          {healthOption && <EChart option={healthOption} height={220} ariaLabel="Portfolio health" onClick={(e) => navigate({ to: '/explore', search: { type: 'application', health: e.name.toLowerCase() } })} />}
+        <Section
+          title="Portfolio health"
+          description="Worked out from fit, technology and lifecycle"
+        >
+          {healthOption && (
+            <EChart
+              option={healthOption}
+              height={220}
+              ariaLabel="Portfolio health"
+              onClick={(e) =>
+                navigate({
+                  to: '/explore',
+                  search: { type: 'application', health: e.name.toLowerCase() },
+                })
+              }
+            />
+          )}
           <div className="mt-2 flex justify-center gap-4 text-xs text-muted-foreground">
             {(['good', 'watch', 'act'] as const).map((h) => (
               <span key={h} className="flex items-center gap-1.5">
-                <span className={cn('size-2 rounded-full', HEALTH_CLASSES[h].dot)} /> {enumLabel(h)} {data.applications.health[h]}
+                <span className={cn('size-2 rounded-full', HEALTH_CLASSES[h].dot)} /> {enumLabel(h)}{' '}
+                {data.applications.health[h]}
               </span>
             ))}
           </div>
         </Section>
-        <Section title="Where the money goes" description="Annual application cost per domain" className="lg:col-span-2">
+        <Section
+          title="Where the money goes"
+          description="Annual application cost per domain"
+          className="lg:col-span-2"
+        >
           {costOption && <EChart option={costOption} height={260} ariaLabel="Cost per domain" />}
         </Section>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
-        <Section title="Invest, tolerate, migrate or eliminate" description="Each bubble is an application; size shows cost" className="lg:col-span-2">
-          {fitOption && <EChart option={fitOption} height={300} ariaLabel="Business and technical fit" onClick={(e) => inspect((e.data as { id: string }).id)} />}
+        <Section
+          title="Invest, tolerate, migrate or eliminate"
+          description="Each bubble is an application; size shows cost"
+          className="lg:col-span-2"
+        >
+          {fitOption && (
+            <EChart
+              option={fitOption}
+              height={300}
+              ariaLabel="Business and technical fit"
+              onClick={(e) => inspect((e.data as { id: string }).id)}
+            />
+          )}
           <div className="mt-1 flex flex-wrap justify-center gap-4 text-xs text-muted-foreground">
-            {[['invest', p.good], ['tolerate', p.unknown], ['migrate', p.watch], ['eliminate', p.act]].map(([k, c]) => (
+            {[
+              ['invest', p.good],
+              ['tolerate', p.unknown],
+              ['migrate', p.watch],
+              ['eliminate', p.act],
+            ].map(([k, c]) => (
               <span key={k} className="flex items-center gap-1.5">
                 <span className="size-2 rounded-full" style={{ background: c }} /> {enumLabel(k!)}
               </span>
             ))}
           </div>
         </Section>
-        <Section title="Top risks" action={<Button size="sm" variant="ghost" onClick={() => navigate({ to: '/explore', search: { type: 'application', health: 'act' } })}>All</Button>}>
+        <Section
+          title="Top risks"
+          action={
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() =>
+                navigate({ to: '/explore', search: { type: 'application', health: 'act' } })
+              }
+            >
+              All
+            </Button>
+          }
+        >
           <RiskList data={data} />
         </Section>
       </div>
-      <Section title="Change in flight" description="Running and planned initiatives" action={<Button size="sm" variant="ghost" onClick={() => navigate({ to: '/roadmap' })}>Roadmap <ArrowRight /></Button>}>
+      <Section
+        title="Change in flight"
+        description="Running and planned initiatives"
+        action={
+          <Button size="sm" variant="ghost" onClick={() => navigate({ to: '/roadmap' })}>
+            Roadmap <ArrowRight />
+          </Button>
+        }
+      >
         <div className="grid gap-x-8 gap-y-1 md:grid-cols-2">
-          {data.initiatives.filter((i) => i.status !== 'done' && i.status !== 'cancelled').slice(0, 8).map((i) => (
-            <ListRow key={i.id} onClick={() => inspect(i.id)}>
-              <Rocket className="size-4 text-muted-foreground" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium">{i.name}</span>
-                <span className="block text-[11px] text-muted-foreground">
-                  {enumLabel(i.status)} · {formatDate(i.start)} – {formatDate(i.end)}
-                  {i.budget ? ` · ${formatMoney(i.budget)}` : ''}
+          {data.initiatives
+            .filter((i) => i.status !== 'done' && i.status !== 'cancelled')
+            .slice(0, 8)
+            .map((i) => (
+              <ListRow key={i.id} onClick={() => inspect(i.id)}>
+                <Rocket className="size-4 text-muted-foreground" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{i.name}</span>
+                  <span className="block text-[11px] text-muted-foreground">
+                    {enumLabel(i.status)} · {formatDate(i.start)} – {formatDate(i.end)}
+                    {i.budget ? ` · ${formatMoney(i.budget)}` : ''}
+                  </span>
                 </span>
-              </span>
-              <span className="w-24">
-                <Progress value={i.progress ?? 0} />
-              </span>
-            </ListRow>
-          ))}
+                <span className="w-24">
+                  <Progress value={i.progress ?? 0} />
+                </span>
+              </ListRow>
+            ))}
         </div>
       </Section>
     </>
@@ -549,19 +834,39 @@ function EngineerHome() {
   return (
     <>
       <div className="grid gap-4 lg:grid-cols-3">
-        <Section title="Your services" description={me?.teamIds.length ? 'Owned by your team' : 'Join a team in Settings to see your services here'} className="lg:col-span-2">
+        <Section
+          title="Your services"
+          description={
+            me?.teamIds.length
+              ? 'Owned by your team'
+              : 'Join a team in Settings to see your services here'
+          }
+          className="lg:col-span-2"
+        >
           {data.myServices.length === 0 ? (
             <div className="flex flex-col items-start gap-2 py-2">
-              <p className="text-[13px] text-muted-foreground">You aren't linked to a team yet, so here are the applications needing attention instead.</p>
+              <p className="text-[13px] text-muted-foreground">
+                You aren't linked to a team yet, so here are the applications needing attention
+                instead.
+              </p>
               <RiskList data={data} limit={5} />
-              <Button size="sm" variant="soft" onClick={() => navigate({ to: '/settings', search: { tab: 'profile' } })}>
+              <Button
+                size="sm"
+                variant="soft"
+                onClick={() => navigate({ to: '/settings', search: { tab: 'profile' } })}
+              >
                 Choose my team
               </Button>
             </div>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
               {data.myServices.map((s) => (
-                <button key={s.id} type="button" onClick={() => inspect(s.id)} className="flex flex-col gap-1.5 rounded-xl border border-border p-3 text-left transition hover:border-border-strong hover:shadow-sm">
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => inspect(s.id)}
+                  className="flex flex-col gap-1.5 rounded-xl border border-border p-3 text-left transition hover:border-border-strong hover:shadow-sm"
+                >
                   <span className="flex items-center gap-2">
                     <TypeIcon type={s.type} size="sm" />
                     <span className="flex-1 truncate text-[13px] font-semibold">{s.name}</span>
@@ -570,7 +875,9 @@ function EngineerHome() {
                   <span className="text-[11px] text-muted-foreground">
                     Needs {s.dependsOn} · Needed by {s.usedBy} · {s.standards} standards
                   </span>
-                  {s.reasons[0] && <span className="truncate text-[11px] text-act-foreground">{s.reasons[0]}</span>}
+                  {s.reasons[0] && (
+                    <span className="truncate text-[11px] text-act-foreground">{s.reasons[0]}</span>
+                  )}
                 </button>
               ))}
             </div>
@@ -583,13 +890,18 @@ function EngineerHome() {
           <div>
             <h3 className="text-[14px] font-semibold">Architecture in your editor</h3>
             <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-              Connect your coding agent. It reads service context and standards while it codes, and can suggest updates to the map.
+              Connect your coding agent. It reads service context and standards while it codes, and
+              can suggest updates to the map.
             </p>
           </div>
           <Button variant="primary" onClick={() => ui.set({ connectAgentOpen: true })}>
             Connect coding agent
           </Button>
-          <Link to="/settings" search={{ tab: 'agents' }} className="text-xs text-muted-foreground hover:underline">
+          <Link
+            to="/settings"
+            search={{ tab: 'agents' }}
+            className="text-xs text-muted-foreground hover:underline"
+          >
             Manage tokens
           </Link>
         </Card>
@@ -598,11 +910,27 @@ function EngineerHome() {
         <Section title="Technology to move off" description="Past or near end of life">
           <EolList data={data} />
         </Section>
-        <Section title="Technology radar" description="What to adopt, try, assess or avoid" action={<Button size="sm" variant="ghost" onClick={() => navigate({ to: '/explore', search: { type: 'technology', view: 'radar' } })}>Open radar <ArrowRight /></Button>}>
+        <Section
+          title="Technology radar"
+          description="What to adopt, try, assess or avoid"
+          action={
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() =>
+                navigate({ to: '/explore', search: { type: 'technology', view: 'radar' } })
+              }
+            >
+              Open radar <ArrowRight />
+            </Button>
+          }
+        >
           <div className="grid grid-cols-4 gap-3">
             {(['adopt', 'trial', 'assess', 'hold'] as const).map((r) => (
               <div key={r} className="rounded-lg bg-surface-2 p-3 text-center">
-                <div className="text-xl font-semibold tabular">{data.technology.byRadar[r] ?? 0}</div>
+                <div className="text-xl font-semibold tabular">
+                  {data.technology.byRadar[r] ?? 0}
+                </div>
                 <div className="text-xs text-muted-foreground">{enumLabel(r)}</div>
               </div>
             ))}

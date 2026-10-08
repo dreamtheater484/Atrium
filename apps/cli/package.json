@@ -1,0 +1,25 @@
+{
+  "name": "@atrium/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Atrium command line: describe services in atrium.yaml, sync them from CI, check them against standards, and connect coding agents.",
+  "type": "module",
+  "bin": {
+    "atrium": "./dist/atrium.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@atrium/schema": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "commander": "^15.0.0",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

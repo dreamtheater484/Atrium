@@ -35,7 +35,9 @@ const exploreRoute = createRoute({
   path: '/explore',
   validateSearch: (s: Record<string, unknown>): ExploreSearch => ({
     type: ELEMENT_TYPES.includes(s.type as ElementType) ? (s.type as ElementType) : undefined,
-    view: ['table', 'map', 'graph', 'landscape', 'radar'].includes(s.view as string) ? (s.view as ExploreView) : undefined,
+    view: ['table', 'map', 'graph', 'landscape', 'radar'].includes(s.view as string)
+      ? (s.view as ExploreView)
+      : undefined,
     q: str(s.q),
     overlay: str(s.overlay) as MapOverlay | undefined,
     domain: str(s.domain),
@@ -47,7 +49,11 @@ const exploreRoute = createRoute({
   component: ExplorePage,
 });
 
-const elementRoute = createRoute({ getParentRoute: () => rootRoute, path: '/e/$id', component: ElementPage });
+const elementRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/e/$id',
+  component: ElementPage,
+});
 
 const dashboardsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -56,12 +62,19 @@ const dashboardsRoute = createRoute({
   component: DashboardsPage,
 });
 
-const roadmapRoute = createRoute({ getParentRoute: () => rootRoute, path: '/roadmap', component: RoadmapPage });
+const roadmapRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/roadmap',
+  component: RoadmapPage,
+});
 
 const changesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/changes',
-  validateSearch: (s: Record<string, unknown>): { id?: string; tab?: string } => ({ id: str(s.id), tab: str(s.tab) }),
+  validateSearch: (s: Record<string, unknown>): { id?: string; tab?: string } => ({
+    id: str(s.id),
+    tab: str(s.tab),
+  }),
   component: ChangesPage,
 });
 
@@ -82,7 +95,11 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
 ]);
 
-export const router = createRouter({ routeTree, defaultPreload: 'intent', scrollRestoration: true });
+export const router = createRouter({
+  routeTree,
+  defaultPreload: 'intent',
+  scrollRestoration: true,
+});
 
 declare module '@tanstack/react-router' {
   interface Register {

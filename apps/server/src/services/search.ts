@@ -1,4 +1,10 @@
-import { type Element, type ElementType, normalizeName, type SearchHit, similarity } from '@atrium/schema';
+import {
+  type Element,
+  type ElementType,
+  normalizeName,
+  type SearchHit,
+  similarity,
+} from '@atrium/schema';
 import type { RequestContext } from '../auth/context';
 import type { Deps } from './deps';
 import { ModelIndex } from './model-index';
@@ -32,7 +38,12 @@ export async function search(
   deps: Deps,
   ctx: RequestContext,
   query: string,
-  opts: { limit?: number; types?: ElementType[]; scenarioId?: string; layer?: 'org' | 'reference' | 'all' } = {},
+  opts: {
+    limit?: number;
+    types?: ElementType[];
+    scenarioId?: string;
+    layer?: 'org' | 'reference' | 'all';
+  } = {},
 ): Promise<SearchHit[]> {
   const q = normalizeName(query);
   if (!q) return [];
@@ -56,11 +67,17 @@ export async function search(
       score,
     });
   }
-  return hits.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name)).slice(0, opts.limit ?? 20);
+  return hits
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+    .slice(0, opts.limit ?? 20);
 }
 
 /** Finds the best single match for a name typed by a person or found in a file. */
-export function bestMatch(index: ModelIndex, name: string, types?: ElementType[]): Element | undefined {
+export function bestMatch(
+  index: ModelIndex,
+  name: string,
+  types?: ElementType[],
+): Element | undefined {
   const q = normalizeName(name);
   if (!q) return undefined;
   const words = q.split(' ');

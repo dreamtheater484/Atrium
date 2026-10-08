@@ -5,7 +5,8 @@ import { ui, useUi } from '../lib/store';
 
 function quarters(fromYear: number, toYear: number) {
   const out: string[] = [];
-  for (let y = fromYear; y <= toYear; y++) for (const m of ['01', '04', '07', '10']) out.push(`${y}-${m}-01`);
+  for (let y = fromYear; y <= toYear; y++)
+    for (const m of ['01', '04', '07', '10']) out.push(`${y}-${m}-01`);
   return out;
 }
 
@@ -21,7 +22,12 @@ export function TimeSlider({ className }: { className?: string }) {
   const steps = useMemo(() => quarters(year - 2, year + 4), [year]);
   const today = new Date().toISOString().slice(0, 10);
   const todayIndex = steps.findIndex((s) => s > today) - 1;
-  const index = at ? Math.max(0, steps.findIndex((s) => s >= at)) : todayIndex;
+  const index = at
+    ? Math.max(
+        0,
+        steps.findIndex((s) => s >= at),
+      )
+    : todayIndex;
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <Clock className="size-3.5 text-muted-foreground" />
@@ -38,10 +44,22 @@ export function TimeSlider({ className }: { className?: string }) {
         }}
         className="h-1.5 w-40 cursor-pointer accent-[var(--primary)]"
       />
-      <span className={cn('w-16 text-xs font-medium tabular', at ? 'text-primary' : 'text-muted-foreground')}>{at ? label(at) : 'Today'}</span>
+      <span
+        className={cn(
+          'w-16 text-xs font-medium tabular',
+          at ? 'text-primary' : 'text-muted-foreground',
+        )}
+      >
+        {at ? label(at) : 'Today'}
+      </span>
       {at && (
         <Tooltip content="Back to today">
-          <Button size="icon-sm" variant="ghost" onClick={() => ui.set({ at: null })} aria-label="Back to today">
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={() => ui.set({ at: null })}
+            aria-label="Back to today"
+          >
             <RotateCcw />
           </Button>
         </Tooltip>

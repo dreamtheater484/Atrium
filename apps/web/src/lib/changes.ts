@@ -18,7 +18,13 @@ export function useChangesSummary() {
   });
 }
 
-export function useChangesets(filter: { status?: string; kind?: string; scenarioId?: string; mine?: boolean; limit?: number }) {
+export function useChangesets(filter: {
+  status?: string;
+  kind?: string;
+  scenarioId?: string;
+  mine?: boolean;
+  limit?: number;
+}) {
   return useQuery({
     queryKey: ['changesets', 'list', filter],
     queryFn: () => api<Changeset[]>('/changesets', { query: filter as never }),
@@ -36,8 +42,22 @@ export function useChangeset(id: string | undefined) {
 export function useChangesetAction() {
   const invalidate = useInvalidateModel();
   return useMutation({
-    mutationFn: ({ id, action, note, title, description }: { id: string; action: 'submit' | 'approve' | 'reject' | 'withdraw' | 'undo'; note?: string; title?: string; description?: string }) =>
-      api<{ ok: boolean; message?: string }>(`/changesets/${id}/${action}`, { body: { note, title, description } }),
+    mutationFn: ({
+      id,
+      action,
+      note,
+      title,
+      description,
+    }: {
+      id: string;
+      action: 'submit' | 'approve' | 'reject' | 'withdraw' | 'undo';
+      note?: string;
+      title?: string;
+      description?: string;
+    }) =>
+      api<{ ok: boolean; message?: string }>(`/changesets/${id}/${action}`, {
+        body: { note, title, description },
+      }),
     onSuccess: () => {
       invalidate();
       void queryClient.invalidateQueries({ queryKey: ['changesets'] });

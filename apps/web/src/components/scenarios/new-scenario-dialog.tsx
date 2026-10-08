@@ -34,7 +34,10 @@ export function NewScenarioDialog({
   const [targetDate, setTargetDate] = useState(`${nextYear}-12-31`);
   const invalidate = useInvalidateModel();
   const create = useMutation({
-    mutationFn: () => api<Scenario>('/scenarios', { body: { name: name.trim(), description, isTarget, targetDate } }),
+    mutationFn: () =>
+      api<Scenario>('/scenarios', {
+        body: { name: name.trim(), description, isTarget, targetDate },
+      }),
     onSuccess: (s) => {
       invalidate();
       ui.set({ scenario: s.isTarget ? 'target' : s.id });
@@ -56,7 +59,8 @@ export function NewScenarioDialog({
         <DialogHeader>
           <DialogTitle>{isTarget ? 'Plan the target state' : 'New what-if scenario'}</DialogTitle>
           <DialogDescription>
-            A scenario starts as a copy of today. Edit it freely; today's model doesn't change until you decide it should.
+            A scenario starts as a copy of today. Edit it freely; today's model doesn't change until
+            you decide it should.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -68,16 +72,33 @@ export function NewScenarioDialog({
         >
           <div className="grid gap-1.5">
             <Label htmlFor="sc-name">Name</Label>
-            <Input id="sc-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Cloud-first variant" autoFocus />
+            <Input
+              id="sc-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Cloud-first variant"
+              autoFocus
+            />
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="sc-desc">What are you exploring?</Label>
-            <Textarea id="sc-desc" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional" />
+            <Textarea
+              id="sc-desc"
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optional"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label htmlFor="sc-date">Target date</Label>
-              <Input id="sc-date" type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
+              <Input
+                id="sc-date"
+                type="date"
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
+              />
             </div>
             <label className="flex items-center gap-2 self-end pb-1.5 text-[13px]">
               <Switch checked={isTarget} onCheckedChange={setIsTarget} /> This is our agreed target

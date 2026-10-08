@@ -86,7 +86,11 @@ function count(s: string, ch: string): number {
  * Reads digits with any mix of thousand and decimal separators.
  * `preferThousands` decides "1.200" (1200 for money, 1.2 otherwise).
  */
-function parseDigits(input: string, preferThousands: boolean, hasMultiplier: boolean): number | undefined {
+function parseDigits(
+  input: string,
+  preferThousands: boolean,
+  hasMultiplier: boolean,
+): number | undefined {
   let s = input;
   if (!/^(?:\d[\d.,]*|[.,]\d+)$/.test(s)) return undefined;
   const dots = count(s, '.');
@@ -105,7 +109,11 @@ function parseDigits(input: string, preferThousands: boolean, hasMultiplier: boo
     const sep = dots === 1 ? '.' : ',';
     const [intPart = '', frac = ''] = s.split(sep);
     const thousandsLike =
-      !hasMultiplier && frac.length === 3 && intPart.length >= 1 && intPart.length <= 3 && intPart !== '0';
+      !hasMultiplier &&
+      frac.length === 3 &&
+      intPart.length >= 1 &&
+      intPart.length <= 3 &&
+      intPart !== '0';
     if (sep === ',') s = thousandsLike ? intPart + frac : `${intPart || '0'}.${frac}`;
     else s = thousandsLike && preferThousands ? intPart + frac : `${intPart || '0'}.${frac}`;
   }
@@ -142,7 +150,7 @@ function parseNumeric(raw: unknown, preferThousands: boolean): number | undefine
     }
   }
   // Spaces, apostrophes and thin spaces are thousand separators ("1 200 000", "1'200").
-  s = s.replace(/[\s'’  ]/g, '');
+  s = s.replace(/[\s'’\u2009\u202f]/g, '');
   const n = parseDigits(s, preferThousands, multiplier !== 1);
   if (n === undefined) return undefined;
   const value = n * multiplier * (negative ? -1 : 1);
@@ -297,8 +305,41 @@ export function parseRating(raw: unknown): number | undefined {
 /* Booleans, lists and URLs                                             */
 /* ------------------------------------------------------------------ */
 
-const TRUE_WORDS = new Set(['yes', 'y', 'true', '1', 'x', 'ja', 'j', 'oui', 'si', 'sí', 'wahr', 'on', 'checked', '✓', '✔', '☑', '✅']);
-const FALSE_WORDS = new Set(['no', 'n', 'false', '0', 'nee', 'nein', 'non', 'off', 'unchecked', 'falsch', '✗', '✘', '☐', '❌']);
+const TRUE_WORDS = new Set([
+  'yes',
+  'y',
+  'true',
+  '1',
+  'x',
+  'ja',
+  'j',
+  'oui',
+  'si',
+  'sí',
+  'wahr',
+  'on',
+  'checked',
+  '✓',
+  '✔',
+  '☑',
+  '✅',
+]);
+const FALSE_WORDS = new Set([
+  'no',
+  'n',
+  'false',
+  '0',
+  'nee',
+  'nein',
+  'non',
+  'off',
+  'unchecked',
+  'falsch',
+  '✗',
+  '✘',
+  '☐',
+  '❌',
+]);
 
 /** Reads yes/no values in several languages and notations. */
 export function parseBoolean(raw: unknown): boolean | undefined {
@@ -354,18 +395,59 @@ export function parseUrl(raw: unknown): string | undefined {
 /* ------------------------------------------------------------------ */
 
 const MONTHS: Record<string, number> = {
-  jan: 1, january: 1, januari: 1, januar: 1, janvier: 1, janner: 1,
-  feb: 2, february: 2, februari: 2, februar: 2, fevrier: 2,
-  mar: 3, march: 3, maart: 3, mrt: 3, marz: 3, mars: 3, maerz: 3,
-  apr: 4, april: 4, avril: 4,
-  may: 5, mei: 5, mai: 5,
-  jun: 6, june: 6, juni: 6, juin: 6,
-  jul: 7, july: 7, juli: 7, juillet: 7,
-  aug: 8, august: 8, augustus: 8, aout: 8,
-  sep: 9, sept: 9, september: 9, septembre: 9,
-  oct: 10, october: 10, okt: 10, oktober: 10, octobre: 10,
-  nov: 11, november: 11, novembre: 11,
-  dec: 12, december: 12, dez: 12, dezember: 12, decembre: 12,
+  jan: 1,
+  january: 1,
+  januari: 1,
+  januar: 1,
+  janvier: 1,
+  janner: 1,
+  feb: 2,
+  february: 2,
+  februari: 2,
+  februar: 2,
+  fevrier: 2,
+  mar: 3,
+  march: 3,
+  maart: 3,
+  mrt: 3,
+  marz: 3,
+  mars: 3,
+  maerz: 3,
+  apr: 4,
+  april: 4,
+  avril: 4,
+  may: 5,
+  mei: 5,
+  mai: 5,
+  jun: 6,
+  june: 6,
+  juni: 6,
+  juin: 6,
+  jul: 7,
+  july: 7,
+  juli: 7,
+  juillet: 7,
+  aug: 8,
+  august: 8,
+  augustus: 8,
+  aout: 8,
+  sep: 9,
+  sept: 9,
+  september: 9,
+  septembre: 9,
+  oct: 10,
+  october: 10,
+  okt: 10,
+  oktober: 10,
+  octobre: 10,
+  nov: 11,
+  november: 11,
+  novembre: 11,
+  dec: 12,
+  december: 12,
+  dez: 12,
+  dezember: 12,
+  decembre: 12,
 };
 
 const EXCEL_EPOCH = Date.UTC(1899, 11, 30);
@@ -465,7 +547,7 @@ export function parseDate(raw: unknown, order?: 'dmy' | 'mdy'): string | undefin
 function parseMonthNameDate(s: string): string | undefined {
   const tokens = s
     .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .split(/[\s,.\-/']+/)
     .filter(Boolean);
   let month: number | undefined;

@@ -1,8 +1,8 @@
 import {
   type ElementType,
+  normalizeName,
   RELATION_TYPE_DEFS,
   type RelationType,
-  normalizeName,
   typeDef,
 } from '@atrium/schema';
 import type { NormalizedElement, NormalizedModel, NormalizedRelation } from './types';
@@ -84,10 +84,14 @@ export class ModelBuilder {
       relations.push(rel);
     }
     for (const [what, n] of invalid) {
-      warnings.push(`Skipped ${n} ${n === 1 ? 'relation' : 'relations'} ${what}: Atrium does not allow that combination`);
+      warnings.push(
+        `Skipped ${n} ${n === 1 ? 'relation' : 'relations'} ${what}: Atrium does not allow that combination`,
+      );
     }
     if (missing) {
-      warnings.push(`Skipped ${missing} ${missing === 1 ? 'relation' : 'relations'} to elements that are not in the file`);
+      warnings.push(
+        `Skipped ${missing} ${missing === 1 ? 'relation' : 'relations'} to elements that are not in the file`,
+      );
     }
 
     const elements = [...this.elements.values()].map((el) => ({ ...el }));
@@ -100,7 +104,7 @@ export class ModelBuilder {
       }
       if (el.domainRef) {
         const domain = this.elements.get(el.domainRef);
-        if (!domain || domain.type !== 'domain' || el.type === 'domain') el.domainRef = undefined;
+        if (domain?.type !== 'domain' || el.type === 'domain') el.domainRef = undefined;
       }
       for (const key of Object.keys(el) as Array<keyof NormalizedElement>) {
         if (el[key] === undefined) delete el[key];

@@ -13,12 +13,16 @@ export function canSuggest(ctx: RequestContext): boolean {
 
 /** Can this person edit scenarios (target state, what-if)? */
 export function canEditScenarios(ctx: RequestContext): boolean {
-  return ctx.kind === 'user' && (ctx.mode === 'solo' || ctx.role === 'admin' || ctx.role === 'architect');
+  return (
+    ctx.kind === 'user' && (ctx.mode === 'solo' || ctx.role === 'admin' || ctx.role === 'architect')
+  );
 }
 
 /** Can this person approve or reject suggestions? */
 export function canReview(ctx: RequestContext): boolean {
-  return ctx.kind === 'user' && (ctx.mode === 'solo' || ctx.role === 'admin' || ctx.role === 'architect');
+  return (
+    ctx.kind === 'user' && (ctx.mode === 'solo' || ctx.role === 'admin' || ctx.role === 'architect')
+  );
 }
 
 export function isAdmin(ctx: RequestContext): boolean {
@@ -35,7 +39,11 @@ const ENGINEER_TYPES = new Set(['application', 'interface', 'data_object', 'tech
  * - engineers: direct on elements owned by their team (applications, interfaces, data, technology)
  * - everyone else, and every agent or CI token: suggestion
  */
-export function canEditDirectly(ctx: RequestContext, el: Element | null, index: ModelIndex): boolean {
+export function canEditDirectly(
+  ctx: RequestContext,
+  el: Element | null,
+  index: ModelIndex,
+): boolean {
   if (ctx.kind !== 'user') return false;
   if (ctx.mode === 'solo' || ctx.role === 'admin') return true;
   if (el?.layer === 'reference') return false;

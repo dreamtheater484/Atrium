@@ -17,7 +17,7 @@ export function containsPhrase(haystack: string, needle: string): boolean {
 /** Cleans a cell's text: no non-breaking spaces, unified newlines, trimmed. */
 export function cleanText(s: string): string {
   return s
-    .replace(/[   ]/g, ' ')
+    .replace(/[\u00a0\u2007\u202f]/g, ' ')
     .replace(/\r\n?/g, '\n')
     .replace(/[ \t]+\n/g, '\n')
     .trim();
@@ -77,7 +77,8 @@ export function decodeText(data: Uint8Array): string {
   const b0 = data[0];
   const b1 = data[1];
   const b2 = data[2];
-  if (b0 === 0xef && b1 === 0xbb && b2 === 0xbf) return new TextDecoder('utf-8').decode(data.subarray(3));
+  if (b0 === 0xef && b1 === 0xbb && b2 === 0xbf)
+    return new TextDecoder('utf-8').decode(data.subarray(3));
   if (b0 === 0xff && b1 === 0xfe) return new TextDecoder('utf-16le').decode(data.subarray(2));
   if (b0 === 0xfe && b1 === 0xff) {
     try {

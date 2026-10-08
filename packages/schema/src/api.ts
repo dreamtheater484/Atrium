@@ -90,11 +90,19 @@ export interface GraphEdge {
   target: string;
   label: string;
   mark?: 'added' | 'changed' | 'removed';
+  /** How many links an aggregated edge stands for. */
+  weight?: number;
+  /** Links run in both directions. */
+  twoWay?: boolean;
 }
 
 export interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  /** Draw nodes inside one box per domain. */
+  grouped?: boolean;
+  /** A short explanation of what is left out. */
+  note?: string;
 }
 
 export type MapOverlay =
@@ -147,6 +155,8 @@ export interface CurrentUser {
 
 export interface WorkspaceInfo {
   name: string;
+  /** Where agents and the CLI reach this Atrium (the server, not the dev UI). */
+  publicUrl: string;
   mode: 'solo' | 'team';
   version: string;
   elementCount: number;

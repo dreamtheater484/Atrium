@@ -26,7 +26,9 @@ export function matchName(
   if (index >= 0) return { name: candidates[index]!, index, score: 1, exact: true };
 
   const compactTarget = target.replace(/ /g, '');
-  const compactIndex = candidates.findIndex((c) => normalizeName(c).replace(/ /g, '') === compactTarget);
+  const compactIndex = candidates.findIndex(
+    (c) => normalizeName(c).replace(/ /g, '') === compactTarget,
+  );
   if (compactIndex >= 0) {
     return { name: candidates[compactIndex]!, index: compactIndex, score: 0.95, exact: false };
   }

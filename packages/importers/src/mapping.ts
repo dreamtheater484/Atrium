@@ -87,16 +87,27 @@ function valueFit(spec: TargetSpec, p: ColumnProfile): number {
         -0.35,
       );
     case 'percent':
-      return graded(ratio(v, (x) => parsePercent(x) !== undefined), 0.1, -0.35);
+      return graded(
+        ratio(v, (x) => parsePercent(x) !== undefined),
+        0.1,
+        -0.35,
+      );
     case 'rating':
-      return graded(ratio(v, (x) => parseRating(x) !== undefined), 0.1, -0.3);
+      return graded(
+        ratio(v, (x) => parseRating(x) !== undefined),
+        0.1,
+        -0.3,
+      );
     case 'boolean':
-      return graded(ratio(v, (x) => parseBoolean(x) !== undefined), 0.1, -0.3);
+      return graded(
+        ratio(v, (x) => parseBoolean(x) !== undefined),
+        0.1,
+        -0.3,
+      );
     case 'enum': {
       const family = enumFamilyFor(spec.options);
       const r = ratio(v, (x) => {
-        const m = matchEnum(x, spec.options ?? [], family);
-        return m !== undefined && !m.fuzzy;
+        return matchEnum(x, spec.options ?? [], family, false) !== undefined;
       });
       return graded(r, 0.15, -0.3);
     }
@@ -112,6 +123,7 @@ function valueFit(spec: TargetSpec, p: ColumnProfile): number {
     case 'key':
       return ratio(v, (x) => /\s/.test(toText(x).trim())) > 0.6 ? -0.25 : 0;
     case 'text':
+      return p.dateRatio > 0.6 ? -0.3 : 0;
     case 'relation':
       return p.dateRatio > 0.6 || p.numericRatio > 0.8 ? -0.3 : 0;
     case 'longtext':
@@ -125,6 +137,9 @@ function valueFit(spec: TargetSpec, p: ColumnProfile): number {
 /* ------------------------------------------------------------------ */
 /* Header matching                                                      */
 /* ------------------------------------------------------------------ */
+
+/** Lowest score at which a header is matched to a target. */
+const MIN_SCORE = 0.5;
 
 interface HeaderForms {
   full: string;
@@ -182,8 +197,19 @@ export function matchColumn(
 
 const LEVEL_RE = /(?:^|\s)(?:level|lvl|lv|l|niveau|ebene)\s?(\d)(?=\s|$)/;
 const LEVEL_FILLER = new Set([
-  'name', 'title', 'capability', 'capabilities', 'business capability', 'process', 'processes',
-  'business process', 'data', 'data object', 'domain', 'area', 'naam',
+  'name',
+  'title',
+  'capability',
+  'capabilities',
+  'business capability',
+  'process',
+  'processes',
+  'business process',
+  'data',
+  'data object',
+  'domain',
+  'area',
+  'naam',
 ]);
 
 interface LevelHeader {
@@ -204,8 +230,6 @@ function levelOf(header: string): LevelHeader | undefined {
 /* ------------------------------------------------------------------ */
 /* guessMapping                                                         */
 /* ------------------------------------------------------------------ */
-
-const MIN_SCORE = 0.5;
 
 interface Pair {
   header: string;
@@ -293,15 +317,15 @@ export function guessMapping(sheet: ParsedSheet, type: ElementType): SheetMappin
       if (spec.valueKind === 'enum' && spec.options) {
         const family = enumFamilyFor(spec.options);
         r = ratio(p.values, (x) => {
-          const m = matchEnum(x, spec.options!, family);
-          return m !== undefined && !m.fuzzy;
+          return matchEnum(x, spec.options!, family, false) !== undefined;
         });
       } else if (spec.valueKind === 'url') {
         r = ratio(p.values, (x) => /^(?:https?:\/\/|www\.)\S+$/i.test(toText(x).trim()));
       } else {
         return;
       }
-      if (r >= 0.8) valuePairs.push({ header, headerIndex, spec, specIndex, score: 0.5 + 0.25 * r });
+      if (r >= 0.8)
+        valuePairs.push({ header, headerIndex, spec, specIndex, score: 0.5 + 0.25 * r });
     });
   });
   take(valuePairs);
@@ -327,9 +351,15 @@ export function guessMapping(sheet: ParsedSheet, type: ElementType): SheetMappin
     if (fallback) assign(fallback, { kind: 'core', field: 'name' }, 0.45, 'core:name');
   }
 
-  for (const h of headers) if (!columns[h]) columns[h] = { kind: 'ignore' };
-
-  return { elementType: type, columns, confidence: mappingConfidence(headers, columns, columnConfidence, profiles), columnConfidence };
+  // Report columns in sheet order; unmatched columns are ignored.
+  const ordered: Record<string, ColumnTarget> = {};
+  for (const h of headers) ordered[h] = columns[h] ?? { kind: 'ignore' };
+  return {
+    elementType: type,
+    columns: ordered,
+    confidence: mappingConfidence(headers, ordered, columnConfidence, profiles),
+    columnConfidence,
+  };
 }
 
 function mappingConfidence(

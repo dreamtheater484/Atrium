@@ -11,8 +11,8 @@ import {
   Kbd,
   Label,
   Textarea,
-  toast,
   TypeIcon,
+  toast,
 } from '@atrium/ui';
 import { useEffect, useRef, useState } from 'react';
 import { useCreateElement, useSearch } from '../../lib/queries';
@@ -89,12 +89,15 @@ export function AddDialog() {
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>Add to the model</DialogTitle>
-          <DialogDescription>Give it a name. Atrium fills in what it can work out, such as owner, domain and key.</DialogDescription>
+          <DialogDescription>
+            Give it a name. Atrium fills in what it can work out, such as owner, domain and key.
+          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Type">
           {ORDER.map((t) => {
             const d = ELEMENT_TYPE_LIST.find((x) => x.type === t)!;
             return (
+              // biome-ignore lint/a11y/useSemanticElements: styled radio cards
               <button
                 key={t}
                 type="button"
@@ -107,7 +110,9 @@ export function AddDialog() {
                 }}
                 className={cn(
                   'flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-medium transition',
-                  type === t ? 'border-primary bg-primary-soft text-primary-soft-foreground' : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground',
+                  type === t
+                    ? 'border-primary bg-primary-soft text-primary-soft-foreground'
+                    : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground',
                 )}
               >
                 <TypeIcon type={t} size="xs" />
@@ -137,15 +142,30 @@ export function AddDialog() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={
-                { application: 'Customer Portal', capability: 'Order management', technology: 'PostgreSQL 16', initiative: 'CRM consolidation' }[type as string] ??
-                `New ${def.label.toLowerCase()}`
+                {
+                  application: 'Customer Portal',
+                  capability: 'Order management',
+                  technology: 'PostgreSQL 16',
+                  initiative: 'CRM consolidation',
+                }[type as string] ?? `New ${def.label.toLowerCase()}`
               }
               className="h-10 text-sm"
               autoComplete="off"
             />
             {dupe && (
               <p className="text-xs text-watch-foreground">
-                Similar: <button type="button" className="font-medium underline" onClick={() => { close(); inspect(dupe.id); }}>{dupe.name}</button> already exists.
+                Similar:{' '}
+                <button
+                  type="button"
+                  className="font-medium underline"
+                  onClick={() => {
+                    close();
+                    inspect(dupe.id);
+                  }}
+                >
+                  {dupe.name}
+                </button>{' '}
+                already exists.
               </p>
             )}
           </div>
@@ -153,19 +173,35 @@ export function AddDialog() {
             {def.hierarchical && (
               <div className="grid gap-1.5">
                 <Label>Part of</Label>
-                <ElementPicker types={[type]} value={parent} onChange={setParent} placeholder="Top level" />
+                <ElementPicker
+                  types={[type]}
+                  value={parent}
+                  onChange={setParent}
+                  placeholder="Top level"
+                />
               </div>
             )}
             {type !== 'domain' && type !== 'team' && (
               <div className="grid gap-1.5">
                 <Label>Domain</Label>
-                <ElementPicker types={['domain']} value={domain} onChange={setDomain} placeholder={parent ? 'Same as parent' : 'Optional'} />
+                <ElementPicker
+                  types={['domain']}
+                  value={domain}
+                  onChange={setDomain}
+                  placeholder={parent ? 'Same as parent' : 'Optional'}
+                />
               </div>
             )}
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="add-desc">Description</Label>
-            <Textarea id="add-desc" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional. What is it for?" />
+            <Textarea
+              id="add-desc"
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optional. What is it for?"
+            />
           </div>
           <div className="flex items-center justify-between pt-1">
             <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">

@@ -12,14 +12,21 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
-  timeAgo,
   TypeIcon,
+  timeAgo,
 } from '@atrium/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { ArrowLeft, History, MessageSquare, Network, Undo2, Zap } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { CoreFields, ElementHeaderMeta, HealthPanel, Relations, Suggestions, TitleField } from '../components/element-editor';
+import {
+  CoreFields,
+  ElementHeaderMeta,
+  HealthPanel,
+  Relations,
+  Suggestions,
+  TitleField,
+} from '../components/element-editor';
 import { api } from '../lib/api';
 import { useChangesetAction, useChangesets } from '../lib/changes';
 import { setViewing } from '../lib/live';
@@ -48,16 +55,28 @@ function ImpactPanel({ id }: { id: string }) {
       <div className="flex flex-wrap items-center gap-3 rounded-xl bg-watch-soft p-4 text-watch-foreground">
         <Zap className="size-5" />
         <p className="flex-1 text-[13px] font-medium">{data.summary}</p>
-        <Button size="sm" onClick={() => navigate({ to: '/explore', search: { view: 'graph', focus: id, type: data.root.type } })}>
+        <Button
+          size="sm"
+          onClick={() =>
+            navigate({ to: '/explore', search: { view: 'graph', focus: id, type: data.root.type } })
+          }
+        >
           <Network /> Show as graph
         </Button>
       </div>
       {[...byDepth.entries()].map(([depth, nodes]) => (
         <div key={depth}>
-          <h4 className="mb-2 text-xs font-semibold text-muted-foreground">{depth === 1 ? 'Directly affected' : `${depth} steps away`} · {nodes.length}</h4>
+          <h4 className="mb-2 text-xs font-semibold text-muted-foreground">
+            {depth === 1 ? 'Directly affected' : `${depth} steps away`} · {nodes.length}
+          </h4>
           <div className="flex flex-wrap gap-1.5">
             {nodes.map((n) => (
-              <button key={n.element.id} type="button" onClick={() => inspect(n.element.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 py-1 text-[13px] shadow-sm hover:border-border-strong">
+              <button
+                key={n.element.id}
+                type="button"
+                onClick={() => inspect(n.element.id)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2 py-1 text-[13px] shadow-sm hover:border-border-strong"
+              >
                 <TypeIcon type={n.element.type} size="xs" /> {n.element.name}
               </button>
             ))}
@@ -69,7 +88,11 @@ function ImpactPanel({ id }: { id: string }) {
 }
 
 function HistoryPanel({ id }: { id: string }) {
-  const { data } = useChangesets({ elementId: id, status: 'applied,open,rejected', limit: 50 } as never);
+  const { data } = useChangesets({
+    elementId: id,
+    status: 'applied,open,rejected',
+    limit: 50,
+  } as never);
   const action = useChangesetAction();
   const navigate = useNavigate();
   if (!data) return <Skeleton className="h-40" />;
@@ -82,7 +105,11 @@ function HistoryPanel({ id }: { id: string }) {
             <Avatar name={c.authorName ?? '?'} size="sm" />
           </span>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className="text-[13px] font-medium hover:underline" onClick={() => navigate({ to: '/changes', search: { id: c.id, tab: 'history' } })}>
+            <button
+              type="button"
+              className="text-[13px] font-medium hover:underline"
+              onClick={() => navigate({ to: '/changes', search: { id: c.id, tab: 'history' } })}
+            >
               {c.title}
             </button>
             {c.status === 'open' && <Badge tone="watch">Waiting for review</Badge>}
@@ -91,10 +118,16 @@ function HistoryPanel({ id }: { id: string }) {
             {c.authorKind === 'agent' && <Badge tone="primary">Agent</Badge>}
           </div>
           <p className="text-xs text-muted-foreground">
-            {c.authorName} · {timeAgo(c.decidedAt ?? c.submittedAt ?? c.createdAt)} · {c.changeCount} change{c.changeCount === 1 ? '' : 's'}
+            {c.authorName} · {timeAgo(c.decidedAt ?? c.submittedAt ?? c.createdAt)} ·{' '}
+            {c.changeCount} change{c.changeCount === 1 ? '' : 's'}
           </p>
           {c.status === 'applied' && (
-            <Button size="sm" variant="ghost" className="mt-1 -ml-2 text-muted-foreground" onClick={() => action.mutate({ id: c.id, action: 'undo' })}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="mt-1 -ml-2 text-muted-foreground"
+              onClick={() => action.mutate({ id: c.id, action: 'undo' })}
+            >
               <Undo2 /> Undo
             </Button>
           )}
@@ -106,7 +139,10 @@ function HistoryPanel({ id }: { id: string }) {
 
 function CommentsPanel({ id }: { id: string }) {
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ['comments', id], queryFn: () => api<Comment[]>(`/elements/${id}/comments`) });
+  const { data } = useQuery({
+    queryKey: ['comments', id],
+    queryFn: () => api<Comment[]>(`/elements/${id}/comments`),
+  });
   const [body, setBody] = useState('');
   const add = useMutation({
     mutationFn: () => api(`/elements/${id}/comments`, { body: { body } }),
@@ -122,7 +158,8 @@ function CommentsPanel({ id }: { id: string }) {
           <Avatar name={c.authorName} />
           <div className="min-w-0 flex-1">
             <p className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">{c.authorName}</span> · {timeAgo(c.createdAt)}
+              <span className="font-medium text-foreground">{c.authorName}</span> ·{' '}
+              {timeAgo(c.createdAt)}
             </p>
             <p className="text-[13px] whitespace-pre-wrap">{c.body}</p>
           </div>
@@ -135,9 +172,19 @@ function CommentsPanel({ id }: { id: string }) {
           if (body.trim()) add.mutate();
         }}
       >
-        <Textarea rows={3} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Ask a question or leave a note. Use @name to mention someone." />
+        <Textarea
+          rows={3}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Ask a question or leave a note. Use @name to mention someone."
+        />
         <div>
-          <Button type="submit" variant="primary" size="sm" disabled={!body.trim() || add.isPending}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
+            disabled={!body.trim() || add.isPending}
+          >
             Comment
           </Button>
         </div>
@@ -150,13 +197,21 @@ export function ElementPage() {
   const { id } = useParams({ from: '/e/$id' });
   const { data: el, isError } = useElement(id);
   const domains = useElements({ type: 'domain', limit: 200 });
-  const domainNames = useMemo(() => new Map((domains.data?.items ?? []).map((d) => [d.id, d.name])), [domains.data]);
+  const domainNames = useMemo(
+    () => new Map((domains.data?.items ?? []).map((d) => [d.id, d.name])),
+    [domains.data],
+  );
   useEffect(() => {
     setViewing(id);
     return () => setViewing(null);
   }, [id]);
 
-  if (isError) return <EmptyState title="This element doesn't exist" className="mt-24">It may have been removed. You can restore it from Changes → History.</EmptyState>;
+  if (isError)
+    return (
+      <EmptyState title="This element doesn't exist" className="mt-24">
+        It may have been removed. You can restore it from Changes → History.
+      </EmptyState>
+    );
   if (!el) {
     return (
       <div className="mx-auto max-w-5xl p-8">
@@ -169,13 +224,21 @@ export function ElementPage() {
   return (
     <div className="mx-auto flex max-w-[1180px] flex-col gap-5 px-6 py-6">
       <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
-        <Link to="/explore" search={{ type: el.type }} className="flex items-center gap-1 hover:text-foreground">
+        <Link
+          to="/explore"
+          search={{ type: el.type }}
+          className="flex items-center gap-1 hover:text-foreground"
+        >
           <ArrowLeft className="size-3.5" /> {def.plural}
         </Link>
         {el.parentName && (
           <>
             <span>/</span>
-            <button type="button" className="hover:text-foreground" onClick={() => el.parentId && inspect(el.parentId)}>
+            <button
+              type="button"
+              className="hover:text-foreground"
+              onClick={() => el.parentId && inspect(el.parentId)}
+            >
               {el.parentName}
             </button>
           </>
@@ -217,10 +280,17 @@ export function ElementPage() {
               </Card>
               {el.children.length > 0 && (
                 <Card className="p-4">
-                  <h3 className="mb-2 text-[13px] font-semibold">Contains · {el.children.length}</h3>
+                  <h3 className="mb-2 text-[13px] font-semibold">
+                    Contains · {el.children.length}
+                  </h3>
                   <div className="flex flex-col">
                     {el.children.map((c) => (
-                      <button key={c.id} type="button" onClick={() => inspect(c.id)} className="flex items-center gap-2 rounded-lg px-2 py-1 text-left text-[13px] hover:bg-surface-2">
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => inspect(c.id)}
+                        className="flex items-center gap-2 rounded-lg px-2 py-1 text-left text-[13px] hover:bg-surface-2"
+                      >
                         <TypeIcon type={c.type} size="xs" /> {c.name}
                       </button>
                     ))}

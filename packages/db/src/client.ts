@@ -35,7 +35,5 @@ export function createDb(opts: DbOptions): Sql {
 }
 
 export function defaultDatabaseUrl(): string {
-  return (
-    process.env.DATABASE_URL ?? 'postgres://atrium:atrium@localhost:5433/atrium'
-  );
+  return process.env.DATABASE_URL ?? 'postgres://atrium:atrium@localhost:5433/atrium';
 }

@@ -34,11 +34,21 @@ export class RealtimeHub {
   private clients = new Set<Client>();
 
   add(socket: SocketLike, user: { id: string; name: string }) {
-    const client: Client = { socket, userId: user.id, name: user.name, viewing: null, editing: null };
+    const client: Client = {
+      socket,
+      userId: user.id,
+      name: user.name,
+      viewing: null,
+      editing: null,
+    };
     this.clients.add(client);
     socket.on('message', (raw) => {
       try {
-        const msg = JSON.parse(String(raw)) as { type: string; viewing?: string | null; editing?: string | null };
+        const msg = JSON.parse(String(raw)) as {
+          type: string;
+          viewing?: string | null;
+          editing?: string | null;
+        };
         if (msg.type === 'presence') {
           client.viewing = msg.viewing ?? null;
           client.editing = msg.editing ?? null;

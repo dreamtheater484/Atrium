@@ -1,9 +1,4 @@
-import type {
-  Classification,
-  ElementType,
-  LifecyclePhase,
-  RelationType,
-} from '@atrium/schema';
+import type { Classification, ElementType, LifecyclePhase, RelationType } from '@atrium/schema';
 
 /** File formats the importer understands. */
 export type ImportFormat =

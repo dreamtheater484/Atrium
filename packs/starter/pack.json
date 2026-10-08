@@ -1,0 +1,246 @@
+{
+  "format": "atrium-pack",
+  "manifest": {
+    "id": "starter-capabilities",
+    "name": "Starter capability reference",
+    "version": "2026.1",
+    "publisher": "Atrium",
+    "description": "A generic, industry-neutral capability map to compare your own capabilities against. A good first reference before you load an industry model.",
+    "license": "CC0 1.0 (public domain)",
+    "frameworks": [
+      {
+        "id": "capabilities",
+        "name": "Generic capabilities",
+        "elementType": "capability"
+      }
+    ]
+  },
+  "elements": [
+    {
+      "sourceId": "1",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Strategy and planning",
+      "description": "Set direction, plan the portfolio and manage performance."
+    },
+    {
+      "sourceId": "1.1",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Strategy management",
+      "description": "Define and track the organisation's strategy and objectives.",
+      "parentSourceId": "1"
+    },
+    {
+      "sourceId": "1.2",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Portfolio and investment management",
+      "description": "Choose and fund the right initiatives.",
+      "parentSourceId": "1"
+    },
+    {
+      "sourceId": "1.3",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Enterprise architecture management",
+      "description": "Keep a shared view of how the organisation works and changes.",
+      "parentSourceId": "1"
+    },
+    {
+      "sourceId": "2",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Customer",
+      "description": "Win, serve and keep customers."
+    },
+    {
+      "sourceId": "2.1",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Marketing",
+      "description": "Understand markets and generate demand.",
+      "parentSourceId": "2"
+    },
+    {
+      "sourceId": "2.2",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Sales",
+      "description": "Turn demand into orders and contracts.",
+      "parentSourceId": "2"
+    },
+    {
+      "sourceId": "2.3",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Customer service",
+      "description": "Help customers with questions and problems.",
+      "parentSourceId": "2"
+    },
+    {
+      "sourceId": "2.4",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Customer information management",
+      "description": "Keep one trusted view of each customer.",
+      "parentSourceId": "2"
+    },
+    {
+      "sourceId": "3",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Products and services",
+      "description": "Design, offer and deliver what customers buy."
+    },
+    {
+      "sourceId": "3.1",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Product management",
+      "description": "Define products, offers and prices.",
+      "parentSourceId": "3"
+    },
+    {
+      "sourceId": "3.2",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Order management",
+      "description": "Capture, check and fulfil orders.",
+      "parentSourceId": "3"
+    },
+    {
+      "sourceId": "3.3",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Service delivery",
+      "description": "Deliver and run the services customers use.",
+      "parentSourceId": "3"
+    },
+    {
+      "sourceId": "4",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Operations",
+      "description": "Run the resources the business depends on."
+    },
+    {
+      "sourceId": "4.1",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Supply chain and procurement",
+      "description": "Source and buy goods and services.",
+      "parentSourceId": "4"
+    },
+    {
+      "sourceId": "4.2",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Asset and resource management",
+      "description": "Plan, track and maintain assets.",
+      "parentSourceId": "4"
+    },
+    {
+      "sourceId": "4.3",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Field operations",
+      "description": "Schedule and carry out work on site.",
+      "parentSourceId": "4"
+    },
+    {
+      "sourceId": "5",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Finance",
+      "description": "Manage money and financial risk."
+    },
+    {
+      "sourceId": "5.1",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Billing and invoicing",
+      "description": "Charge customers correctly and on time.",
+      "parentSourceId": "5"
+    },
+    {
+      "sourceId": "5.2",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Accounting and reporting",
+      "description": "Keep the books and report results.",
+      "parentSourceId": "5"
+    },
+    {
+      "sourceId": "5.3",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Revenue assurance",
+      "description": "Find and stop revenue leakage.",
+      "parentSourceId": "5"
+    },
+    {
+      "sourceId": "6",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "People and organisation",
+      "description": "Hire, develop and support people."
+    },
+    {
+      "sourceId": "6.1",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Workforce management",
+      "description": "Plan and manage the workforce.",
+      "parentSourceId": "6"
+    },
+    {
+      "sourceId": "6.2",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Learning and development",
+      "description": "Build skills.",
+      "parentSourceId": "6"
+    },
+    {
+      "sourceId": "7",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Data and technology",
+      "description": "Provide the data and technology the business runs on."
+    },
+    {
+      "sourceId": "7.1",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Data management",
+      "description": "Govern, integrate and protect data.",
+      "parentSourceId": "7"
+    },
+    {
+      "sourceId": "7.2",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Analytics and insight",
+      "description": "Turn data into decisions.",
+      "parentSourceId": "7"
+    },
+    {
+      "sourceId": "7.3",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Identity and access management",
+      "description": "Control who can use what.",
+      "parentSourceId": "7"
+    },
+    {
+      "sourceId": "7.4",
+      "framework": "capabilities",
+      "type": "capability",
+      "name": "Integration",
+      "description": "Connect systems through APIs and events.",
+      "parentSourceId": "7"
+    }
+  ],
+  "relations": []
+}

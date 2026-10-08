@@ -53,7 +53,20 @@ function overlap(a: Set<string>, b: Set<string>): number {
   return n / Math.min(a.size, b.size);
 }
 
-const SAAS_VENDORS = ['salesforce', 'workday', 'servicenow', 'microsoft 365', 'zendesk', 'hubspot', 'atlassian', 'slack', 'google workspace', 'successfactors', 'coupa', 'docusign'];
+const SAAS_VENDORS = [
+  'salesforce',
+  'workday',
+  'servicenow',
+  'microsoft 365',
+  'zendesk',
+  'hubspot',
+  'atlassian',
+  'slack',
+  'google workspace',
+  'successfactors',
+  'coupa',
+  'docusign',
+];
 
 function suggestion(value: unknown, reason: string, confidence: number): FieldSuggestion {
   return { value, reason, source: 'rules', confidence };
@@ -83,7 +96,9 @@ export class RuleBasedAssistant implements AiProvider {
       if (domain) {
         out.domainId = suggestion(
           domain.id,
-          fromParent ? `Same domain as ${parent!.name}` : `Most of the capabilities it supports are in ${domain.name}`,
+          fromParent
+            ? `Same domain as ${parent!.name}`
+            : `Most of the capabilities it supports are in ${domain.name}`,
           fromParent ? 0.9 : 0.7,
         );
       }
@@ -92,8 +107,10 @@ export class RuleBasedAssistant implements AiProvider {
     if (!el.owner) {
       const team = teams[0];
       const domain = index.get(el.domainId);
-      if (team?.owner) out.owner = suggestion(team.owner, `Lead of ${team.name}, the owning team`, 0.6);
-      else if (domain?.owner) out.owner = suggestion(domain.owner, `Owner of the ${domain.name} domain`, 0.4);
+      if (team?.owner)
+        out.owner = suggestion(team.owner, `Lead of ${team.name}, the owning team`, 0.6);
+      else if (domain?.owner)
+        out.owner = suggestion(domain.owner, `Owner of the ${domain.name} domain`, 0.4);
     }
 
     if ((el.description ?? '').trim().length < 15) {
@@ -104,24 +121,41 @@ export class RuleBasedAssistant implements AiProvider {
     if (el.type === 'application') {
       const vendor = String(el.attributes.vendor ?? '').toLowerCase();
       if (!el.attributes.hosting && vendor && SAAS_VENDORS.some((v) => vendor.includes(v))) {
-        out['attributes.hosting'] = suggestion('saas', `${el.attributes.vendor} is usually delivered as SaaS`, 0.7);
+        out['attributes.hosting'] = suggestion(
+          'saas',
+          `${el.attributes.vendor} is usually delivered as SaaS`,
+          0.7,
+        );
       }
       if (!el.attributes.criticality && caps.some((c) => c.attributes.importance === 'high')) {
-        out['attributes.criticality'] = suggestion('high', 'Supports a capability of high strategic importance', 0.5);
+        out['attributes.criticality'] = suggestion(
+          'high',
+          'Supports a capability of high strategic importance',
+          0.5,
+        );
       }
       if (!el.attributes.time) {
         const tf = Number(el.attributes.technical_fit);
         const bf = Number(el.attributes.business_fit);
         if (tf && bf) {
-          const time = bf >= 3 ? (tf >= 3 ? 'invest' : 'migrate') : tf >= 3 ? 'tolerate' : 'eliminate';
-          out['attributes.time'] = suggestion(time, `From business fit ${bf}/5 and technical fit ${tf}/5`, 0.8);
+          const time =
+            bf >= 3 ? (tf >= 3 ? 'invest' : 'migrate') : tf >= 3 ? 'tolerate' : 'eliminate';
+          out['attributes.time'] = suggestion(
+            time,
+            `From business fit ${bf}/5 and technical fit ${tf}/5`,
+            0.8,
+          );
         }
       }
     }
     if (el.type === 'data_object' && el.classification === 'internal') {
       const s = el.attributes.sensitivity as string | undefined;
       if (s && s !== 'none') {
-        out.classification = suggestion('confidential', `${enumLabel(s)} is usually confidential`, 0.7);
+        out.classification = suggestion(
+          'confidential',
+          `${enumLabel(s)} is usually confidential`,
+          0.7,
+        );
       }
     }
     return out;
@@ -134,9 +168,14 @@ export class RuleBasedAssistant implements AiProvider {
     switch (el.type) {
       case 'application': {
         const vendor = el.attributes.vendor ? ` from ${el.attributes.vendor}` : '';
-        const hosting = el.attributes.hosting ? `${enumLabel(el.attributes.hosting as string)} ` : '';
+        const hosting = el.attributes.hosting
+          ? `${enumLabel(el.attributes.hosting as string)} `
+          : '';
         const what = caps.length ? ` It supports ${list(caps.slice(0, 3))}.` : '';
-        return `${el.name} is a ${hosting.toLowerCase()}application${vendor}${inDomain}.${what}`.replace(/\s+/g, ' ');
+        return `${el.name} is a ${hosting.toLowerCase()}application${vendor}${inDomain}.${what}`.replace(
+          /\s+/g,
+          ' ',
+        );
       }
       case 'capability': {
         const parent = index.get(el.parentId)?.name;
@@ -160,9 +199,18 @@ export class RuleBasedAssistant implements AiProvider {
     for (const t of index.ofType(targetType)) {
       if (t.id === el.id || existing.has(t.id)) continue;
       const theirs = words(`${t.name} ${t.description}`);
-      const score = Math.max(overlap(mine, words(t.name)) * 0.9, overlap(mine, theirs) * 0.6, similarity(el.name, t.name));
+      const score = Math.max(
+        overlap(mine, words(t.name)) * 0.9,
+        overlap(mine, theirs) * 0.6,
+        similarity(el.name, t.name),
+      );
       if (score >= 0.45) {
-        matches.push({ id: t.id, name: t.name, confidence: Math.min(0.95, score), reason: `Name and description match "${t.name}"` });
+        matches.push({
+          id: t.id,
+          name: t.name,
+          confidence: Math.min(0.95, score),
+          reason: `Name and description match "${t.name}"`,
+        });
       }
     }
     return matches.sort((a, b) => b.confidence - a.confidence).slice(0, limit);
@@ -176,7 +224,12 @@ export class RuleBasedAssistant implements AiProvider {
       if (mapped.has(t.id)) continue;
       const score = Math.max(overlap(mine, words(t.name)), similarity(el.name, t.name) * 1.1);
       if (score >= 0.5) {
-        matches.push({ id: t.id, name: t.name, confidence: Math.min(0.95, score), reason: `Closest match in ${t.pack ?? 'the reference model'}` });
+        matches.push({
+          id: t.id,
+          name: t.name,
+          confidence: Math.min(0.95, score),
+          reason: `Closest match in ${t.pack ?? 'the reference model'}`,
+        });
       }
     }
     return matches.sort((a, b) => b.confidence - a.confidence).slice(0, limit);

@@ -167,13 +167,24 @@ export function AttributeField({
       return (
         <div className="flex h-7 items-center px-1.5">
           <Rating value={value as number} onChange={disabled ? undefined : (v) => onSave(v)} />
-          <span className="ml-2 text-xs text-muted-foreground tabular">{value ? `${value}/5` : ''}</span>
+          <span className="ml-2 text-xs text-muted-foreground tabular">
+            {value ? `${value}/5` : ''}
+          </span>
         </div>
       );
     case 'boolean':
       return (
-        <button type="button" disabled={disabled} onClick={() => onSave(!value)} className="flex h-7 items-center gap-1.5 px-1.5 text-[13px]">
-          {value ? <Check className="size-4 text-good" /> : <X className="size-4 text-muted-foreground" />}
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onSave(!value)}
+          className="flex h-7 items-center gap-1.5 px-1.5 text-[13px]"
+        >
+          {value ? (
+            <Check className="size-4 text-good" />
+          ) : (
+            <X className="size-4 text-muted-foreground" />
+          )}
           {value ? 'Yes' : 'No'}
         </button>
       );
@@ -199,28 +210,57 @@ export function AttributeField({
         />
       );
     case 'date':
-      return (
-        <DateField value={(value as string) ?? null} onSave={onSave} disabled={disabled} />
-      );
+      return <DateField value={(value as string) ?? null} onSave={onSave} disabled={disabled} />;
     case 'list':
       return (
         <InlineText
           value={Array.isArray(value) ? value.join(', ') : ((value as string) ?? '')}
-          onSave={(v) => onSave(v ? v.split(/[,;]/).map((s) => s.trim()).filter(Boolean) : null)}
+          onSave={(v) =>
+            onSave(
+              v
+                ? v
+                    .split(/[,;]/)
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                : null,
+            )
+          }
           disabled={disabled}
           placeholder="Comma-separated"
         />
       );
     case 'url':
-      return <InlineText value={(value as string) ?? ''} onSave={onSave} disabled={disabled} placeholder="https://…" />;
+      return (
+        <InlineText
+          value={(value as string) ?? ''}
+          onSave={onSave}
+          disabled={disabled}
+          placeholder="https://…"
+        />
+      );
     case 'longtext':
-      return <InlineTextarea value={(value as string) ?? ''} onSave={(v) => onSave(v || null)} disabled={disabled} placeholder="Add…" />;
+      return (
+        <InlineTextarea
+          value={(value as string) ?? ''}
+          onSave={(v) => onSave(v || null)}
+          disabled={disabled}
+          placeholder="Add…"
+        />
+      );
     default:
       return <InlineText value={(value as string) ?? ''} onSave={onSave} disabled={disabled} />;
   }
 }
 
-export function DateField({ value, onSave, disabled }: { value: string | null; onSave: (v: string | null) => void; disabled?: boolean }) {
+export function DateField({
+  value,
+  onSave,
+  disabled,
+}: {
+  value: string | null;
+  onSave: (v: string | null) => void;
+  disabled?: boolean;
+}) {
   const [editing, setEditing] = useState(false);
   if (editing && !disabled) {
     return (
@@ -245,17 +285,31 @@ export function DateField({ value, onSave, disabled }: { value: string | null; o
       type="button"
       disabled={disabled}
       onClick={() => setEditing(true)}
-      className={cn('block min-h-7 w-full rounded-md px-1.5 py-1 text-left text-[13px] hover:bg-surface-2', !value && 'text-subtle-foreground')}
+      className={cn(
+        'block min-h-7 w-full rounded-md px-1.5 py-1 text-left text-[13px] hover:bg-surface-2',
+        !value && 'text-subtle-foreground',
+      )}
     >
       {value ? formatDate(value) : 'Add date…'}
     </button>
   );
 }
 
-export function FieldRow({ label, children, hint }: { label: ReactNode; children: ReactNode; hint?: ReactNode }) {
+export function FieldRow({
+  label,
+  children,
+  hint,
+}: {
+  label: ReactNode;
+  children: ReactNode;
+  hint?: ReactNode;
+}) {
   return (
     <div className="grid grid-cols-[120px_1fr] items-start gap-2 py-0.5">
-      <div className="flex min-h-7 items-center text-xs text-muted-foreground" title={typeof hint === 'string' ? hint : undefined}>
+      <div
+        className="flex min-h-7 items-center text-xs text-muted-foreground"
+        title={typeof hint === 'string' ? hint : undefined}
+      >
         {label}
       </div>
       <div className="min-w-0">{children}</div>

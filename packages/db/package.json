@@ -6,7 +6,10 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src", "migrations"],
+  "files": [
+    "src",
+    "migrations"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit -p ."
   },

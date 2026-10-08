@@ -22,7 +22,13 @@ function readPref(): ThemePref {
   }
 }
 
-export function ThemeProvider({ children, onChange }: { children: ReactNode; onChange?: (t: ThemePref) => void }) {
+export function ThemeProvider({
+  children,
+  onChange,
+}: {
+  children: ReactNode;
+  onChange?: (t: ThemePref) => void;
+}) {
   const [theme, setThemeState] = useState<ThemePref>(readPref);
   const [sysDark, setSysDark] = useState(systemDark);
   const resolved = theme === 'system' ? (sysDark ? 'dark' : 'light') : theme;
@@ -34,13 +40,10 @@ export function ThemeProvider({ children, onChange }: { children: ReactNode; onC
     return () => mq.removeEventListener('change', fn);
   }, []);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.add('theme-switching');
-    root.classList.toggle('dark', resolved === 'dark');
-    const t = setTimeout(() => root.classList.remove('theme-switching'), 50);
-    return () => clearTimeout(t);
-  }, [resolved]);
+  // Applied during render (not in an effect) so charts that read the colour tokens while
+  // rendering already see the new theme.
+  if (typeof document !== 'undefined')
+    document.documentElement.classList.toggle('dark', resolved === 'dark');
 
   const setTheme = useCallback(
     (t: ThemePref) => {

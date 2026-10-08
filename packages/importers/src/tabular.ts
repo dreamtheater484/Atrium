@@ -25,7 +25,8 @@ function nonEmptyCount(row: readonly CellScalar[]): number {
 function textCount(row: readonly CellScalar[]): number {
   const seen = new Set<string>();
   for (const v of row) {
-    if (typeof v === 'string' && v.trim() && !/^[-+]?[\d.,\s%]+$/.test(v)) seen.add(v.trim().toLowerCase());
+    if (typeof v === 'string' && v.trim() && !/^[-+]?[\d.,\s%]+$/.test(v))
+      seen.add(v.trim().toLowerCase());
   }
   return seen.size;
 }
@@ -44,7 +45,9 @@ function findHeaderRow(grid: readonly CellScalar[][]): number {
   if (firstRows.length === 0) return -1;
   const widest = Math.max(...firstRows.map((r) => nonEmptyCount(grid[r]!)));
   const minWidth = Math.max(2, Math.ceil(widest * 0.5));
-  const header = firstRows.find((r) => textCount(grid[r]!) >= 2 && nonEmptyCount(grid[r]!) >= minWidth);
+  const header = firstRows.find(
+    (r) => textCount(grid[r]!) >= 2 && nonEmptyCount(grid[r]!) >= minWidth,
+  );
   return header ?? firstRows[0]!;
 }
 
@@ -109,11 +112,13 @@ export function gridToSheet(
   if (twoLevel) {
     // A sub header used under several groups ("Name" under two owners) gets its group as prefix.
     const counts = new Map<string, number>();
-    for (const t of rawHeaders) if (t) counts.set(t.toLowerCase(), (counts.get(t.toLowerCase()) ?? 0) + 1);
+    for (const t of rawHeaders)
+      if (t) counts.set(t.toLowerCase(), (counts.get(t.toLowerCase()) ?? 0) + 1);
     for (let c = 0; c < width; c++) {
       const t = rawHeaders[c]!;
       const group = groupText(c);
-      if (t && (counts.get(t.toLowerCase()) ?? 0) > 1 && group && group !== t) rawHeaders[c] = `${group} ${t}`;
+      if (t && (counts.get(t.toLowerCase()) ?? 0) > 1 && group && group !== t)
+        rawHeaders[c] = `${group} ${t}`;
     }
   }
 

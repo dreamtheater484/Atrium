@@ -19,14 +19,17 @@ export function toRgb(color: string): string {
   ctx.fillStyle = color;
   ctx.fillRect(0, 0, 1, 1);
   const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
-  const out = a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${(a! / 255).toFixed(3)})`;
+  const out =
+    a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${(a! / 255).toFixed(3)})`;
   cache.set(color, out);
   return out;
 }
 
 export function cssVar(name: string, el?: HTMLElement): string {
   if (typeof document === 'undefined') return '#888';
-  const raw = getComputedStyle(el ?? document.documentElement).getPropertyValue(name).trim();
+  const raw = getComputedStyle(el ?? document.documentElement)
+    .getPropertyValue(name)
+    .trim();
   return raw ? toRgb(raw) : '#888';
 }
 
@@ -89,7 +92,12 @@ export function echartsTheme(p: ChartPalette = chartPalette()) {
     backgroundColor: 'transparent',
     textStyle: { fontFamily: 'Inter Variable, Inter, system-ui, sans-serif', color: p.text },
     title: { textStyle: { color: p.text, fontWeight: 600 } },
-    legend: { textStyle: { color: p.muted, fontSize: 11 }, icon: 'roundRect', itemWidth: 10, itemHeight: 10 },
+    legend: {
+      textStyle: { color: p.muted, fontSize: 11 },
+      icon: 'roundRect',
+      itemWidth: 10,
+      itemHeight: 10,
+    },
     tooltip: {
       backgroundColor: p.surface,
       borderColor: p.border,

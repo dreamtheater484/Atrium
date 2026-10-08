@@ -30,7 +30,9 @@ function ThemedToaster() {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider onChange={(theme) => void api('/me', { method: 'PATCH', body: { theme } }).catch(() => {})}>
+      <ThemeProvider
+        onChange={(theme) => void api('/me', { method: 'PATCH', body: { theme } }).catch(() => {})}
+      >
         <TooltipProvider delayDuration={300}>
           <RouterProvider router={router} />
           <ThemedToaster />

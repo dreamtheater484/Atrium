@@ -1,5 +1,5 @@
 import type { Element, LifecycleDates } from './element';
-import { LIFECYCLE_PHASES, type Health, type LifecyclePhase } from './enums';
+import { type Health, LIFECYCLE_PHASES, type LifecyclePhase } from './enums';
 import { type RelationType, typeDef } from './metamodel';
 
 export interface RelationCounts {
@@ -54,7 +54,8 @@ export function missingFields(el: QualityInput, rels?: RelationCounts): MissingF
   if (rels) {
     for (const exp of def.expectedRelations ?? []) {
       const n = (exp.direction === 'out' ? rels.out : rels.in)[exp.relation] ?? 0;
-      if (n === 0) missing.push({ field: `relation.${exp.relation}`, label: exp.label, kind: 'relation' });
+      if (n === 0)
+        missing.push({ field: `relation.${exp.relation}`, label: exp.label, kind: 'relation' });
     }
   }
   return missing;
@@ -153,13 +154,16 @@ export function computeHealth(
   if (bf <= 2) act.push(`Low business fit (${bf}/5)`);
   else if (bf === 3) watch.push('Average business fit (3/5)');
   for (const t of techs) {
-    if (t.eolDate && t.eolDate < today) act.push(`Runs on ${t.name}, past end of life (${t.eolDate})`);
-    else if (t.eolDate && t.eolDate <= soon) watch.push(`Runs on ${t.name}, end of life ${t.eolDate}`);
+    if (t.eolDate && t.eolDate < today)
+      act.push(`Runs on ${t.name}, past end of life (${t.eolDate})`);
+    else if (t.eolDate && t.eolDate <= soon)
+      watch.push(`Runs on ${t.name}, end of life ${t.eolDate}`);
     if (t.radar === 'hold') watch.push(`Uses ${t.name}, which is on hold`);
   }
   if (act.length) return { health: 'act', reasons: [...act, ...watch] };
   if (watch.length) return { health: 'watch', reasons: watch };
-  if (Number.isNaN(tf) && Number.isNaN(bf) && techs.length === 0) return { health: null, reasons: [] };
+  if (Number.isNaN(tf) && Number.isNaN(bf) && techs.length === 0)
+    return { health: null, reasons: [] };
   return { health: 'good', reasons: [] };
 }
 

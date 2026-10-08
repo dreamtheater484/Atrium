@@ -60,11 +60,15 @@ function langText(v: unknown): string | undefined {
   const items = Array.isArray(v) ? v : v === undefined ? [] : [v];
   const texts = items
     .map((item) => {
-      if (typeof item === 'string' || typeof item === 'number') return { text: String(item), lang: '' };
+      if (typeof item === 'string' || typeof item === 'number')
+        return { text: String(item), lang: '' };
       const n = asNode(item);
       if (!n) return undefined;
       const text = n['#text'];
-      return { text: typeof text === 'string' || typeof text === 'number' ? String(text) : '', lang: String(n['@_lang'] ?? '') };
+      return {
+        text: typeof text === 'string' || typeof text === 'number' ? String(text) : '',
+        lang: String(n['@_lang'] ?? ''),
+      };
     })
     .filter((x): x is { text: string; lang: string } => x !== undefined && x.text.trim() !== '');
   if (!texts.length) return undefined;
@@ -95,7 +99,11 @@ const SUPPORTED: ElementType[] = ['capability', 'business_process'];
 const GOVERNING: ElementType[] = ['principle', 'standard'];
 
 /** Maps an ArchiMate relationship between two imported elements to what it means in Atrium. */
-function mapRelationship(kind: string, s: NormalizedElement, t: NormalizedElement): Action | undefined {
+function mapRelationship(
+  kind: string,
+  s: NormalizedElement,
+  t: NormalizedElement,
+): Action | undefined {
   const rel = (type: RelationType, from: NormalizedElement, to: NormalizedElement): Action => ({
     kind: 'relation',
     type,
@@ -105,12 +113,14 @@ function mapRelationship(kind: string, s: NormalizedElement, t: NormalizedElemen
   switch (kind) {
     case 'Serving':
       if (SUPPORTERS.includes(s.type) && SUPPORTED.includes(t.type)) return rel('supports', s, t);
-      if (s.type === 'technology' && (t.type === 'application' || t.type === 'technology')) return rel('uses', t, s);
+      if (s.type === 'technology' && (t.type === 'application' || t.type === 'technology'))
+        return rel('uses', t, s);
       if (s.type === 'application' && t.type === 'application') return rel('depends_on', t, s);
       if (s.type === 'interface' && t.type === 'application') return rel('consumes', t, s);
       return undefined;
     case 'Realization':
-      if ((s.type === 'business_process' || s.type === 'initiative') && t.type === 'capability') return rel('realizes', s, t);
+      if ((s.type === 'business_process' || s.type === 'initiative') && t.type === 'capability')
+        return rel('realizes', s, t);
       if (SUPPORTERS.includes(s.type) && SUPPORTED.includes(t.type)) return rel('supports', s, t);
       if (s.type === 'application' && t.type === 'interface') return rel('exposes', s, t);
       if (s.type === 'application' && t.type === 'data_object') return rel('stores', s, t);
@@ -128,8 +138,10 @@ function mapRelationship(kind: string, s: NormalizedElement, t: NormalizedElemen
       return undefined;
     case 'Composition':
     case 'Aggregation':
-      if (s.type === t.type && typeDef(s.type).hierarchical) return { kind: 'parent', child: t.ref, parent: s.ref };
-      if (s.type === 'domain' && t.type !== 'domain') return { kind: 'domain', element: t.ref, domain: s.ref };
+      if (s.type === t.type && typeDef(s.type).hierarchical)
+        return { kind: 'parent', child: t.ref, parent: s.ref };
+      if (s.type === 'domain' && t.type !== 'domain')
+        return { kind: 'domain', element: t.ref, domain: s.ref };
       if (s.type === 'application' && t.type === 'interface') return rel('exposes', s, t);
       return undefined;
     case 'Influence':
@@ -138,14 +150,18 @@ function mapRelationship(kind: string, s: NormalizedElement, t: NormalizedElemen
     case 'Association':
       if (s.type === 'initiative') return rel('impacts', s, t);
       if (t.type === 'initiative') return rel('impacts', t, s);
-      if (GOVERNING.includes(t.type) && !GOVERNING.includes(s.type)) return rel('governed_by', s, t);
-      if (GOVERNING.includes(s.type) && !GOVERNING.includes(t.type)) return rel('governed_by', t, s);
+      if (GOVERNING.includes(t.type) && !GOVERNING.includes(s.type))
+        return rel('governed_by', s, t);
+      if (GOVERNING.includes(s.type) && !GOVERNING.includes(t.type))
+        return rel('governed_by', t, s);
       if (SUPPORTERS.includes(s.type) && SUPPORTED.includes(t.type)) return rel('supports', s, t);
       if (SUPPORTERS.includes(t.type) && SUPPORTED.includes(s.type)) return rel('supports', t, s);
       if (s.type === 'team' && t.type !== 'team') return rel('owned_by', t, s);
       if (t.type === 'team' && s.type !== 'team') return rel('owned_by', s, t);
-      if (s.type === 'domain' && t.type !== 'domain') return { kind: 'domain', element: t.ref, domain: s.ref };
-      if (t.type === 'domain' && s.type !== 'domain') return { kind: 'domain', element: s.ref, domain: t.ref };
+      if (s.type === 'domain' && t.type !== 'domain')
+        return { kind: 'domain', element: t.ref, domain: s.ref };
+      if (t.type === 'domain' && s.type !== 'domain')
+        return { kind: 'domain', element: s.ref, domain: t.ref };
       return undefined;
     default:
       return undefined;
@@ -191,7 +207,11 @@ export function parseArchimate(xml: string): NormalizedModel {
 
   // Property definitions: identifier → name.
   const propertyNames = new Map<string, string>();
-  const defsContainer = asNode(model.propertyDefinitions) ?? asNode(model.propertydefinitions) ?? asNode(model.propertydefs) ?? asNode(model.propertyDefs);
+  const defsContainer =
+    asNode(model.propertyDefinitions) ??
+    asNode(model.propertydefinitions) ??
+    asNode(model.propertydefs) ??
+    asNode(model.propertyDefs);
   if (defsContainer) {
     const defs = [
       ...asList(defsContainer.propertyDefinition),
@@ -230,11 +250,16 @@ export function parseArchimate(xml: string): NormalizedModel {
 
     const properties = asList(asNode(node.properties)?.property);
     for (const prop of properties) {
-      const defRef = attr(prop, 'propertyDefinitionRef') ?? attr(prop, 'identifierref') ?? attr(prop, 'propertyDefinitionref');
+      const defRef =
+        attr(prop, 'propertyDefinitionRef') ??
+        attr(prop, 'identifierref') ??
+        attr(prop, 'propertyDefinitionref');
       const propName = defRef ? propertyNames.get(defRef) : undefined;
       const raw = langText(prop.value);
       if (!propName || raw === undefined) continue;
-      applyProperty(el, propName, raw, unknownProperties, (t, n) => pendingByName.push({ el, type: t, name: n }));
+      applyProperty(el, propName, raw, unknownProperties, (t, n) =>
+        pendingByName.push({ el, type: t, name: n }),
+      );
     }
     builder.add(el);
   }
@@ -259,7 +284,10 @@ export function parseArchimate(xml: string): NormalizedModel {
     }
     const action = mapRelationship(kind, s, t);
     if (!action) {
-      bump(skippedRelations, `${kind} ${typeDef(s.type).label.toLowerCase()} → ${typeDef(t.type).label.toLowerCase()}`);
+      bump(
+        skippedRelations,
+        `${kind} ${typeDef(s.type).label.toLowerCase()} → ${typeDef(t.type).label.toLowerCase()}`,
+      );
       continue;
     }
     if (action.kind === 'relation') builder.relate(action.type, action.from, action.to);
@@ -267,24 +295,34 @@ export function parseArchimate(xml: string): NormalizedModel {
     else {
       const el = builder.get(action.element)!;
       if (el.domainRef && el.domainRef !== action.domain) {
-        builder.warn(`"${el.name}" is in more than one grouping; kept "${builder.get(el.domainRef)?.name}" as its domain`);
+        builder.warn(
+          `"${el.name}" is in more than one grouping; kept "${builder.get(el.domainRef)?.name}" as its domain`,
+        );
       } else el.domainRef = action.domain;
     }
   }
 
   if (skippedTypes.size) {
     const total = [...skippedTypes.values()].reduce((a, b) => a + b, 0);
-    builder.warn(`Skipped ${total} ArchiMate ${total === 1 ? 'element' : 'elements'} of types Atrium does not use: ${countSummary(skippedTypes)}`);
+    builder.warn(
+      `Skipped ${total} ArchiMate ${total === 1 ? 'element' : 'elements'} of types Atrium does not use: ${countSummary(skippedTypes)}`,
+    );
   }
   if (skippedRelations.size) {
     const total = [...skippedRelations.values()].reduce((a, b) => a + b, 0);
-    builder.warn(`Skipped ${total} ${total === 1 ? 'relationship' : 'relationships'} with no Atrium meaning: ${countSummary(skippedRelations)}`);
+    builder.warn(
+      `Skipped ${total} ${total === 1 ? 'relationship' : 'relationships'} with no Atrium meaning: ${countSummary(skippedRelations)}`,
+    );
   }
   if (danglingRelations) {
-    builder.warn(`Skipped ${danglingRelations} ${danglingRelations === 1 ? 'relationship' : 'relationships'} connected to skipped elements`);
+    builder.warn(
+      `Skipped ${danglingRelations} ${danglingRelations === 1 ? 'relationship' : 'relationships'} connected to skipped elements`,
+    );
   }
   if (unknownProperties.size) {
-    builder.warn(`Ignored properties Atrium does not know: ${humanList([...unknownProperties].slice(0, 8).map((p) => `"${p}"`))}${unknownProperties.size > 8 ? ' and more' : ''}`);
+    builder.warn(
+      `Ignored properties Atrium does not know: ${humanList([...unknownProperties].slice(0, 8).map((p) => `"${p}"`))}${unknownProperties.size > 8 ? ' and more' : ''}`,
+    );
   }
   return builder.build();
 }
@@ -292,11 +330,17 @@ export function parseArchimate(xml: string): NormalizedModel {
 function setParent(builder: ModelBuilder, childRef: string, parentRef: string): void {
   const child = builder.get(childRef)!;
   if (child.parentRef && child.parentRef !== parentRef) {
-    builder.warn(`"${child.name}" has more than one parent; kept "${builder.get(child.parentRef)?.name}"`);
+    builder.warn(
+      `"${child.name}" has more than one parent; kept "${builder.get(child.parentRef)?.name}"`,
+    );
     return;
   }
   // Refuse cycles.
-  for (let cur = builder.get(parentRef); cur; cur = cur.parentRef ? builder.get(cur.parentRef) : undefined) {
+  for (
+    let cur = builder.get(parentRef);
+    cur;
+    cur = cur.parentRef ? builder.get(cur.parentRef) : undefined
+  ) {
     if (cur.ref === childRef) {
       builder.warn(`Ignored a parent link that would make "${child.name}" its own ancestor`);
       return;

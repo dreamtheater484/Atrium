@@ -14,7 +14,11 @@ import {
   withdraw,
 } from '../services/review';
 
-const actionBody = z.object({ note: z.string().max(2000).optional(), title: z.string().max(200).optional(), description: z.string().max(5000).optional() });
+const actionBody = z.object({
+  note: z.string().max(2000).optional(),
+  title: z.string().max(200).optional(),
+  description: z.string().max(5000).optional(),
+});
 
 export function changeRoutes(deps: Deps) {
   return [
@@ -59,7 +63,8 @@ export function changeRoutes(deps: Deps) {
       access: 'user',
       params: idParams,
       body: actionBody,
-      handler: async ({ params, body, ctx }) => submitDraft(deps, ctx, params.id, body.title, body.description),
+      handler: async ({ params, body, ctx }) =>
+        submitDraft(deps, ctx, params.id, body.title, body.description),
     }),
     route({
       method: 'POST',

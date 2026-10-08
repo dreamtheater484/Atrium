@@ -1,0 +1,81 @@
+{
+  "id": "tmforum",
+  "name": "TM Forum frameworks",
+  "publisher": "TM Forum (content) · Atrium (importer)",
+  "description": "Telecom reference models: eTOM business processes, the SID information model, the ODA Functional Framework and ODA Components. Load the files you are licensed to use; Atrium turns them into a read-only reference layer you can map your own model to.",
+  "license": "TM Forum material is largely member content. This pack contains only the importer and mappings; you supply the source files under your own TM Forum terms.",
+  "homepage": "https://www.tmforum.org/oda/",
+  "frameworks": [
+    {
+      "id": "etom",
+      "name": "eTOM Business Process Framework",
+      "elementType": "business_process",
+      "description": "Process hierarchy (levels 0 to 4) with dotted identifiers such as 1.2.3.",
+      "detect": {
+        "sheetWords": ["etom", "business process", "process framework"],
+        "headerWords": ["process identifier", "process name", "level", "brief description"]
+      }
+    },
+    {
+      "id": "sid",
+      "name": "SID Information Framework",
+      "elementType": "data_object",
+      "description": "Domains, aggregate business entities (ABEs) and business entities.",
+      "detect": {
+        "sheetWords": ["sid", "information framework", "abe", "business entit"],
+        "headerWords": ["abe", "entity", "domain"]
+      }
+    },
+    {
+      "id": "oda-ff",
+      "name": "ODA Functional Framework",
+      "elementType": "capability",
+      "description": "Functional domains, functional blocks and functions.",
+      "detect": {
+        "sheetWords": ["functional framework", "function", "tam"],
+        "headerWords": ["functional block", "function", "functional domain"]
+      }
+    },
+    {
+      "id": "oda-components",
+      "name": "ODA Components",
+      "elementType": "application",
+      "description": "ODA component specifications, with the Open APIs they expose and use.",
+      "detect": {
+        "sheetWords": ["oda component", "component"],
+        "headerWords": ["component", "exposed api", "dependent api", "tmf"]
+      }
+    }
+  ],
+  "columns": {
+    "id": [
+      "id",
+      "identifier",
+      "process identifier",
+      "element id",
+      "code",
+      "number",
+      "ref",
+      "component id"
+    ],
+    "name": [
+      "name",
+      "title",
+      "process name",
+      "element name",
+      "abe name",
+      "entity name",
+      "function name",
+      "component name"
+    ],
+    "parent": ["parent", "parent id", "parent identifier", "parent code", "belongs to"],
+    "description": [
+      "description",
+      "brief description",
+      "definition",
+      "extended description",
+      "purpose"
+    ],
+    "level": ["level", "process level", "depth"]
+  }
+}

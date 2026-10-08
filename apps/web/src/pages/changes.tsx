@@ -13,13 +13,26 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
+  TypeIcon,
   timeAgo,
   toast,
-  TypeIcon,
 } from '@atrium/ui';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { Bot, Check, CircleSlash, FlaskConical, GitPullRequestArrow, History, Inbox, Minus, Plus, Target, Undo2, X } from 'lucide-react';
+import {
+  Bot,
+  Check,
+  CircleSlash,
+  FlaskConical,
+  GitPullRequestArrow,
+  History,
+  Inbox,
+  Minus,
+  Plus,
+  Target,
+  Undo2,
+  X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { useChangeset, useChangesetAction, useChangesets, useChangesSummary } from '../lib/changes';
@@ -54,7 +67,10 @@ function StatusBadge({ c }: { c: Changeset }) {
 function fmt(v: unknown): string {
   if (v === null || v === undefined || v === '') return '—';
   if (Array.isArray(v)) return v.join(', ');
-  if (typeof v === 'object') return Object.entries(v as Record<string, unknown>).map(([k, x]) => `${k}: ${x}`).join(', ');
+  if (typeof v === 'object')
+    return Object.entries(v as Record<string, unknown>)
+      .map(([k, x]) => `${k}: ${x}`)
+      .join(', ');
   return String(v);
 }
 
@@ -66,22 +82,36 @@ function Detail({ id, onDone }: { id: string; onDone: () => void }) {
   const [title, setTitle] = useState('');
   const invalidate = useInvalidateModel();
   const discard = useMutation({
-    mutationFn: (changeId: string) => api(`/changesets/${id}/changes/${changeId}`, { method: 'DELETE' }),
+    mutationFn: (changeId: string) =>
+      api(`/changesets/${id}/changes/${changeId}`, { method: 'DELETE' }),
     onSuccess: () => invalidate(),
   });
-  useEffect(() => setTitle(data?.title === 'Suggested changes' ? '' : (data?.title ?? '')), [data?.title]);
+  useEffect(
+    () => setTitle(data?.title === 'Suggested changes' ? '' : (data?.title ?? '')),
+    [data?.title],
+  );
   if (!data) return <Skeleton className="h-80" />;
   const run = (a: 'approve' | 'reject' | 'withdraw' | 'undo' | 'submit') =>
     action.mutate(
       { id, action: a, note: note || undefined, title: title || undefined },
       {
         onSuccess: (r) => {
-          toast.success(r?.message ?? { approve: 'Approved and applied', reject: 'Declined', withdraw: 'Withdrawn', undo: 'Undone', submit: 'Sent for review' }[a]);
+          toast.success(
+            r?.message ??
+              {
+                approve: 'Approved and applied',
+                reject: 'Declined',
+                withdraw: 'Withdrawn',
+                undo: 'Undone',
+                submit: 'Sent for review',
+              }[a],
+          );
           if (a !== 'undo') onDone();
         },
       },
     );
-  const mineDraft = data.status === 'draft' && data.authorId === me?.id && data.kind === 'suggestion';
+  const mineDraft =
+    data.status === 'draft' && data.authorId === me?.id && data.kind === 'suggestion';
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start gap-3">
@@ -89,34 +119,74 @@ function Detail({ id, onDone }: { id: string; onDone: () => void }) {
         <div className="min-w-0 flex-1">
           <h2 className="text-lg font-semibold tracking-tight">{data.title}</h2>
           <p className="text-[13px] text-muted-foreground">
-            {data.authorName} · {timeAgo(data.submittedAt ?? data.createdAt)} · {data.changes.length} change{data.changes.length === 1 ? '' : 's'}
-            {data.authorKind === 'agent' ? ' · proposed by an AI coding agent' : data.authorKind === 'ci' ? ' · synced from a repository' : ''}
+            {data.authorName} · {timeAgo(data.submittedAt ?? data.createdAt)} ·{' '}
+            {data.changes.length} change{data.changes.length === 1 ? '' : 's'}
+            {data.authorKind === 'agent'
+              ? ' · proposed by an AI coding agent'
+              : data.authorKind === 'ci'
+                ? ' · synced from a repository'
+                : ''}
           </p>
         </div>
         <StatusBadge c={data} />
       </div>
-      {data.description && <p className="rounded-xl bg-surface-2 p-3 text-[13px] whitespace-pre-wrap">{data.description}</p>}
+      {data.description && (
+        <p className="rounded-xl bg-surface-2 p-3 text-[13px] whitespace-pre-wrap">
+          {data.description}
+        </p>
+      )}
       {data.decisionNote && (
         <p className="text-[13px] text-muted-foreground">
-          <span className="font-medium text-foreground">{data.reviewerName}:</span> {data.decisionNote}
+          <span className="font-medium text-foreground">{data.reviewerName}:</span>{' '}
+          {data.decisionNote}
         </p>
       )}
       <div className="flex flex-col gap-2">
         {data.changes.map((c) => (
           <Card key={c.id} className="p-3">
             <div className="flex items-center gap-2">
-              <span className={cn('flex size-5 items-center justify-center rounded-md', c.op === 'create' ? 'bg-good-soft text-good-foreground' : c.op === 'delete' ? 'bg-act-soft text-act-foreground' : 'bg-primary-soft text-primary-soft-foreground')}>
-                {c.op === 'create' ? <Plus className="size-3" /> : c.op === 'delete' ? <Minus className="size-3" /> : <span className="text-[10px] font-bold">~</span>}
+              <span
+                className={cn(
+                  'flex size-5 items-center justify-center rounded-md',
+                  c.op === 'create'
+                    ? 'bg-good-soft text-good-foreground'
+                    : c.op === 'delete'
+                      ? 'bg-act-soft text-act-foreground'
+                      : 'bg-primary-soft text-primary-soft-foreground',
+                )}
+              >
+                {c.op === 'create' ? (
+                  <Plus className="size-3" />
+                ) : c.op === 'delete' ? (
+                  <Minus className="size-3" />
+                ) : (
+                  <span className="text-[10px] font-bold">~</span>
+                )}
               </span>
               {c.entity === 'element' && <TypeIcon type={c.type as never} size="xs" />}
-              <button type="button" className="min-w-0 flex-1 truncate text-left text-[13px] font-medium hover:underline" onClick={() => c.entity === 'element' && inspect(c.entityId)}>
+              <button
+                type="button"
+                className="min-w-0 flex-1 truncate text-left text-[13px] font-medium hover:underline"
+                onClick={() => c.entity === 'element' && inspect(c.entityId)}
+              >
                 {c.entity === 'relation' ? `Link: ${c.name}` : c.name}
               </button>
               <span className="text-[11px] text-muted-foreground">
-                {c.op === 'create' ? (c.entity === 'relation' ? 'New link' : 'New') : c.op === 'delete' ? 'Removed' : `${c.fields.length} field${c.fields.length === 1 ? '' : 's'}`}
+                {c.op === 'create'
+                  ? c.entity === 'relation'
+                    ? 'New link'
+                    : 'New'
+                  : c.op === 'delete'
+                    ? 'Removed'
+                    : `${c.fields.length} field${c.fields.length === 1 ? '' : 's'}`}
               </span>
               {(mineDraft || (data.kind === 'scenario' && data.status === 'draft')) && (
-                <Button size="icon-sm" variant="ghost" aria-label="Drop this change" onClick={() => discard.mutate(c.id)}>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label="Drop this change"
+                  onClick={() => discard.mutate(c.id)}
+                >
                   <X />
                 </Button>
               )}
@@ -126,19 +196,30 @@ function Detail({ id, onDone }: { id: string; onDone: () => void }) {
                 {c.fields.map((f) => (
                   <div key={f.field} className="contents">
                     <span className="text-muted-foreground">{f.label}</span>
-                    <span className="truncate rounded bg-act-soft/60 px-1.5 text-act-foreground line-through decoration-1">{fmt(f.before)}</span>
-                    <span className="truncate rounded bg-good-soft/70 px-1.5 text-good-foreground">{fmt(f.after)}</span>
+                    <span className="truncate rounded bg-act-soft/60 px-1.5 text-act-foreground line-through decoration-1">
+                      {fmt(f.before)}
+                    </span>
+                    <span className="truncate rounded bg-good-soft/70 px-1.5 text-good-foreground">
+                      {fmt(f.after)}
+                    </span>
                   </div>
                 ))}
               </div>
             )}
           </Card>
         ))}
-        {data.changes.length === 0 && <p className="text-[13px] text-muted-foreground">No changes left in this set.</p>}
+        {data.changes.length === 0 && (
+          <p className="text-[13px] text-muted-foreground">No changes left in this set.</p>
+        )}
       </div>
       {data.canReview && (
         <Card className="flex flex-col gap-2 p-3">
-          <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note for the author" />
+          <Textarea
+            rows={2}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Optional note for the author"
+          />
           <div className="flex gap-2">
             <Button variant="primary" onClick={() => run('approve')} disabled={action.isPending}>
               <Check /> Approve and apply
@@ -151,10 +232,38 @@ function Detail({ id, onDone }: { id: string; onDone: () => void }) {
       )}
       {mineDraft && (
         <Card className="flex flex-col gap-2 p-3">
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Give it a title, e.g. Update CRM ownership" />
-          <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Why? (optional, helps the reviewer)" />
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Give it a title, e.g. Update CRM ownership"
+          />
+          <Textarea
+            rows={2}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Why? (optional, helps the reviewer)"
+          />
           <div className="flex gap-2">
-            <Button variant="primary" onClick={() => action.mutate({ id, action: 'submit', title: title || undefined, description: note || undefined }, { onSuccess: () => { toast.success('Sent for review'); onDone(); } })} disabled={!data.changes.length}>
+            <Button
+              variant="primary"
+              onClick={() =>
+                action.mutate(
+                  {
+                    id,
+                    action: 'submit',
+                    title: title || undefined,
+                    description: note || undefined,
+                  },
+                  {
+                    onSuccess: () => {
+                      toast.success('Sent for review');
+                      onDone();
+                    },
+                  },
+                )
+              }
+              disabled={!data.changes.length}
+            >
               <GitPullRequestArrow /> Submit for review
             </Button>
             <Button onClick={() => run('withdraw')}>Discard all</Button>
@@ -196,17 +305,26 @@ function ScenarioPanel({ id }: { id: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start gap-3">
-        <span className="flex size-9 items-center justify-center rounded-xl bg-primary-soft text-primary">{scenario.isTarget ? <Target className="size-4" /> : <FlaskConical className="size-4" />}</span>
+        <span className="flex size-9 items-center justify-center rounded-xl bg-primary-soft text-primary">
+          {scenario.isTarget ? <Target className="size-4" /> : <FlaskConical className="size-4" />}
+        </span>
         <div className="flex-1">
           <h2 className="text-lg font-semibold tracking-tight">{scenario.name}</h2>
-          <p className="text-[13px] text-muted-foreground">{scenario.description || 'No description'}</p>
+          <p className="text-[13px] text-muted-foreground">
+            {scenario.description || 'No description'}
+          </p>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button variant="primary" onClick={() => ui.set({ scenario: scenario.isTarget ? 'target' : scenario.id })}>
+        <Button
+          variant="primary"
+          onClick={() => ui.set({ scenario: scenario.isTarget ? 'target' : scenario.id })}
+        >
           View this scenario
         </Button>
-        {!scenario.isTarget && <Button onClick={() => makeTarget.mutate()}>Make it the target</Button>}
+        {!scenario.isTarget && (
+          <Button onClick={() => makeTarget.mutate()}>Make it the target</Button>
+        )}
         <Button onClick={() => apply.mutate()} disabled={apply.isPending}>
           Apply to today
         </Button>
@@ -214,7 +332,11 @@ function ScenarioPanel({ id }: { id: string }) {
       {sets.map((s) => (
         <Detail key={s.id} id={s.id} onDone={() => {}} />
       ))}
-      {sets.length === 0 && <p className="text-[13px] text-muted-foreground">No differences from today yet. Switch to the scenario and start editing.</p>}
+      {sets.length === 0 && (
+        <p className="text-[13px] text-muted-foreground">
+          No differences from today yet. Switch to the scenario and start editing.
+        </p>
+      )}
     </div>
   );
 }
@@ -224,9 +346,15 @@ export function ChangesPage() {
   const navigate = useNavigate({ from: '/changes' });
   const summary = useChangesSummary().data;
   const ws = useWorkspace().data;
-  const tab = (search.tab as Tab) ?? (summary?.waitingForReview ? 'review' : summary?.myDraftChanges ? 'mine' : 'history');
+  const tab =
+    (search.tab as Tab) ??
+    (summary?.waitingForReview ? 'review' : summary?.myDraftChanges ? 'mine' : 'history');
   const filter =
-    tab === 'review' ? { status: 'open' } : tab === 'mine' ? { mine: true, status: 'draft,open,rejected', kind: 'suggestion' } : { status: 'applied', limit: 200 };
+    tab === 'review'
+      ? { status: 'open' }
+      : tab === 'mine'
+        ? { mine: true, status: 'draft,open,rejected', kind: 'suggestion' }
+        : { status: 'applied', limit: 200 };
   const list = useChangesets(filter);
   const selected = search.id;
 
@@ -234,15 +362,23 @@ export function ChangesPage() {
     <div className="mx-auto flex h-full max-w-[1320px] flex-col px-6 py-6">
       <div className="mb-4 flex items-center gap-3">
         <h1 className="text-xl font-semibold tracking-tight">Changes</h1>
-        <p className="text-[13px] text-muted-foreground">Suggestions waiting for review, your own drafts, and everything that changed.</p>
+        <p className="text-[13px] text-muted-foreground">
+          Suggestions waiting for review, your own drafts, and everything that changed.
+        </p>
       </div>
       <Tabs value={tab} onValueChange={(t) => navigate({ search: { tab: t } })}>
         <TabsList>
           <TabsTrigger value="review">
-            <Inbox /> Waiting for review {summary?.waitingForReview ? <Badge tone="primary">{summary.waitingForReview}</Badge> : null}
+            <Inbox /> Waiting for review{' '}
+            {summary?.waitingForReview ? (
+              <Badge tone="primary">{summary.waitingForReview}</Badge>
+            ) : null}
           </TabsTrigger>
           <TabsTrigger value="mine">
-            <GitPullRequestArrow /> Your suggestions {summary?.myDraftChanges ? <Badge tone="watch">{summary.myDraftChanges} unsent</Badge> : null}
+            <GitPullRequestArrow /> Your suggestions{' '}
+            {summary?.myDraftChanges ? (
+              <Badge tone="watch">{summary.myDraftChanges} unsent</Badge>
+            ) : null}
           </TabsTrigger>
           <TabsTrigger value="history">
             <History /> History
@@ -260,12 +396,21 @@ export function ChangesPage() {
                   key={s.id}
                   type="button"
                   onClick={() => navigate({ search: { tab, id: s.id } })}
-                  className={cn('flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-surface-2', selected === s.id && 'bg-surface-2')}
+                  className={cn(
+                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-surface-2',
+                    selected === s.id && 'bg-surface-2',
+                  )}
                 >
-                  {s.isTarget ? <Target className="size-4 text-primary" /> : <FlaskConical className="size-4 text-muted-foreground" />}
+                  {s.isTarget ? (
+                    <Target className="size-4 text-primary" />
+                  ) : (
+                    <FlaskConical className="size-4 text-muted-foreground" />
+                  )}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[13px] font-medium">{s.name}</span>
-                    <span className="block text-[11px] text-muted-foreground">{s.changeCount} differences from today</span>
+                    <span className="block text-[11px] text-muted-foreground">
+                      {s.changeCount} differences from today
+                    </span>
                   </span>
                 </button>
               ))
@@ -276,21 +421,38 @@ export function ChangesPage() {
                     key={c.id}
                     type="button"
                     onClick={() => navigate({ search: { tab, id: c.id } })}
-                    className={cn('flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-surface-2', selected === c.id && 'bg-surface-2')}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-surface-2',
+                      selected === c.id && 'bg-surface-2',
+                    )}
                   >
                     <AuthorAvatar c={c} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13px] font-medium">{c.title}</span>
                       <span className="block truncate text-[11px] text-muted-foreground">
-                        {c.authorName} · {timeAgo(c.decidedAt ?? c.submittedAt ?? c.createdAt)} · {c.changeCount}
+                        {c.authorName} · {timeAgo(c.decidedAt ?? c.submittedAt ?? c.createdAt)} ·{' '}
+                        {c.changeCount}
                       </span>
                     </span>
                     {tab !== 'history' && <StatusBadge c={c} />}
                   </button>
                 ))}
           {tab !== 'scenarios' && !list.isLoading && !list.data?.length && (
-            <EmptyState icon={tab === 'review' ? <Inbox /> : <History />} title={tab === 'review' ? 'Nothing to review' : tab === 'mine' ? 'No suggestions' : 'No history yet'}>
-              {tab === 'review' ? "When people or agents suggest changes, they'll appear here." : tab === 'mine' ? 'When you edit something you don’t own, your edits collect here until you submit them.' : ''}
+            <EmptyState
+              icon={tab === 'review' ? <Inbox /> : <History />}
+              title={
+                tab === 'review'
+                  ? 'Nothing to review'
+                  : tab === 'mine'
+                    ? 'No suggestions'
+                    : 'No history yet'
+              }
+            >
+              {tab === 'review'
+                ? "When people or agents suggest changes, they'll appear here."
+                : tab === 'mine'
+                  ? 'When you edit something you don’t own, your edits collect here until you submit them.'
+                  : ''}
             </EmptyState>
           )}
         </div>
@@ -302,8 +464,13 @@ export function ChangesPage() {
               <Detail id={selected} onDone={() => navigate({ search: { tab } })} />
             )
           ) : (
-            <EmptyState icon={<GitPullRequestArrow />} title="Pick something on the left" className="mt-16">
-              Every change shows exactly what was different, field by field. {RELATION_TYPE_DEFS.supports ? '' : ''}
+            <EmptyState
+              icon={<GitPullRequestArrow />}
+              title="Pick something on the left"
+              className="mt-16"
+            >
+              Every change shows exactly what was different, field by field.{' '}
+              {RELATION_TYPE_DEFS.supports ? '' : ''}
             </EmptyState>
           )}
         </div>

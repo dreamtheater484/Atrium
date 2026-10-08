@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { type CellScalar, type HorizontalMerges, gridToSheet } from './tabular';
+import { type CellScalar, gridToSheet, type HorizontalMerges } from './tabular';
 import { cleanText } from './text';
 import type { ParsedSheet } from './types';
 import { isoFromDate } from './values';
@@ -7,7 +7,9 @@ import { isoFromDate } from './values';
 function richTextToString(v: unknown): string {
   if (typeof v === 'string') return v;
   if (v && typeof v === 'object' && 'richText' in v && Array.isArray(v.richText)) {
-    return v.richText.map((part: { text?: unknown }) => (typeof part.text === 'string' ? part.text : '')).join('');
+    return v.richText
+      .map((part: { text?: unknown }) => (typeof part.text === 'string' ? part.text : ''))
+      .join('');
   }
   return '';
 }
@@ -48,13 +50,18 @@ function scalarOf(value: ExcelJS.CellValue, numFmt: string | undefined): CellSca
 }
 
 function worksheetGrid(ws: ExcelJS.Worksheet): { grid: CellScalar[][]; merges: HorizontalMerges } {
+  // Only the area that holds values: formatting often extends far beyond the data.
   let width = 0;
-  ws.eachRow({ includeEmpty: false }, (row) => {
-    width = Math.max(width, row.cellCount);
+  let height = 0;
+  ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    height = Math.max(height, rowNumber);
+    row.eachCell({ includeEmpty: false }, (_cell, col) => {
+      width = Math.max(width, col);
+    });
   });
   const merges: HorizontalMerges = new Map();
   const grid: CellScalar[][] = [];
-  for (let r = 1; r <= ws.rowCount; r++) {
+  for (let r = 1; r <= height; r++) {
     const row = ws.findRow(r);
     const out: CellScalar[] = new Array<CellScalar>(width).fill(null);
     if (row) {
@@ -62,11 +69,14 @@ function worksheetGrid(ws: ExcelJS.Worksheet): { grid: CellScalar[][]; merges: H
         const cell = row.getCell(c);
         const master = cell.master;
         if (master && master.address !== cell.address) {
-          if (master.row === r) {
+          // exceljs types row/col as strings; they are numbers at runtime.
+          const masterRow = Number(master.row);
+          const masterCol = Number(master.col);
+          if (masterRow === r) {
             // Horizontal merge: the value belongs to the first cell only.
-            merges.set(`${r - 1},${c - 1}`, master.col - 1);
-            merges.set(`${r - 1},${master.col - 1}`, master.col - 1);
-          } else if (master.col === c) {
+            merges.set(`${r - 1},${c - 1}`, masterCol - 1);
+            merges.set(`${r - 1},${masterCol - 1}`, masterCol - 1);
+          } else if (masterCol === c) {
             // Vertical merge: repeat the value down (e.g. one "Domain" cell for several rows).
             out[c - 1] = scalarOf(master.value, master.numFmt);
           }
@@ -80,14 +90,19 @@ function worksheetGrid(ws: ExcelJS.Worksheet): { grid: CellScalar[][]; merges: H
   return { grid, merges };
 }
 
-function toLoadable(data: Uint8Array): Buffer {
-  const B = (globalThis as { Buffer?: typeof Buffer }).Buffer;
+type Loadable = Parameters<ExcelJS.Xlsx['load']>[0];
+
+function toLoadable(data: Uint8Array): Loadable {
+  const NodeBuffer = (globalThis as { Buffer?: typeof Buffer }).Buffer;
   // exceljs is typed for Node Buffers; JSZip underneath also accepts a Uint8Array in browsers.
-  return B ? B.from(data.buffer, data.byteOffset, data.byteLength) : (data as unknown as Buffer);
+  const bytes = NodeBuffer ? NodeBuffer.from(data.buffer, data.byteOffset, data.byteLength) : data;
+  return bytes as unknown as Loadable;
 }
 
 /** Reads every visible worksheet of an .xlsx file. */
-export async function readXlsx(data: Uint8Array): Promise<{ sheets: ParsedSheet[]; warnings: string[] }> {
+export async function readXlsx(
+  data: Uint8Array,
+): Promise<{ sheets: ParsedSheet[]; warnings: string[] }> {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(toLoadable(data));
   const sheets: ParsedSheet[] = [];

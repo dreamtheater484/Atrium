@@ -48,7 +48,9 @@ export function GlobalDropZone() {
           <FileUp className="size-6" />
         </span>
         <p className="text-base font-semibold">Drop to import</p>
-        <p className="text-[13px] text-muted-foreground">Excel, CSV, ArchiMate, Backstage or atrium.yaml</p>
+        <p className="text-[13px] text-muted-foreground">
+          Excel, CSV, ArchiMate, Backstage or atrium.yaml
+        </p>
       </div>
     </div>
   );

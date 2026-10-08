@@ -62,6 +62,7 @@ export function systemRoutes(deps: Deps) {
           from scenarios s where archived_at is null order by is_target desc, created_at`;
         return {
           name: ws.name,
+          publicUrl: config.publicUrl,
           mode: config.mode,
           version: config.version,
           elementCount: orgCount,
@@ -77,7 +78,11 @@ export function systemRoutes(deps: Deps) {
             updatedAt: new Date(s.updatedAt as string).toISOString(),
             changeCount: Number(s.changeCount ?? 0),
           })),
-          features: { ai: deps.ai.name === 'off' ? 'off' : 'mock', eolLookup: config.eolLookup, sso: !!config.oidc },
+          features: {
+            ai: deps.ai.name === 'off' ? 'off' : 'mock',
+            eolLookup: config.eolLookup,
+            sso: !!config.oidc,
+          },
         };
       },
     }),
@@ -119,8 +124,10 @@ export function systemRoutes(deps: Deps) {
         await asSystem(sql, async (tx) => {
           if (body.name) await tx`update users set name = ${body.name} where id = ${ctx.userId}`;
           if (body.theme) await tx`update users set theme = ${body.theme} where id = ${ctx.userId}`;
-          if (body.onboarded !== undefined) await tx`update users set onboarded = ${body.onboarded} where id = ${ctx.userId}`;
-          if (body.homeRole) await setSetting(tx, `prefs:${ctx.userId}`, { homeRole: body.homeRole });
+          if (body.onboarded !== undefined)
+            await tx`update users set onboarded = ${body.onboarded} where id = ${ctx.userId}`;
+          if (body.homeRole)
+            await setSetting(tx, `prefs:${ctx.userId}`, { homeRole: body.homeRole });
         });
         if (body.name) deps.onUserChanged?.();
         return { ok: true };

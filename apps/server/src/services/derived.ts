@@ -4,7 +4,11 @@ import { ModelIndex } from './model-index';
 import { ELEMENT_COLUMNS, rowToElement, rowToRelation } from './rows';
 import { loadSnapshot } from './store';
 
-async function persist(db: Db, el: Element, d: Pick<Element, 'quality' | 'health' | 'healthReasons'>) {
+async function persist(
+  db: Db,
+  el: Element,
+  d: Pick<Element, 'quality' | 'health' | 'healthReasons'>,
+) {
   if (
     d.quality === el.quality &&
     d.health === el.health &&
@@ -29,7 +33,10 @@ export async function refreshDerived(db: Db, ids: Array<string | null | undefine
     where r.type = 'uses' and r.deleted_at is null and t.type = 'technology' and t.id = any(${uniq}::uuid[])`;
   const all = [...new Set([...uniq, ...users.map((u) => u.id as string)])];
   const els = (
-    await db.unsafe(`select ${ELEMENT_COLUMNS} from elements where id = any($1::uuid[]) and deleted_at is null`, [all])
+    await db.unsafe(
+      `select ${ELEMENT_COLUMNS} from elements where id = any($1::uuid[]) and deleted_at is null`,
+      [all],
+    )
   ).map(rowToElement);
   const rels = (
     await db`select id, type, source_id, target_id, attributes, created_at, created_by from relations
@@ -38,9 +45,10 @@ export async function refreshDerived(db: Db, ids: Array<string | null | undefine
   const techIds = [...new Set(rels.filter((r) => r.type === 'uses').map((r) => r.targetId))];
   const techs = techIds.length
     ? (
-        await db.unsafe(`select ${ELEMENT_COLUMNS} from elements where id = any($1::uuid[]) and deleted_at is null`, [
-          techIds,
-        ])
+        await db.unsafe(
+          `select ${ELEMENT_COLUMNS} from elements where id = any($1::uuid[]) and deleted_at is null`,
+          [techIds],
+        )
       ).map(rowToElement)
     : [];
   const index = new ModelIndex({

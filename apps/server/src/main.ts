@@ -1,11 +1,11 @@
 import { asSystem, createDb, migrate } from '@atrium/db';
-import { refreshAllDerived } from './services/derived';
 import { buildApp } from './app';
 import { ensureSoloUser, type UserRow } from './auth/auth';
 import { loadConfig } from './config';
 import { allRoutes } from './routes';
 import { NoAssistant, RuleBasedAssistant } from './services/ai';
 import type { Deps } from './services/deps';
+import { refreshAllDerived } from './services/derived';
 import { EolService } from './services/eol';
 import { RealtimeHub } from './services/realtime';
 import { ModelStore } from './services/store';

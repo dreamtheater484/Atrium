@@ -1,0 +1,16 @@
+{
+  "id": "starter-capabilities",
+  "name": "Starter capability reference",
+  "version": "2026.1",
+  "publisher": "Atrium",
+  "description": "A generic, industry-neutral capability map to compare your own capabilities against. A good first reference before you load an industry model.",
+  "license": "CC0 1.0 (public domain)",
+  "frameworks": [
+    {
+      "id": "capabilities",
+      "name": "Generic capabilities",
+      "elementType": "capability"
+    }
+  ],
+  "bundled": true
+}

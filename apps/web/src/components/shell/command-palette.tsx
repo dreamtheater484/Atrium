@@ -46,7 +46,9 @@ export function CommandPalette() {
   const { resolved, setTheme } = useTheme();
   const scenario = useScenario();
   const search = useSearch(q, { limit: 12, layer: 'all' });
-  const ask = useMutation({ mutationFn: (question: string) => api<AskAnswer>('/ask', { body: { q: question, scenario } }) });
+  const ask = useMutation({
+    mutationFn: (question: string) => api<AskAnswer>('/ask', { body: { q: question, scenario } }),
+  });
   const isQuestion = QUESTION.test(q.trim()) && q.trim().split(/\s+/).length >= 2;
 
   useEffect(() => {
@@ -64,7 +66,10 @@ export function CommandPalette() {
 
   return (
     <Dialog open={open} onOpenChange={(o) => ui.set({ commandOpen: o })}>
-      <DialogContent className="top-[18%] max-w-[620px] translate-y-0 overflow-hidden p-0" hideClose>
+      <DialogContent
+        className="top-[18%] max-w-[620px] translate-y-0 overflow-hidden p-0"
+        hideClose
+      >
         <DialogTitle className="sr-only">Search or ask</DialogTitle>
         <Command shouldFilter={false} loop>
           <CommandInput
@@ -106,7 +111,9 @@ export function CommandPalette() {
             </div>
           ) : (
             <CommandList>
-              {q && !search.isFetching && !isQuestion && <CommandEmpty>No matches. Try fewer words, or ask a question.</CommandEmpty>}
+              {q && !search.isFetching && !isQuestion && (
+                <CommandEmpty>No matches. Try fewer words, or ask a question.</CommandEmpty>
+              )}
               {q && (isQuestion || (search.data?.length ?? 0) === 0) && (
                 <CommandGroup heading="Ask Atrium">
                   <CommandItem value="__ask" onSelect={() => ask.mutate(q)}>
@@ -123,7 +130,11 @@ export function CommandPalette() {
                       <TypeIcon type={h.type} size="sm" />
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="truncate">{h.name}</span>
-                        {h.snippet && <span className="truncate text-[11px] text-muted-foreground">{h.snippet}</span>}
+                        {h.snippet && (
+                          <span className="truncate text-[11px] text-muted-foreground">
+                            {h.snippet}
+                          </span>
+                        )}
                       </span>
                       <span className="shrink-0 text-[11px] text-muted-foreground">
                         {h.layer === 'reference' ? 'Reference' : (h.domainName ?? '')}
@@ -138,13 +149,37 @@ export function CommandPalette() {
                     <CommandItem onSelect={() => go(() => navigate({ to: '/' }))}>
                       <House /> Home
                     </CommandItem>
-                    <CommandItem onSelect={() => go(() => navigate({ to: '/explore', search: { type: 'application', view: 'table' } }))}>
+                    <CommandItem
+                      onSelect={() =>
+                        go(() =>
+                          navigate({
+                            to: '/explore',
+                            search: { type: 'application', view: 'table' },
+                          }),
+                        )
+                      }
+                    >
                       <Table2 /> Applications
                     </CommandItem>
-                    <CommandItem onSelect={() => go(() => navigate({ to: '/explore', search: { type: 'capability', view: 'map' } }))}>
+                    <CommandItem
+                      onSelect={() =>
+                        go(() =>
+                          navigate({ to: '/explore', search: { type: 'capability', view: 'map' } }),
+                        )
+                      }
+                    >
                       <Blocks /> Capability map
                     </CommandItem>
-                    <CommandItem onSelect={() => go(() => navigate({ to: '/explore', search: { type: 'application', view: 'graph' } }))}>
+                    <CommandItem
+                      onSelect={() =>
+                        go(() =>
+                          navigate({
+                            to: '/explore',
+                            search: { type: 'application', view: 'graph' },
+                          }),
+                        )
+                      }
+                    >
                       <Network /> Dependency graph
                     </CommandItem>
                     <CommandItem onSelect={() => go(() => navigate({ to: '/dashboards' }))}>
@@ -168,7 +203,9 @@ export function CommandPalette() {
                     <CommandItem onSelect={() => go(() => ui.set({ connectAgentOpen: true }))}>
                       <Bot /> Connect a coding agent
                     </CommandItem>
-                    <CommandItem onSelect={() => go(() => setTheme(resolved === 'dark' ? 'light' : 'dark'))}>
+                    <CommandItem
+                      onSelect={() => go(() => setTheme(resolved === 'dark' ? 'light' : 'dark'))}
+                    >
                       <Moon /> Switch to {resolved === 'dark' ? 'light' : 'dark'} mode
                     </CommandItem>
                     <CommandItem onSelect={() => go(() => navigate({ to: '/settings' }))}>

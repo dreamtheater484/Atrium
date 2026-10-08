@@ -1,7 +1,7 @@
 import {
+  attributeDef,
   type ElementType,
   type LifecyclePhase,
-  attributeDef,
   lifecycleAt,
   todayIso,
 } from '@atrium/schema';
@@ -22,7 +22,17 @@ export interface CandidateOptions {
   today?: string;
 }
 
-const TOTAL_ROWS = new Set(['total', 'totals', 'grand total', 'sum', 'subtotal', 'sub total', 'totaal', 'summe', 'gesamt']);
+const TOTAL_ROWS = new Set([
+  'total',
+  'totals',
+  'grand total',
+  'sum',
+  'subtotal',
+  'sub total',
+  'totaal',
+  'summe',
+  'gesamt',
+]);
 
 const DMY_RE = /^\s*(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4})\s*$/;
 
@@ -55,7 +65,10 @@ function newCandidate(row: number, type: ElementType, name: string): Candidate {
 
 function addRelation(c: Candidate, rel: Omit<CandidateRelation, 'names'>, names: string[]): void {
   const existing = c.relations.find(
-    (r) => r.relation === rel.relation && r.direction === rel.direction && r.targetType === rel.targetType,
+    (r) =>
+      r.relation === rel.relation &&
+      r.direction === rel.direction &&
+      r.targetType === rel.targetType,
   );
   const target = existing ?? {
     relation: rel.relation,
@@ -69,18 +82,33 @@ function addRelation(c: Candidate, rel: Omit<CandidateRelation, 'names'>, names:
   if (!existing) c.relations.push(target);
 }
 
+const MERGED_FIELDS = [
+  'key',
+  'externalId',
+  'description',
+  'owner',
+  'domainName',
+  'parentName',
+  'teamName',
+  'lifecycle',
+  'classification',
+] as const;
+
+function fillField<K extends (typeof MERGED_FIELDS)[number]>(
+  into: Candidate,
+  from: Candidate,
+  field: K,
+): void {
+  if (into[field] === undefined && from[field] !== undefined) into[field] = from[field];
+}
+
 /** Fills empty fields of `into` from `from`; lists and relations are combined. */
 function merge(into: Candidate, from: Candidate): void {
-  const fields = [
-    'key', 'externalId', 'description', 'owner', 'domainName', 'parentName', 'teamName',
-    'lifecycle', 'classification',
-  ] as const;
-  for (const f of fields) {
-    if (into[f] === undefined && from[f] !== undefined) (into as unknown as Record<string, unknown>)[f] = from[f];
-  }
+  for (const f of MERGED_FIELDS) fillField(into, from, f);
   if (from.lifecycleDates) into.lifecycleDates = { ...from.lifecycleDates, ...into.lifecycleDates };
   if (from.tags) into.tags = [...new Set([...(into.tags ?? []), ...from.tags])];
-  for (const [k, v] of Object.entries(from.attributes)) if (into.attributes[k] === undefined) into.attributes[k] = v;
+  for (const [k, v] of Object.entries(from.attributes))
+    if (into.attributes[k] === undefined) into.attributes[k] = v;
   for (const r of from.relations) addRelation(into, r, r.names);
 }
 
@@ -101,7 +129,10 @@ export function sheetToCandidates(
     ([header, t]) => t.kind !== 'ignore' && sheet.headers.includes(header),
   );
   const levelColumns = columns
-    .filter((entry): entry is [string, Extract<ColumnTarget, { kind: 'level' }>] => entry[1].kind === 'level')
+    .filter(
+      (entry): entry is [string, Extract<ColumnTarget, { kind: 'level' }>] =>
+        entry[1].kind === 'level',
+    )
     .sort((a, b) => a[1].level - b[1].level);
   const dateOrders = new Map<string, NormalizeOptions['dateOrder']>();
   for (const [header, target] of columns) {
@@ -130,24 +161,48 @@ export function sheetToCandidates(
     const levels = new Map<number, string>();
 
     for (const [header, target] of columns) {
-      const result = normalizeValue(target, row[header], type, { dateOrder: dateOrders.get(header) });
+      const result = normalizeValue(target, row[header], type, {
+        dateOrder: dateOrders.get(header),
+      });
       if (result.warning) warnings.push(`Row ${rowNo}, ${header}: ${result.warning}`);
       const value = result.value;
       if (value === undefined) continue;
       switch (target.kind) {
         case 'core':
           switch (target.field) {
-            case 'name': c.name = String(value); break;
-            case 'key': c.key = String(value); break;
-            case 'external_id': c.externalId = String(value); break;
-            case 'description': c.description = String(value); break;
-            case 'owner': c.owner = String(value); break;
-            case 'domain': c.domainName = String(value); break;
-            case 'parent': c.parentName = String(value); break;
-            case 'team': c.teamName = String(value); break;
-            case 'lifecycle': c.lifecycle = value as LifecyclePhase; break;
-            case 'classification': c.classification = value as Candidate['classification']; break;
-            case 'tags': c.tags = [...new Set([...(c.tags ?? []), ...(value as string[])])]; break;
+            case 'name':
+              c.name = String(value);
+              break;
+            case 'key':
+              c.key = String(value);
+              break;
+            case 'external_id':
+              c.externalId = String(value);
+              break;
+            case 'description':
+              c.description = String(value);
+              break;
+            case 'owner':
+              c.owner = String(value);
+              break;
+            case 'domain':
+              c.domainName = String(value);
+              break;
+            case 'parent':
+              c.parentName = String(value);
+              break;
+            case 'team':
+              c.teamName = String(value);
+              break;
+            case 'lifecycle':
+              c.lifecycle = value as LifecyclePhase;
+              break;
+            case 'classification':
+              c.classification = value as Candidate['classification'];
+              break;
+            case 'tags':
+              c.tags = [...new Set([...(c.tags ?? []), ...(value as string[])])];
+              break;
           }
           break;
         case 'attribute':
@@ -195,7 +250,9 @@ export function sheetToCandidates(
     const key = norm(c.name);
     const firstRow = explicitRow.get(key);
     if (firstRow !== undefined) {
-      warnings.push(`Row ${rowNo}: "${c.name}" also appears on row ${firstRow}; the rows were merged`);
+      warnings.push(
+        `Row ${rowNo}: "${c.name}" also appears on row ${firstRow}; the rows were merged`,
+      );
     } else {
       explicitRow.set(key, rowNo);
     }
@@ -215,8 +272,10 @@ export function sheetToCandidates(
 
 /** For interface lists without a name column: "CRM → ERP". */
 function interfaceName(c: Candidate): string | undefined {
-  const source = c.relations.find((r) => r.relation === 'exposes' && r.direction === 'in')?.names[0];
-  const target = c.relations.find((r) => r.relation === 'consumes' && r.direction === 'in')?.names[0];
+  const source = c.relations.find((r) => r.relation === 'exposes' && r.direction === 'in')
+    ?.names[0];
+  const target = c.relations.find((r) => r.relation === 'consumes' && r.direction === 'in')
+    ?.names[0];
   return source && target ? `${source} → ${target}` : undefined;
 }
 

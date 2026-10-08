@@ -37,7 +37,9 @@ export async function migrate(sql: Sql, dir = migrationsDir()): Promise<Migratio
   await sql`select pg_advisory_lock(727274)`;
   try {
     const done = new Set(
-      (await sql<{ version: string }[]>`select version from schema_migrations`).map((r) => r.version),
+      (await sql<{ version: string }[]>`select version from schema_migrations`).map(
+        (r) => r.version,
+      ),
     );
     const files = readdirSync(dir)
       .filter((f) => f.endsWith('.sql'))

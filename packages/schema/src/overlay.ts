@@ -16,7 +16,10 @@ export interface OverlayMarks {
  * Applies scenario changes on top of a snapshot of today's model. Changes are
  * replayed in order; the latest state of an entity wins.
  */
-export function applyOverlay(base: ModelSnapshot, changes: Change[]): ModelSnapshot & { marks: OverlayMarks } {
+export function applyOverlay(
+  base: ModelSnapshot,
+  changes: Change[],
+): ModelSnapshot & { marks: OverlayMarks } {
   const elements = new Map(base.elements);
   const relations = new Map(base.relations);
   const marks: OverlayMarks = { added: new Set(), changed: new Set(), removed: new Set() };

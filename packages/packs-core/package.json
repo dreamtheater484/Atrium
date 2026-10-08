@@ -8,9 +8,10 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "dependencies": {
-    "@atrium/schema": "workspace:*"
+    "@atrium/schema": "workspace:*",
+    "zod": "^4.6.5"
   }
 }

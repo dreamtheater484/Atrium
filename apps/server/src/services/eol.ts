@@ -78,7 +78,10 @@ let snapshot: { fetchedAt: string; products: Record<string, SnapshotCycle[]> } |
 function loadSnapshot() {
   if (snapshot) return snapshot;
   const here = dirname(fileURLToPath(import.meta.url));
-  for (const p of [join(here, '..', 'data', 'eol-snapshot.json'), join(here, 'data', 'eol-snapshot.json')]) {
+  for (const p of [
+    join(here, '..', 'data', 'eol-snapshot.json'),
+    join(here, 'data', 'eol-snapshot.json'),
+  ]) {
     try {
       snapshot = JSON.parse(readFileSync(p, 'utf8'));
       return snapshot!;
@@ -153,7 +156,11 @@ export class EolService {
     private live: boolean,
   ) {}
 
-  async lookup(name: string, product?: string | null, version?: string | null): Promise<EolInfo | null> {
+  async lookup(
+    name: string,
+    product?: string | null,
+    version?: string | null,
+  ): Promise<EolInfo | null> {
     const id = inferProduct(name, product);
     const ver = version || inferVersion(name);
     if (!id || !ver) return null;
@@ -163,9 +170,15 @@ export class EolService {
           select data from eol_cache where product = ${id} and fetched_at > now() - interval '30 days'`;
         let cycles = cached[0]?.data as SnapshotCycle[] | undefined;
         if (!cycles) {
-          const res = await fetch(`https://endoflife.date/api/${id}.json`, { signal: AbortSignal.timeout(4000) });
+          const res = await fetch(`https://endoflife.date/api/${id}.json`, {
+            signal: AbortSignal.timeout(4000),
+          });
           if (res.ok) {
-            const raw = (await res.json()) as Array<{ cycle: string; eol: string | boolean; releaseDate?: string }>;
+            const raw = (await res.json()) as Array<{
+              cycle: string;
+              eol: string | boolean;
+              releaseDate?: string;
+            }>;
             cycles = raw.map((c) => ({ c: String(c.cycle), eol: c.eol, r: c.releaseDate }));
             await this.sql`
               insert into eol_cache (product, data) values (${id}, ${this.sql.json(cycles as never)})

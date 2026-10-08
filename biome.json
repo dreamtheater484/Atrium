@@ -1,8 +1,22 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
-    "includes": ["**", "!**/dist", "!**/node_modules", "!**/*.gen.ts", "!**/test-results", "!**/playwright-report", "!apps/videos/public", "!apps/videos/out", "!packages/importers/fixtures"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/*.gen.ts",
+      "!**/test-results",
+      "!**/playwright-report",
+      "!apps/videos/public",
+      "!apps/videos/out",
+      "!packages/importers/fixtures"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -32,7 +46,13 @@
       "a11y": {
         "noStaticElementInteractions": "off",
         "useKeyWithClickEvents": "off",
-        "noSvgWithoutTitle": "off"
+        "noSvgWithoutTitle": "off",
+        "noLabelWithoutControl": {
+          "level": "error",
+          "options": {
+            "inputComponents": ["Switch", "Checkbox", "Input", "Textarea", "Select"]
+          }
+        }
       },
       "correctness": {
         "useExhaustiveDependencies": "warn"
@@ -40,6 +60,40 @@
     }
   },
   "css": {
-    "parser": { "tailwindDirectives": true }
-  }
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.css"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noImportantStyles": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["e2e/**", "**/scripts/**", "**/build.mjs", "apps/videos/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUndeclaredEnvVars": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    }
+  ]
 }

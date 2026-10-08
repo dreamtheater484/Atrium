@@ -7,8 +7,8 @@ import {
   similarity,
   slugify,
 } from './derive';
-import { applyOverlay } from './overlay';
 import type { Element } from './element';
+import { applyOverlay } from './overlay';
 
 const app = (attrs: Record<string, unknown> = {}, extra: Partial<Element> = {}) =>
   ({
@@ -59,20 +59,26 @@ describe('quality', () => {
 describe('health', () => {
   const today = '2026-10-08';
   it('flags applications on end-of-life technology', () => {
-    const h = computeHealth(app({ technical_fit: 4, business_fit: 4 }), [
-      { name: 'Java 8', eolDate: '2026-03-31' },
-    ], today);
+    const h = computeHealth(
+      app({ technical_fit: 4, business_fit: 4 }),
+      [{ name: 'Java 8', eolDate: '2026-03-31' }],
+      today,
+    );
     expect(h.health).toBe('act');
     expect(h.reasons[0]).toContain('Java 8');
   });
   it('watches average fit', () => {
-    expect(computeHealth(app({ technical_fit: 3, business_fit: 4 }), [], today).health).toBe('watch');
+    expect(computeHealth(app({ technical_fit: 3, business_fit: 4 }), [], today).health).toBe(
+      'watch',
+    );
   });
   it('is unknown without any signals', () => {
     expect(computeHealth(app(), [], today).health).toBeNull();
   });
   it('is good when everything is fine', () => {
-    expect(computeHealth(app({ technical_fit: 5, business_fit: 4 }), [], today).health).toBe('good');
+    expect(computeHealth(app({ technical_fit: 5, business_fit: 4 }), [], today).health).toBe(
+      'good',
+    );
   });
 });
 
@@ -110,9 +116,39 @@ describe('overlay', () => {
     };
     const t = '2026-01-01T00:00:00Z';
     const result = applyOverlay(base, [
-      { id: '1', changesetId: 'c', seq: 1, op: 'update', entity: 'element', entityId: 'a', before: null, after: { id: 'a', name: 'A2' }, createdAt: t },
-      { id: '2', changesetId: 'c', seq: 2, op: 'delete', entity: 'element', entityId: 'b', before: null, after: null, createdAt: t },
-      { id: '3', changesetId: 'c', seq: 3, op: 'create', entity: 'element', entityId: 'c', before: null, after: { id: 'c', name: 'C' }, createdAt: t },
+      {
+        id: '1',
+        changesetId: 'c',
+        seq: 1,
+        op: 'update',
+        entity: 'element',
+        entityId: 'a',
+        before: null,
+        after: { id: 'a', name: 'A2' },
+        createdAt: t,
+      },
+      {
+        id: '2',
+        changesetId: 'c',
+        seq: 2,
+        op: 'delete',
+        entity: 'element',
+        entityId: 'b',
+        before: null,
+        after: null,
+        createdAt: t,
+      },
+      {
+        id: '3',
+        changesetId: 'c',
+        seq: 3,
+        op: 'create',
+        entity: 'element',
+        entityId: 'c',
+        before: null,
+        after: { id: 'c', name: 'C' },
+        createdAt: t,
+      },
     ]);
     expect(result.elements.get('a')?.name).toBe('A2');
     expect(result.marks.changed.has('a')).toBe(true);

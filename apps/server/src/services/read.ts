@@ -2,7 +2,6 @@ import {
   type Element,
   type ElementDetail,
   type ElementRow,
-  type SuggestedRelation,
   type ElementType,
   type FieldSuggestion,
   type Health,
@@ -10,6 +9,7 @@ import {
   missingFields,
   RELATION_TYPE_DEFS,
   type RelationView,
+  type SuggestedRelation,
   typeDef,
 } from '@atrium/schema';
 import type { RequestContext } from '../auth/context';
@@ -18,7 +18,6 @@ import type { Deps } from './deps';
 import { ModelIndex } from './model-index';
 import { canEditDirectly } from './policy';
 import { type ResolvedState, resolveState } from './store';
-
 
 export interface ListQuery {
   type?: ElementType;
@@ -80,7 +79,8 @@ export async function listElements(deps: Deps, ctx: RequestContext, q: ListQuery
       if (phase === 'not_yet') return false;
     }
     if (needle) {
-      const hay = `${e.name} ${e.key ?? ''} ${e.description} ${e.tags.join(' ')} ${e.owner ?? ''}`.toLowerCase();
+      const hay =
+        `${e.name} ${e.key ?? ''} ${e.description} ${e.tags.join(' ')} ${e.owner ?? ''}`.toLowerCase();
       if (!hay.includes(needle)) return false;
     }
     return true;
@@ -136,8 +136,8 @@ export async function elementDetail(
   }
   relations.sort(
     (a, b) =>
-      Object.keys(RELATION_TYPE_DEFS).indexOf(a.type) - Object.keys(RELATION_TYPE_DEFS).indexOf(b.type) ||
-      a.other.name.localeCompare(b.other.name),
+      Object.keys(RELATION_TYPE_DEFS).indexOf(a.type) -
+        Object.keys(RELATION_TYPE_DEFS).indexOf(b.type) || a.other.name.localeCompare(b.other.name),
   );
   const children = (index.children.get(id) ?? [])
     .map((c) => index.get(c))
@@ -152,11 +152,19 @@ export async function elementDetail(
   const suggestedRelations: SuggestedRelation[] = [];
   if (el.layer === 'org') {
     if (el.type === 'application' && index.outgoing(id, 'supports').length === 0) {
-      suggestedRelations.push({ relation: 'supports', targetType: 'capability', matches: deps.ai.suggestRelated(el, index, 'capability') });
+      suggestedRelations.push({
+        relation: 'supports',
+        targetType: 'capability',
+        matches: deps.ai.suggestRelated(el, index, 'capability'),
+      });
     }
     const refs = index.ofType(el.type, 'reference');
     if (refs.length) {
-      suggestedRelations.push({ relation: 'maps_to', targetType: el.type, matches: deps.ai.suggestMappings(el, index) });
+      suggestedRelations.push({
+        relation: 'maps_to',
+        targetType: el.type,
+        matches: deps.ai.suggestMappings(el, index),
+      });
     }
   }
   const [pending] = await deps.sql`
@@ -172,7 +180,11 @@ export async function elementDetail(
     children,
     missing: missingFields(el, index.relCounts(id)),
     canEditDirectly: opts.scenarioId ? true : canEditDirectly(ctx, el, index),
-    scenarioMark: state.marks.added.has(id) ? 'added' : state.marks.changed.has(id) ? 'changed' : undefined,
+    scenarioMark: state.marks.added.has(id)
+      ? 'added'
+      : state.marks.changed.has(id)
+        ? 'changed'
+        : undefined,
     pendingSuggestions: Number(pending?.n ?? 0),
     suggestedRelations: suggestedRelations.filter((s) => s.matches.length),
   };

@@ -13,7 +13,14 @@ import {
 import { ChevronDown, FileUp, Plus } from 'lucide-react';
 import { openAdd, openImport } from '../../lib/store';
 
-const QUICK = ['application', 'capability', 'technology', 'interface', 'initiative', 'decision'] as const;
+const QUICK = [
+  'application',
+  'capability',
+  'technology',
+  'interface',
+  'initiative',
+  'decision',
+] as const;
 
 export function AddMenu() {
   return (
@@ -23,7 +30,11 @@ export function AddMenu() {
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="primary" className="rounded-l-none border-l border-white/20 px-1.5" aria-label="More ways to add">
+          <Button
+            variant="primary"
+            className="rounded-l-none border-l border-white/20 px-1.5"
+            aria-label="More ways to add"
+          >
             <ChevronDown />
           </Button>
         </DropdownMenuTrigger>

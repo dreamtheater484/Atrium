@@ -14,7 +14,11 @@ export const FULL_SCOPE: AccessScope = { maxRank: 3, domainIds: [] };
  * Runs `fn` in a transaction as the restricted role `atrium_app`, so Postgres
  * row-level security enforces the scope as well as the application code.
  */
-export async function withScope<T>(sql: Sql, scope: AccessScope, fn: (tx: Tx) => Promise<T>): Promise<T> {
+export async function withScope<T>(
+  sql: Sql,
+  scope: AccessScope,
+  fn: (tx: Tx) => Promise<T>,
+): Promise<T> {
   return (await sql.begin(async (tx) => {
     await tx`set local role atrium_app`;
     await tx`select

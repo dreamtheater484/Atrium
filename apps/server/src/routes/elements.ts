@@ -11,7 +11,13 @@ import { z } from 'zod';
 import { boolParam, idParams, listParam, resolveScenario } from '../http/query';
 import { route } from '../http/route';
 import type { Deps } from '../services/deps';
-import { createElement, createRelation, deleteElement, deleteRelation, updateElement } from '../services/model';
+import {
+  createElement,
+  createRelation,
+  deleteElement,
+  deleteRelation,
+  updateElement,
+} from '../services/model';
 import { elementDetail, listElements, typeCounts } from '../services/read';
 import { search } from '../services/search';
 
@@ -28,7 +34,10 @@ const listQuery = z.object({
   layer: z.enum(['org', 'reference', 'all']).optional(),
   pack: z.string().optional(),
   gaps: boolParam,
-  at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  at: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   sort: z.string().optional(),
   dir: z.enum(['asc', 'desc']).optional(),
   limit: z.coerce.number().int().min(1).max(10000).optional(),
@@ -47,7 +56,11 @@ export function elementRoutes(deps: Deps) {
       query: listQuery,
       handler: async ({ query, ctx }) => {
         const scenarioId = await resolveScenario(deps.sql, query.scenario);
-        return listElements(deps, ctx, { ...query, types: query.types as ElementType[] | undefined, scenarioId });
+        return listElements(deps, ctx, {
+          ...query,
+          types: query.types as ElementType[] | undefined,
+          scenarioId,
+        });
       },
     }),
     route({
@@ -57,7 +70,8 @@ export function elementRoutes(deps: Deps) {
       tag: 'Model',
       access: 'any',
       query: scenarioQuery,
-      handler: async ({ query, ctx }) => typeCounts(deps, ctx, await resolveScenario(deps.sql, query.scenario)),
+      handler: async ({ query, ctx }) =>
+        typeCounts(deps, ctx, await resolveScenario(deps.sql, query.scenario)),
     }),
     route({
       method: 'GET',
@@ -68,7 +82,9 @@ export function elementRoutes(deps: Deps) {
       params: idParams,
       query: scenarioQuery,
       handler: async ({ params, query, ctx }) =>
-        elementDetail(deps, ctx, params.id, { scenarioId: await resolveScenario(deps.sql, query.scenario) }),
+        elementDetail(deps, ctx, params.id, {
+          scenarioId: await resolveScenario(deps.sql, query.scenario),
+        }),
     }),
     route({
       method: 'POST',
@@ -79,7 +95,9 @@ export function elementRoutes(deps: Deps) {
       query: scenarioQuery,
       body: createElementInput,
       handler: async ({ body, query, ctx }) => {
-        const r = await createElement(deps, ctx, body, { scenarioId: await resolveScenario(deps.sql, query.scenario) });
+        const r = await createElement(deps, ctx, body, {
+          scenarioId: await resolveScenario(deps.sql, query.scenario),
+        });
         return { element: r.item, mode: r.mode, changesetId: r.changesetId };
       },
     }),
@@ -108,7 +126,9 @@ export function elementRoutes(deps: Deps) {
       params: idParams,
       query: scenarioQuery,
       handler: async ({ params, query, ctx }) => {
-        const r = await deleteElement(deps, ctx, params.id, { scenarioId: await resolveScenario(deps.sql, query.scenario) });
+        const r = await deleteElement(deps, ctx, params.id, {
+          scenarioId: await resolveScenario(deps.sql, query.scenario),
+        });
         return { mode: r.mode, changesetId: r.changesetId };
       },
     }),
@@ -121,7 +141,9 @@ export function elementRoutes(deps: Deps) {
       query: scenarioQuery,
       body: createRelationInput,
       handler: async ({ body, query, ctx }) => {
-        const r = await createRelation(deps, ctx, body, { scenarioId: await resolveScenario(deps.sql, query.scenario) });
+        const r = await createRelation(deps, ctx, body, {
+          scenarioId: await resolveScenario(deps.sql, query.scenario),
+        });
         return { relation: r.item, mode: r.mode, changesetId: r.changesetId };
       },
     }),
@@ -134,7 +156,9 @@ export function elementRoutes(deps: Deps) {
       params: idParams,
       query: scenarioQuery,
       handler: async ({ params, query, ctx }) => {
-        const r = await deleteRelation(deps, ctx, params.id, { scenarioId: await resolveScenario(deps.sql, query.scenario) });
+        const r = await deleteRelation(deps, ctx, params.id, {
+          scenarioId: await resolveScenario(deps.sql, query.scenario),
+        });
         return { mode: r.mode, changesetId: r.changesetId };
       },
     }),
@@ -146,8 +170,14 @@ export function elementRoutes(deps: Deps) {
       access: 'user',
       params: idParams,
       handler: async ({ params }) => {
-        const rows = await deps.sql`select id, author_name, body, created_at from comments where element_id = ${params.id} order by created_at`;
-        return rows.map((r) => ({ id: r.id, authorName: r.authorName, body: r.body, createdAt: new Date(r.createdAt as string).toISOString() }));
+        const rows =
+          await deps.sql`select id, author_name, body, created_at from comments where element_id = ${params.id} order by created_at`;
+        return rows.map((r) => ({
+          id: r.id,
+          authorName: r.authorName,
+          body: r.body,
+          createdAt: new Date(r.createdAt as string).toISOString(),
+        }));
       },
     }),
     route({
@@ -167,7 +197,11 @@ export function elementRoutes(deps: Deps) {
           if (u) {
             await deps.sql`insert into notifications (user_id, kind, title, body, link)
               values (${u.id}, 'mention', ${`${ctx.name} mentioned you`}, ${body.body.slice(0, 200)}, ${`/e/${params.id}`})`;
-            deps.hub.broadcast({ type: 'notification', userId: u.id as string, title: `${ctx.name} mentioned you` });
+            deps.hub.broadcast({
+              type: 'notification',
+              userId: u.id as string,
+              title: `${ctx.name} mentioned you`,
+            });
           }
         }
         return { id: r!.id };

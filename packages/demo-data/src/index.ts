@@ -1,2 +1,2 @@
-export * from './types';
 export { acmeTelco } from './acme-telco';
+export * from './types';

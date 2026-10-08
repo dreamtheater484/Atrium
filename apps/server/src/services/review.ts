@@ -67,7 +67,14 @@ export async function changesSummary(deps: Deps, ctx: RequestContext) {
 export async function listChangesets(
   deps: Deps,
   ctx: RequestContext,
-  f: { status?: string; kind?: string; scenarioId?: string; mine?: boolean; limit?: number; elementId?: string },
+  f: {
+    status?: string;
+    kind?: string;
+    scenarioId?: string;
+    mine?: boolean;
+    limit?: number;
+    elementId?: string;
+  },
 ): Promise<Changeset[]> {
   const where: string[] = [];
   const params: unknown[] = [];
@@ -75,12 +82,16 @@ export async function listChangesets(
     params.push(v);
     where.push(sql.replace('?', `$${params.length}`));
   };
-  if (f.status) add('s.status = any(string_to_array(?, \',\'))', f.status);
-  if (f.kind) add('s.kind = any(string_to_array(?, \',\'))', f.kind);
+  if (f.status) add("s.status = any(string_to_array(?, ','))", f.status);
+  if (f.kind) add("s.kind = any(string_to_array(?, ','))", f.kind);
   if (f.scenarioId) add('s.scenario_id = ?', f.scenarioId);
   else where.push("(s.kind <> 'scenario')");
   if (f.mine) add('s.author_id = ?', ctx.userId);
-  if (f.elementId) add('exists (select 1 from changes c where c.changeset_id = s.id and c.entity_id = ?)', f.elementId);
+  if (f.elementId)
+    add(
+      'exists (select 1 from changes c where c.changeset_id = s.id and c.entity_id = ?)',
+      f.elementId,
+    );
   // Drafts are private to their author.
   add("(s.status <> 'draft' or s.author_id = ? or s.kind = 'scenario')", ctx.userId);
   params.push(f.limit ?? 100);
@@ -112,23 +123,34 @@ function label(field: string, type: ElementType | undefined): string {
   );
 }
 
-export async function changesetDetail(deps: Deps, ctx: RequestContext, id: string): Promise<ChangesetDetail> {
+export async function changesetDetail(
+  deps: Deps,
+  ctx: RequestContext,
+  id: string,
+): Promise<ChangesetDetail> {
   const [row] = await deps.sql.unsafe(`${LIST_SQL} where s.id = $1`, [id]);
   if (!row) throw notFound('That change');
   const cs = rowToChangeset(row);
-  if (cs.status === 'draft' && cs.authorId !== ctx.userId && cs.kind !== 'scenario') throw notFound('That change');
-  const changes = (await deps.sql`select * from changes where changeset_id = ${id} order by seq`).map(rowToChange);
+  if (cs.status === 'draft' && cs.authorId !== ctx.userId && cs.kind !== 'scenario')
+    throw notFound('That change');
+  const changes = (
+    await deps.sql`select * from changes where changeset_id = ${id} order by seq`
+  ).map(rowToChange);
   const snapshot = await deps.store.snapshot(ctx.scope);
   const index = new ModelIndex(snapshot);
   const nameOf = (eid: string) => {
-    const created = changes.find((c) => c.entityId === eid && c.after)?.after as Element | undefined;
+    const created = changes.find((c) => c.entityId === eid && c.after)?.after as
+      | Element
+      | undefined;
     return index.get(eid)?.name ?? created?.name ?? 'an element';
   };
   const display = (field: string, v: unknown): unknown => {
     if (v === null || v === undefined) return null;
     if (field === 'domainId' || field === 'parentId') return nameOf(v as string);
-    if (typeof v === 'string' && ['lifecycle', 'classification'].includes(field)) return enumLabel(v);
-    if (field.startsWith('attributes.') && typeof v === 'string' && /^[a-z_]+$/.test(v)) return enumLabel(v);
+    if (typeof v === 'string' && ['lifecycle', 'classification'].includes(field))
+      return enumLabel(v);
+    if (field.startsWith('attributes.') && typeof v === 'string' && /^[a-z_]+$/.test(v))
+      return enumLabel(v);
     return v;
   };
   return {
@@ -141,9 +163,22 @@ export async function changesetDetail(deps: Deps, ctx: RequestContext, id: strin
           c.op === 'update'
             ? diffElement(c.before, c.after)
                 .filter((d) => !d.field.startsWith('attributes._'))
-                .map((d) => ({ field: d.field, label: label(d.field, el.type), before: display(d.field, d.before), after: display(d.field, d.after) }))
+                .map((d) => ({
+                  field: d.field,
+                  label: label(d.field, el.type),
+                  before: display(d.field, d.before),
+                  after: display(d.field, d.after),
+                }))
             : [];
-        return { id: c.id, op: c.op, entity: c.entity, entityId: c.entityId, name: el.name, type: el.type, fields };
+        return {
+          id: c.id,
+          op: c.op,
+          entity: c.entity,
+          entityId: c.entityId,
+          name: el.name,
+          type: el.type,
+          fields,
+        };
       }
       const rel = (c.after ?? c.before) as unknown as Relation;
       const def = RELATION_TYPE_DEFS[rel.type];
@@ -166,34 +201,65 @@ async function loadChangeset(deps: Deps, id: string) {
   return rowToChangeset(row);
 }
 
-async function notify(deps: Deps, userId: string | null, title: string, body: string, link: string) {
+async function notify(
+  deps: Deps,
+  userId: string | null,
+  title: string,
+  body: string,
+  link: string,
+) {
   if (!userId) return;
-  await asSystem(deps.sql, (tx) => tx`insert into notifications (user_id, kind, title, body, link) values (${userId}, 'review', ${title}, ${body}, ${link})`);
+  await asSystem(
+    deps.sql,
+    (tx) =>
+      tx`insert into notifications (user_id, kind, title, body, link) values (${userId}, 'review', ${title}, ${body}, ${link})`,
+  );
   deps.hub.broadcast({ type: 'notification', userId, title });
 }
 
-export async function submitDraft(deps: Deps, ctx: RequestContext, id: string, title?: string, description?: string) {
+export async function submitDraft(
+  deps: Deps,
+  ctx: RequestContext,
+  id: string,
+  title?: string,
+  description?: string,
+) {
   const cs = await loadChangeset(deps, id);
   if (cs.authorId !== ctx.userId) throw forbidden('Only the author can submit this.');
   if (cs.status !== 'draft') throw badRequest('This was already submitted.');
   await deps.sql`update changesets set status = 'open', submitted_at = now(),
     title = ${title?.trim() || cs.title}, description = ${description ?? cs.description} where id = ${id}`;
-  deps.hub.broadcast({ type: 'changeset.updated', id, status: 'open', title: title || cs.title, by: actorName(ctx) });
+  deps.hub.broadcast({
+    type: 'changeset.updated',
+    id,
+    status: 'open',
+    title: title || cs.title,
+    by: actorName(ctx),
+  });
   return { ok: true };
 }
 
 export async function withdraw(deps: Deps, ctx: RequestContext, id: string) {
   const cs = await loadChangeset(deps, id);
   if (cs.authorId !== ctx.userId && !canReview(ctx)) throw forbidden();
-  if (!['draft', 'open'].includes(cs.status)) throw badRequest('Only pending changes can be withdrawn.');
+  if (!['draft', 'open'].includes(cs.status))
+    throw badRequest('Only pending changes can be withdrawn.');
   await deps.sql`update changesets set status = 'withdrawn', decided_at = now() where id = ${id}`;
-  deps.hub.broadcast({ type: 'changeset.updated', id, status: 'withdrawn', title: cs.title, by: actorName(ctx) });
+  deps.hub.broadcast({
+    type: 'changeset.updated',
+    id,
+    status: 'withdrawn',
+    title: cs.title,
+    by: actorName(ctx),
+  });
   return { ok: true };
 }
 
 /** Applies a set of recorded changes to today's model. */
 async function applyAll(deps: Deps, ctx: RequestContext, changesetId: string, inverse = false) {
-  const changes = (await deps.sql`select * from changes where changeset_id = ${changesetId} order by seq`).map(rowToChange);
+  const changes = (
+    await deps.sql`select * from changes where changeset_id = ${changesetId} order by seq`
+  ).map(rowToChange);
   const ordered = inverse ? [...changes].reverse() : changes;
   const skipped: string[] = [];
   await withScope(deps.sql, ctx.scope, async (tx) => {
@@ -205,7 +271,12 @@ async function applyAll(deps: Deps, ctx: RequestContext, changesetId: string, in
     for (const c of ordered) {
       const ch = inverse
         ? {
-            op: c.op === 'create' ? ('delete' as const) : c.op === 'delete' ? ('create' as const) : ('update' as const),
+            op:
+              c.op === 'create'
+                ? ('delete' as const)
+                : c.op === 'delete'
+                  ? ('create' as const)
+                  : ('update' as const),
             entity: c.entity,
             entityId: c.entityId,
             before: c.after,
@@ -215,7 +286,16 @@ async function applyAll(deps: Deps, ctx: RequestContext, changesetId: string, in
       const res = await applyChangeToBase(tx, ch, actorName(ctx));
       if (res.skipped) skipped.push(res.skipped);
       touched.push(...res.touched);
-      if (undoSet) await recordChange(tx, undoSet, ch.op, ch.entity, ch.entityId, ch.before as object, ch.after as object);
+      if (undoSet)
+        await recordChange(
+          tx,
+          undoSet,
+          ch.op,
+          ch.entity,
+          ch.entityId,
+          ch.before as object,
+          ch.after as object,
+        );
     }
     await refreshDerived(tx, touched);
   });
@@ -231,10 +311,33 @@ export async function approve(deps: Deps, ctx: RequestContext, id: string, note?
   const skipped = await applyAll(deps, ctx, id);
   await deps.sql`update changesets set status = 'applied', reviewer_id = ${ctx.userId}, reviewer_name = ${ctx.name},
     decision_note = ${note ?? null}, decided_at = now() where id = ${id}`;
-  await audit(deps.sql, ctx, 'changeset.approve', { type: 'changeset', id }, { title: cs.title, skipped });
-  await notify(deps, cs.authorId, `${ctx.name} approved “${cs.title}”`, note ?? '', `/changes?id=${id}`);
-  deps.hub.broadcast({ type: 'changeset.updated', id, status: 'applied', title: cs.title, by: actorName(ctx) });
-  return { ok: true, message: skipped.length ? `Applied. ${skipped.length} item(s) were already up to date.` : 'Applied.' };
+  await audit(
+    deps.sql,
+    ctx,
+    'changeset.approve',
+    { type: 'changeset', id },
+    { title: cs.title, skipped },
+  );
+  await notify(
+    deps,
+    cs.authorId,
+    `${ctx.name} approved “${cs.title}”`,
+    note ?? '',
+    `/changes?id=${id}`,
+  );
+  deps.hub.broadcast({
+    type: 'changeset.updated',
+    id,
+    status: 'applied',
+    title: cs.title,
+    by: actorName(ctx),
+  });
+  return {
+    ok: true,
+    message: skipped.length
+      ? `Applied. ${skipped.length} item(s) were already up to date.`
+      : 'Applied.',
+  };
 }
 
 export async function reject(deps: Deps, ctx: RequestContext, id: string, note?: string) {
@@ -244,8 +347,20 @@ export async function reject(deps: Deps, ctx: RequestContext, id: string, note?:
   await deps.sql`update changesets set status = 'rejected', reviewer_id = ${ctx.userId}, reviewer_name = ${ctx.name},
     decision_note = ${note ?? null}, decided_at = now() where id = ${id}`;
   await audit(deps.sql, ctx, 'changeset.reject', { type: 'changeset', id }, { title: cs.title });
-  await notify(deps, cs.authorId, `${ctx.name} declined “${cs.title}”`, note ?? '', `/changes?id=${id}`);
-  deps.hub.broadcast({ type: 'changeset.updated', id, status: 'rejected', title: cs.title, by: actorName(ctx) });
+  await notify(
+    deps,
+    cs.authorId,
+    `${ctx.name} declined “${cs.title}”`,
+    note ?? '',
+    `/changes?id=${id}`,
+  );
+  deps.hub.broadcast({
+    type: 'changeset.updated',
+    id,
+    status: 'rejected',
+    title: cs.title,
+    by: actorName(ctx),
+  });
   return { ok: true };
 }
 
@@ -253,18 +368,30 @@ export async function reject(deps: Deps, ctx: RequestContext, id: string, note?:
 export async function undo(deps: Deps, ctx: RequestContext, id: string) {
   const cs = await loadChangeset(deps, id);
   if (cs.status !== 'applied') throw badRequest('Only applied changes can be undone.');
-  if (cs.authorId !== ctx.userId && !canReview(ctx)) throw forbidden('You can only undo your own changes.');
+  if (cs.authorId !== ctx.userId && !canReview(ctx))
+    throw forbidden('You can only undo your own changes.');
   const [state] = await deps.sql`select undone_at from changesets where id = ${id}`;
   if (state?.undoneAt) throw badRequest('This was already undone.');
   const skipped = await applyAll(deps, ctx, id, true);
   await deps.sql`update changesets set undone_at = now(), undone_by = ${ctx.name} where id = ${id}`;
   await audit(deps.sql, ctx, 'changeset.undo', { type: 'changeset', id }, { title: cs.title });
-  return { ok: true, message: skipped.length ? `Undone, except ${skipped.length} item(s) that changed since.` : 'Undone.' };
+  return {
+    ok: true,
+    message: skipped.length
+      ? `Undone, except ${skipped.length} item(s) that changed since.`
+      : 'Undone.',
+  };
 }
 
-export async function discardChange(deps: Deps, ctx: RequestContext, changesetId: string, changeId: string) {
+export async function discardChange(
+  deps: Deps,
+  ctx: RequestContext,
+  changesetId: string,
+  changeId: string,
+) {
   const cs = await loadChangeset(deps, changesetId);
-  if (!['draft', 'open'].includes(cs.status)) throw badRequest('Only pending changes can be edited.');
+  if (!['draft', 'open'].includes(cs.status))
+    throw badRequest('Only pending changes can be edited.');
   if (cs.authorId !== ctx.userId && !(cs.kind === 'scenario' && canReview(ctx))) throw forbidden();
   await deps.sql`delete from changes where id = ${changeId} and changeset_id = ${changesetId}`;
   return { ok: true };

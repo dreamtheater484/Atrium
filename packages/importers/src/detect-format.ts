@@ -16,9 +16,10 @@ export function isLegacyOffice(data: Uint8Array): boolean {
 function sniffText(data: Uint8Array): string {
   const head = data.subarray(0, SNIFF_BYTES);
   let text: string;
-  if (head[0] === 0xff && head[1] === 0xfe) text = new TextDecoder('utf-16le').decode(head.subarray(2));
+  if (head[0] === 0xff && head[1] === 0xfe)
+    text = new TextDecoder('utf-16le').decode(head.subarray(2));
   else text = new TextDecoder('utf-8').decode(head);
-  return text.replace(/^﻿/, '');
+  return text.replace(/^\uFEFF/, '');
 }
 
 /** Whether the start of a text file looks like delimited rows (consistent separators per line). */

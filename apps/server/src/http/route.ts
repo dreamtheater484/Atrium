@@ -103,12 +103,19 @@ export function openApiDocument(routes: AnyRoute[], info: { version: string; ser
       security: r.access === 'public' ? [] : [{ bearer: [] }, { session: [] }],
     };
     if (r.body) {
-      op.requestBody = { required: true, content: { 'application/json': { schema: toJson(r.body) } } };
+      op.requestBody = {
+        required: true,
+        content: { 'application/json': { schema: toJson(r.body) } },
+      };
     }
     if (r.multipart) {
       op.requestBody = {
         required: true,
-        content: { 'multipart/form-data': { schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } } },
+        content: {
+          'multipart/form-data': {
+            schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
+          },
+        },
       };
     }
     paths[path] ??= {};

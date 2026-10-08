@@ -33,7 +33,7 @@ interface EntityRef {
   name: string;
 }
 
-const KIND_TYPES: Record<string, ElementType> = {
+const KIND_TYPES: Partial<Record<string, ElementType>> = {
   component: 'application',
   api: 'interface',
   resource: 'technology',
@@ -83,7 +83,8 @@ function refString(r: EntityRef): string {
 }
 
 function strings(v: unknown): string[] {
-  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string' && x.trim() !== '');
+  if (Array.isArray(v))
+    return v.filter((x): x is string => typeof x === 'string' && x.trim() !== '');
   return typeof v === 'string' && v.trim() ? [v] : [];
 }
 
@@ -117,7 +118,8 @@ export function parseBackstage(yamlText: string): NormalizedModel {
   const entities: Array<{ entity: Entity; ref: EntityRef }> = [];
 
   parseAllDocuments(yamlText).forEach((doc, i) => {
-    for (const err of doc.errors.slice(0, 2)) builder.warn(`Document ${i + 1}: ${err.message.split('\n')[0]}`);
+    for (const err of doc.errors.slice(0, 2))
+      builder.warn(`Document ${i + 1}: ${err.message.split('\n')[0]}`);
     const value = doc.toJS() as unknown;
     if (!value || typeof value !== 'object' || Array.isArray(value)) return;
     const entity = value as Entity;
@@ -127,7 +129,10 @@ export function parseBackstage(yamlText: string): NormalizedModel {
       builder.warn(`Document ${i + 1} has no kind or metadata.name and was skipped`);
       return;
     }
-    entities.push({ entity, ref: { kind, namespace: (str(entity.metadata?.namespace) ?? 'default').toLowerCase(), name } });
+    entities.push({
+      entity,
+      ref: { kind, namespace: (str(entity.metadata?.namespace) ?? 'default').toLowerCase(), name },
+    });
   });
 
   const hasDomains = entities.some((e) => e.ref.kind === 'domain');
@@ -142,7 +147,8 @@ export function parseBackstage(yamlText: string): NormalizedModel {
     }
     if (ref.kind === 'system') {
       const domain = str(entity.spec?.domain);
-      if (domain) systemDomain.set(refString(ref), refString(parseRef(domain, 'domain', ref.namespace)));
+      if (domain)
+        systemDomain.set(refString(ref), refString(parseRef(domain, 'domain', ref.namespace)));
     }
   }
 
@@ -158,17 +164,25 @@ export function parseBackstage(yamlText: string): NormalizedModel {
     const id = refString(ref);
     const type = KIND_TYPES[ref.kind];
     if (type && !builder.has(id)) {
-      builder.add({ ref: id, type, name: ref.name, key: ref.name, externalIds: { backstage: id }, placeholder: true });
+      builder.add({
+        ref: id,
+        type,
+        name: ref.name,
+        key: ref.name,
+        externalIds: { backstage: id },
+        placeholder: true,
+      });
     }
     return id;
   };
 
   // Elements.
   for (const { entity, ref } of entities) {
-    let type = KIND_TYPES[ref.kind];
-    if (ref.kind === 'system' && hasDomains) type = undefined;
+    const type: ElementType | undefined =
+      ref.kind === 'system' && hasDomains ? undefined : KIND_TYPES[ref.kind];
     if (!type) {
-      if (!QUIET_KINDS.has(ref.kind) && ref.kind !== 'system') ignoredKinds.set(ref.kind, (ignoredKinds.get(ref.kind) ?? 0) + 1);
+      if (!QUIET_KINDS.has(ref.kind) && ref.kind !== 'system')
+        ignoredKinds.set(ref.kind, (ignoredKinds.get(ref.kind) ?? 0) + 1);
       continue;
     }
     const meta = entity.metadata ?? {};
@@ -178,7 +192,10 @@ export function parseBackstage(yamlText: string): NormalizedModel {
     const el: NormalizedElement = {
       ref: id,
       type,
-      name: str(meta.title) ?? (ref.kind === 'group' ? str(profile?.displayName) : undefined) ?? ref.name,
+      name:
+        str(meta.title) ??
+        (ref.kind === 'group' ? str(profile?.displayName) : undefined) ??
+        ref.name,
       key: ref.name,
       externalIds: { backstage: id },
     };
@@ -200,13 +217,17 @@ export function parseBackstage(yamlText: string): NormalizedModel {
       const apiType = str(spec.type)?.toLowerCase();
       if (apiType) {
         attributes.protocol =
-          API_PROTOCOLS[apiType] ?? matchEnum(apiType, INTERFACE_PROTOCOLS, 'protocol')?.value ?? 'other';
+          API_PROTOCOLS[apiType] ??
+          matchEnum(apiType, INTERFACE_PROTOCOLS, 'protocol')?.value ??
+          'other';
       }
       if (link) attributes.docs = link;
     }
     if (type === 'technology') {
       const resourceType = str(spec.type);
-      const category = resourceType ? matchEnum(resourceType, TECH_CATEGORIES, 'tech_category') : undefined;
+      const category = resourceType
+        ? matchEnum(resourceType, TECH_CATEGORIES, 'tech_category')
+        : undefined;
       if (category) attributes.category = category.value;
     }
     if (type === 'team') {
@@ -241,8 +262,10 @@ export function parseBackstage(yamlText: string): NormalizedModel {
         target.kind === 'resource' && el.type === 'application' ? 'uses' : 'depends_on';
       builder.relate(relation, id, placeholder(target));
     }
-    for (const api of strings(spec.providesApis)) builder.relate('exposes', id, placeholder(parseRef(api, 'api', ref.namespace)));
-    for (const api of strings(spec.consumesApis)) builder.relate('consumes', id, placeholder(parseRef(api, 'api', ref.namespace)));
+    for (const api of strings(spec.providesApis))
+      builder.relate('exposes', id, placeholder(parseRef(api, 'api', ref.namespace)));
+    for (const api of strings(spec.consumesApis))
+      builder.relate('consumes', id, placeholder(parseRef(api, 'api', ref.namespace)));
   }
 
   // Domains referenced by components but not defined in the file.

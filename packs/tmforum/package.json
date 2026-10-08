@@ -1,0 +1,10 @@
+{
+  "name": "@atrium/pack-tmforum",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Importer configuration for TM Forum frameworks (eTOM, SID, ODA Functional Framework, ODA Components). Contains no TM Forum content.",
+  "type": "module",
+  "exports": {
+    "./manifest.json": "./manifest.json"
+  }
+}

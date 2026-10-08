@@ -1,7 +1,11 @@
 import { useSyncExternalStore } from 'react';
 
 /** A tiny global store (no extra dependency). */
-export function createStore<T extends object>(initial: T, persistKey?: string, persistFields?: Array<keyof T>) {
+export function createStore<T extends object>(
+  initial: T,
+  persistKey?: string,
+  persistFields?: Array<keyof T>,
+) {
   let state = initial;
   if (persistKey) {
     try {
@@ -18,7 +22,9 @@ export function createStore<T extends object>(initial: T, persistKey?: string, p
     state = { ...state, ...next };
     if (persistKey) {
       try {
-        const toSave = persistFields ? Object.fromEntries(persistFields.map((f) => [f, state[f]])) : state;
+        const toSave = persistFields
+          ? Object.fromEntries(persistFields.map((f) => [f, state[f]]))
+          : state;
         localStorage.setItem(persistKey, JSON.stringify(toSave));
       } catch {
         // ignore
@@ -31,7 +37,11 @@ export function createStore<T extends object>(initial: T, persistKey?: string, p
     return () => listeners.delete(l);
   };
   function useStore<R>(selector: (s: T) => R): R {
-    return useSyncExternalStore(subscribe, () => selector(state), () => selector(state));
+    return useSyncExternalStore(
+      subscribe,
+      () => selector(state),
+      () => selector(state),
+    );
   }
   return { get, set, subscribe, useStore };
 }

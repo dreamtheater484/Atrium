@@ -16,7 +16,14 @@ export interface Overview {
     byTime: Record<string, number>;
     byHosting: Record<string, number>;
     byDomain: Array<{ id: string | null; name: string; count: number; cost: number; act: number }>;
-    fitScatter: Array<{ id: string; name: string; business: number; technical: number; cost: number; time: string | null }>;
+    fitScatter: Array<{
+      id: string;
+      name: string;
+      business: number;
+      technical: number;
+      cost: number;
+      time: string | null;
+    }>;
   };
   quality: {
     average: number;
@@ -25,8 +32,23 @@ export interface Overview {
     gaps: Array<ElementSummary & { quality: number; missing: string[]; domainName: string | null }>;
   };
   risks: Array<ElementSummary & { reasons: string[]; domainName: string | null; cost: number }>;
-  eol: Array<{ id: string; name: string; eolDate: string; past: boolean; apps: Array<{ id: string; name: string }> }>;
-  initiatives: Array<{ id: string; name: string; status: string | null; start: string | null; end: string | null; progress: number | null; budget: number | null; impacts: number }>;
+  eol: Array<{
+    id: string;
+    name: string;
+    eolDate: string;
+    past: boolean;
+    apps: Array<{ id: string; name: string }>;
+  }>;
+  initiatives: Array<{
+    id: string;
+    name: string;
+    status: string | null;
+    start: string | null;
+    end: string | null;
+    progress: number | null;
+    budget: number | null;
+    impacts: number;
+  }>;
   capabilities: {
     total: number;
     withoutApps: Array<{ id: string; name: string }>;
@@ -34,7 +56,15 @@ export interface Overview {
     costByCapability: Array<{ id: string; name: string; cost: number; health: Health | null }>;
   };
   technology: { total: number; byRadar: Record<string, number> };
-  myServices: Array<ElementSummary & { domainName: string | null; dependsOn: number; usedBy: number; reasons: string[]; standards: number }>;
+  myServices: Array<
+    ElementSummary & {
+      domainName: string | null;
+      dependsOn: number;
+      usedBy: number;
+      reasons: string[];
+      standards: number;
+    }
+  >;
 }
 
 export function useOverview() {

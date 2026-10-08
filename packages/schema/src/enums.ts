@@ -60,7 +60,13 @@ export const INTERFACE_PROTOCOLS = [
   'other',
 ] as const;
 export const INTERFACE_FREQUENCY = ['realtime', 'hourly', 'daily', 'batch', 'on_demand'] as const;
-export const DATA_SENSITIVITY = ['none', 'personal', 'sensitive_personal', 'financial', 'secret'] as const;
+export const DATA_SENSITIVITY = [
+  'none',
+  'personal',
+  'sensitive_personal',
+  'financial',
+  'secret',
+] as const;
 export const DECISION_STATUS = ['proposed', 'accepted', 'superseded', 'rejected'] as const;
 export const INITIATIVE_STATUS = ['planned', 'running', 'done', 'on_hold', 'cancelled'] as const;
 export const STANDARD_LEVEL = ['must', 'should'] as const;

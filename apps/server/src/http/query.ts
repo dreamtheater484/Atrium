@@ -10,7 +10,14 @@ export const boolParam = z
 export const listParam = z
   .string()
   .optional()
-  .transform((v) => (v ? v.split(',').map((s) => s.trim()).filter(Boolean) : undefined));
+  .transform((v) =>
+    v
+      ? v
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined,
+  );
 
 export const idParams = z.object({ id: z.string().uuid('Not a valid id') });
 
@@ -18,7 +25,10 @@ export const idParams = z.object({ id: z.string().uuid('Not a valid id') });
  * `?scenario=` accepts a scenario id, or "target" for the current target state.
  * Returns undefined for today.
  */
-export async function resolveScenario(db: Db, value: string | undefined | null): Promise<string | undefined> {
+export async function resolveScenario(
+  db: Db,
+  value: string | undefined | null,
+): Promise<string | undefined> {
   if (!value || value === 'today') return undefined;
   if (value === 'target') {
     const [t] = await db`select id from scenarios where is_target and archived_at is null limit 1`;

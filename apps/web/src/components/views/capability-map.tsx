@@ -13,7 +13,8 @@ export function useCapabilityMap(opts: { layer?: 'org' | 'reference'; pack?: str
   const at = useUi((s) => s.at) ?? undefined;
   return useQuery({
     queryKey: ['model', 'capability-map', scenario, at, opts],
-    queryFn: () => api<CapabilityMapData>('/views/capability-map', { query: { scenario, at, ...opts } }),
+    queryFn: () =>
+      api<CapabilityMapData>('/views/capability-map', { query: { scenario, at, ...opts } }),
   });
 }
 
@@ -62,7 +63,9 @@ export function overlayTone(cell: CapabilityCell, overlay: MapOverlay, costQ: nu
       return TONES.seq[Math.min(4, i)]!;
     }
     case 'lifecycle': {
-      const ending = cell.apps.filter((a) => a.lifecycle === 'phase_out' || a.lifecycle === 'retired').length;
+      const ending = cell.apps.filter(
+        (a) => a.lifecycle === 'phase_out' || a.lifecycle === 'retired',
+      ).length;
       if (!cell.apps.length) return TONES.neutral;
       return ending / cell.apps.length >= 0.5 ? TONES.act : ending > 0 ? TONES.watch : TONES.good;
     }
@@ -70,10 +73,20 @@ export function overlayTone(cell: CapabilityCell, overlay: MapOverlay, costQ: nu
       const counts: Record<string, number> = {};
       for (const a of cell.apps) if (a.time) counts[a.time] = (counts[a.time] ?? 0) + 1;
       const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
-      return top === 'invest' ? TONES.good : top === 'migrate' ? TONES.watch : top === 'eliminate' ? TONES.act : TONES.neutral;
+      return top === 'invest'
+        ? TONES.good
+        : top === 'migrate'
+          ? TONES.watch
+          : top === 'eliminate'
+            ? TONES.act
+            : TONES.neutral;
     }
     case 'importance':
-      return cell.importance === 'high' ? TONES.seq[3]! : cell.importance === 'medium' ? TONES.seq[1]! : TONES.neutral;
+      return cell.importance === 'high'
+        ? TONES.seq[3]!
+        : cell.importance === 'medium'
+          ? TONES.seq[1]!
+          : TONES.neutral;
     case 'quality':
       return cell.quality >= 85 ? TONES.good : cell.quality >= 60 ? TONES.watch : TONES.act;
     default:
@@ -88,17 +101,50 @@ export function OverlayLegend({ overlay, costQ }: { overlay: MapOverlay; costQ: 
     </span>
   );
   const legends: Partial<Record<MapOverlay, React.ReactNode[]>> = {
-    health: [item('bg-good-soft border-good/40', 'Good'), item('bg-watch-soft border-watch/50', 'Watch'), item('bg-act-soft border-act/40', 'Act'), item('bg-surface-2 border-border', 'No applications or unknown')],
-    coverage: [item('bg-act-soft border-act/40', 'Gap: no application'), item('bg-good-soft border-good/40', 'Covered'), item('bg-watch-soft border-watch/50', '3+ applications: possible overlap')],
-    cost: [item('bg-seq-1 border-seq-2', `Up to ${formatMoney(costQ[0])}`), item('bg-seq-3 border-seq-4', 'Middle'), item('bg-seq-5 border-seq-5', `Over ${formatMoney(costQ[3])}`), item('bg-surface-2 border-border', 'No cost data')],
-    lifecycle: [item('bg-good-soft border-good/40', 'Current'), item('bg-watch-soft border-watch/50', 'Some phasing out'), item('bg-act-soft border-act/40', 'Mostly phasing out')],
-    time: [item('bg-good-soft border-good/40', 'Mostly invest'), item('bg-watch-soft border-watch/50', 'Mostly migrate'), item('bg-act-soft border-act/40', 'Mostly eliminate'), item('bg-surface-2 border-border', 'Tolerate or not rated')],
-    importance: [item('bg-seq-4 border-seq-5', 'High'), item('bg-seq-2 border-seq-3', 'Medium'), item('bg-surface-2 border-border', 'Low or not set')],
-    quality: [item('bg-good-soft border-good/40', 'Complete'), item('bg-watch-soft border-watch/50', 'Partly'), item('bg-act-soft border-act/40', 'Mostly missing')],
+    health: [
+      item('bg-good-soft border-good/40', 'Good'),
+      item('bg-watch-soft border-watch/50', 'Watch'),
+      item('bg-act-soft border-act/40', 'Act'),
+      item('bg-surface-2 border-border', 'No applications or unknown'),
+    ],
+    coverage: [
+      item('bg-act-soft border-act/40', 'Gap: no application'),
+      item('bg-good-soft border-good/40', 'Covered'),
+      item('bg-watch-soft border-watch/50', '3+ applications: possible overlap'),
+    ],
+    cost: [
+      item('bg-seq-1 border-seq-2', `Up to ${formatMoney(costQ[0])}`),
+      item('bg-seq-3 border-seq-4', 'Middle'),
+      item('bg-seq-5 border-seq-5', `Over ${formatMoney(costQ[3])}`),
+      item('bg-surface-2 border-border', 'No cost data'),
+    ],
+    lifecycle: [
+      item('bg-good-soft border-good/40', 'Current'),
+      item('bg-watch-soft border-watch/50', 'Some phasing out'),
+      item('bg-act-soft border-act/40', 'Mostly phasing out'),
+    ],
+    time: [
+      item('bg-good-soft border-good/40', 'Mostly invest'),
+      item('bg-watch-soft border-watch/50', 'Mostly migrate'),
+      item('bg-act-soft border-act/40', 'Mostly eliminate'),
+      item('bg-surface-2 border-border', 'Tolerate or not rated'),
+    ],
+    importance: [
+      item('bg-seq-4 border-seq-5', 'High'),
+      item('bg-seq-2 border-seq-3', 'Medium'),
+      item('bg-surface-2 border-border', 'Low or not set'),
+    ],
+    quality: [
+      item('bg-good-soft border-good/40', 'Complete'),
+      item('bg-watch-soft border-watch/50', 'Partly'),
+      item('bg-act-soft border-act/40', 'Mostly missing'),
+    ],
   };
   const items = legends[overlay];
   if (!items) return null;
-  return <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">{items}</div>;
+  return (
+    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">{items}</div>
+  );
 }
 
 function appsTooltip(cell: CapabilityCell) {
@@ -116,7 +162,15 @@ function appsTooltip(cell: CapabilityCell) {
   );
 }
 
-function Leaf({ cell, overlay, costQ }: { cell: CapabilityCell; overlay: MapOverlay; costQ: number[] }) {
+function Leaf({
+  cell,
+  overlay,
+  costQ,
+}: {
+  cell: CapabilityCell;
+  overlay: MapOverlay;
+  costQ: number[];
+}) {
   const tone = overlayTone(cell, overlay, costQ);
   return (
     <Tooltip content={appsTooltip(cell)} side="right">
@@ -147,12 +201,24 @@ function Leaf({ cell, overlay, costQ }: { cell: CapabilityCell; overlay: MapOver
   );
 }
 
-function Level2({ cell, overlay, costQ }: { cell: CapabilityCell; overlay: MapOverlay; costQ: number[] }) {
+function Level2({
+  cell,
+  overlay,
+  costQ,
+}: {
+  cell: CapabilityCell;
+  overlay: MapOverlay;
+  costQ: number[];
+}) {
   if (!cell.children.length) return <Leaf cell={cell} overlay={overlay} costQ={costQ} />;
   const tone = overlayTone(cell, overlay, costQ);
   return (
     <div className={cn('rounded-lg border p-1.5', tone.border, 'bg-surface')}>
-      <button type="button" onClick={() => inspect(cell.id)} className="mb-1 flex w-full items-center gap-1.5 px-1 text-left text-[12px] font-semibold hover:underline">
+      <button
+        type="button"
+        onClick={() => inspect(cell.id)}
+        className="mb-1 flex w-full items-center gap-1.5 px-1 text-left text-[12px] font-semibold hover:underline"
+      >
         <span className={cn('size-2 rounded-sm', tone.bg, 'border', tone.border)} />
         {cell.name}
         <MarkBadge mark={cell.mark} />
@@ -166,20 +232,45 @@ function Level2({ cell, overlay, costQ }: { cell: CapabilityCell; overlay: MapOv
   );
 }
 
-export function CapabilityMap({ data, overlay, q }: { data: CapabilityMapData; overlay: MapOverlay; q?: string }) {
+export function CapabilityMap({
+  data,
+  overlay,
+  q,
+}: {
+  data: CapabilityMapData;
+  overlay: MapOverlay;
+  q?: string;
+}) {
   const costQ = useMemo(() => quantiles(flatten(data.roots).map((c) => c.cost)), [data]);
   const needle = q?.toLowerCase();
   const roots = needle
-    ? data.roots.filter((r) => flatten([r]).some((c) => c.name.toLowerCase().includes(needle) || c.apps.some((a) => a.name.toLowerCase().includes(needle))))
+    ? data.roots.filter((r) =>
+        flatten([r]).some(
+          (c) =>
+            c.name.toLowerCase().includes(needle) ||
+            c.apps.some((a) => a.name.toLowerCase().includes(needle)),
+        ),
+      )
     : data.roots;
   return (
     <div className="flex flex-col gap-4">
       <OverlayLegend overlay={overlay} costQ={costQ} />
       <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] items-start gap-4">
         {roots.map((root) => (
-          <section key={root.id} className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-3 shadow-sm">
-            <button type="button" onClick={() => inspect(root.id)} className="group flex flex-col gap-0.5 px-1 text-left">
-              {root.domainName && <span className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">{root.domainName}</span>}
+          <section
+            key={root.id}
+            className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-3 shadow-sm"
+          >
+            <button
+              type="button"
+              onClick={() => inspect(root.id)}
+              className="group flex flex-col gap-0.5 px-1 text-left"
+            >
+              {root.domainName && (
+                <span className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                  {root.domainName}
+                </span>
+              )}
               <span className="flex items-center gap-2 text-[14px] font-semibold tracking-tight group-hover:underline">
                 {root.name}
                 <MarkBadge mark={root.mark} />
@@ -218,7 +309,11 @@ export function CapabilityMapView({ overlay, q }: { overlay: MapOverlay; q?: str
           title="No capabilities yet"
           className="mt-16"
           action={
-            <button type="button" className="text-[13px] font-medium text-primary hover:underline" onClick={() => openAdd('capability')}>
+            <button
+              type="button"
+              className="text-[13px] font-medium text-primary hover:underline"
+              onClick={() => openAdd('capability')}
+            >
               Add your first capability
             </button>
           }

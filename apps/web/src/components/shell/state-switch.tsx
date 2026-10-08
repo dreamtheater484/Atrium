@@ -30,16 +30,34 @@ export function StateSwitch() {
   const pill = (active: boolean) =>
     cn(
       'inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-[13px] font-medium transition-all',
-      active ? 'bg-surface text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+      active
+        ? 'bg-surface text-foreground shadow-sm'
+        : 'text-muted-foreground hover:text-foreground',
     );
 
   return (
-    <div className="flex items-center gap-0.5 rounded-lg bg-surface-2 p-0.5" role="tablist" aria-label="Model version">
-      <button type="button" role="tab" aria-selected={scenario === 'today'} className={pill(scenario === 'today')} onClick={() => ui.set({ scenario: 'today', at: null })}>
+    <div
+      className="flex items-center gap-0.5 rounded-lg bg-surface-2 p-0.5"
+      role="tablist"
+      aria-label="Model version"
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={scenario === 'today'}
+        className={pill(scenario === 'today')}
+        onClick={() => ui.set({ scenario: 'today', at: null })}
+      >
         Today
       </button>
       {target ? (
-        <Tooltip content={target.targetDate ? `Target state for ${formatDate(target.targetDate)}` : 'Agreed target state'}>
+        <Tooltip
+          content={
+            target.targetDate
+              ? `Target state for ${formatDate(target.targetDate)}`
+              : 'Agreed target state'
+          }
+        >
           <button
             type="button"
             role="tab"
@@ -72,7 +90,9 @@ export function StateSwitch() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-64">
           <DropdownMenuLabel>What-if scenarios</DropdownMenuLabel>
-          {others.length === 0 && <div className="px-2 py-1.5 text-xs text-muted-foreground">No scenarios yet.</div>}
+          {others.length === 0 && (
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">No scenarios yet.</div>
+          )}
           {others.map((s) => (
             <DropdownMenuItem key={s.id} onSelect={() => ui.set({ scenario: s.id, at: null })}>
               <FlaskConical />
@@ -96,7 +116,10 @@ export function ScenarioBanner() {
   const ws = useWorkspace().data;
   const navigate = useNavigate();
   if (scenario === 'today') return null;
-  const current = scenario === 'target' ? ws?.scenarios.find((s) => s.isTarget) : ws?.scenarios.find((s) => s.id === scenario);
+  const current =
+    scenario === 'target'
+      ? ws?.scenarios.find((s) => s.isTarget)
+      : ws?.scenarios.find((s) => s.id === scenario);
   if (!current) return null;
   return (
     <div className="no-print flex h-9 shrink-0 items-center gap-2 border-b border-primary/20 bg-primary-soft px-4 text-[13px] text-primary-soft-foreground">
@@ -107,10 +130,21 @@ export function ScenarioBanner() {
         {current.changeCount ? ` (${current.changeCount} so far)` : ''}.
       </span>
       <div className="flex-1" />
-      <Button variant="ghost" size="sm" className="text-primary-soft-foreground hover:bg-primary/10" onClick={() => navigate({ to: '/changes', search: { tab: 'scenarios', id: current.id } })}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-primary-soft-foreground hover:bg-primary/10"
+        onClick={() => navigate({ to: '/changes', search: { tab: 'scenarios', id: current.id } })}
+      >
         See what's different
       </Button>
-      <Button variant="ghost" size="icon-sm" className="text-primary-soft-foreground hover:bg-primary/10" aria-label="Back to today" onClick={() => ui.set({ scenario: 'today', at: null })}>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="text-primary-soft-foreground hover:bg-primary/10"
+        aria-label="Back to today"
+        onClick={() => ui.set({ scenario: 'today', at: null })}
+      >
         <X />
       </Button>
     </div>

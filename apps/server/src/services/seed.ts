@@ -23,7 +23,9 @@ function toElement(s: SeedElement, refs: Map<string, string>, by: string): Eleme
     domainId: s.domain ? (refs.get(s.domain) ?? null) : null,
     parentId: s.parent ? (refs.get(s.parent) ?? null) : null,
     owner: s.owner ?? null,
-    lifecycle: typeDef(s.type).hasLifecycle ? (s.lifecycle ?? (phase && phase !== 'not_yet' ? phase : null)) : null,
+    lifecycle: typeDef(s.type).hasLifecycle
+      ? (s.lifecycle ?? (phase && phase !== 'not_yet' ? phase : null))
+      : null,
     lifecycleDates: dates,
     classification: s.classification ?? 'internal',
     attributes: { ...(s.attributes ?? {}) },
@@ -100,14 +102,19 @@ async function recordSeedChanges(
     } else if (ch.op === 'unrelate') {
       const s = refs.get(ch.relation.from);
       const t = refs.get(ch.relation.to);
-      const rel = relations.find((r) => r.type === ch.relation.type && r.sourceId === s && r.targetId === t);
+      const rel = relations.find(
+        (r) => r.type === ch.relation.type && r.sourceId === s && r.targetId === t,
+      );
       if (rel) await recordChange(db, changesetId, 'delete', 'relation', rel.id, rel, null, true);
     }
   }
 }
 
 /** Loads a sample dataset (Acme Telco) into an empty workspace. */
-export async function loadDataset(deps: Deps, dataset: SeedDataset): Promise<{ elements: number; relations: number }> {
+export async function loadDataset(
+  deps: Deps,
+  dataset: SeedDataset,
+): Promise<{ elements: number; relations: number }> {
   const ctx = SYSTEM(deps.config.mode);
   const by = 'Atrium sample data';
   const refs = new Map<string, string>();
@@ -119,22 +126,32 @@ export async function loadDataset(deps: Deps, dataset: SeedDataset): Promise<{ e
       if (v) el.attributes.version = v;
     }
     if (el.type === 'technology' && !el.attributes.eol_date) {
-      const info = await deps.eol.lookup(el.name, el.attributes.product as string, el.attributes.version as string);
+      const info = await deps.eol.lookup(
+        el.name,
+        el.attributes.product as string,
+        el.attributes.version as string,
+      );
       if (info?.eolDate) el.attributes.eol_date = info.eolDate;
     }
   }
-  const relations = dataset.relations.map((r) => toRelation(r, refs, by)).filter(Boolean) as Relation[];
+  const relations = dataset.relations
+    .map((r) => toRelation(r, refs, by))
+    .filter(Boolean) as Relation[];
 
   await asSystem(deps.sql, async (tx) => {
     // Domains first, then parents before children.
-    const ordered = [...elements].sort((a, b) => (a.type === 'domain' ? -1 : 0) - (b.type === 'domain' ? -1 : 0));
+    const ordered = [...elements].sort(
+      (a, b) => (a.type === 'domain' ? -1 : 0) - (b.type === 'domain' ? -1 : 0),
+    );
     const inserted = new Set<string>();
     const pending = [...ordered];
     let guard = 0;
     while (pending.length && guard++ < 20) {
       for (let i = pending.length - 1; i >= 0; i--) {
         const el = pending[i]!;
-        const ready = (!el.parentId || inserted.has(el.parentId)) && (!el.domainId || inserted.has(el.domainId) || el.type === 'domain');
+        const ready =
+          (!el.parentId || inserted.has(el.parentId)) &&
+          (!el.domainId || inserted.has(el.domainId) || el.type === 'domain');
         if (!ready) continue;
         await insertElementRow(tx, el);
         inserted.add(el.id);
@@ -159,7 +176,12 @@ export async function loadDataset(deps: Deps, dataset: SeedDataset): Promise<{ e
       await tx`
         insert into scenarios (id, name, description, is_target, target_date, created_by)
         values (${scenarioId}, ${sc.name}, ${sc.description}, ${sc.isTarget}, ${sc.targetDate}, ${by})`;
-      const csId = await openChangeset(tx, ctx, { kind: 'scenario', status: 'draft', title: sc.name, scenarioId });
+      const csId = await openChangeset(tx, ctx, {
+        kind: 'scenario',
+        status: 'draft',
+        title: sc.name,
+        scenarioId,
+      });
       await recordSeedChanges(tx, csId, sc.changes, new Map(refs), new Map(current), relations, by);
     }
 
@@ -170,7 +192,15 @@ export async function loadDataset(deps: Deps, dataset: SeedDataset): Promise<{ e
         insert into changesets (id, kind, status, title, description, author_id, author_name, author_kind, submitted_at)
         values (${csId}, 'suggestion', 'open', ${sg.title}, ${sg.description}, ${author?.id ?? null},
                 ${sg.authorName}, ${sg.authorKind}, now() - interval '2 hours')`;
-      await recordSeedChanges(tx, csId, sg.changes, new Map(refs), new Map(current), relations, sg.authorName);
+      await recordSeedChanges(
+        tx,
+        csId,
+        sg.changes,
+        new Map(refs),
+        new Map(current),
+        relations,
+        sg.authorName,
+      );
     }
 
     await refreshAllDerived(tx);

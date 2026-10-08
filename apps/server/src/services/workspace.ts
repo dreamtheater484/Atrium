@@ -30,7 +30,11 @@ export async function getWorkspace(db: Db, defaultName: string): Promise<Workspa
   return getSetting(db, 'workspace', { ...DEFAULTS, name: defaultName });
 }
 
-export async function updateWorkspace(db: Db, defaultName: string, patch: Partial<WorkspaceSettings>) {
+export async function updateWorkspace(
+  db: Db,
+  defaultName: string,
+  patch: Partial<WorkspaceSettings>,
+) {
   const current = await getWorkspace(db, defaultName);
   const next = { ...current, ...patch };
   await setSetting(db, 'workspace', next);

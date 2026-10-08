@@ -3,8 +3,8 @@ import { ApiError } from '../../lib/api';
 import { useLive } from '../../lib/live';
 import { useMe, useWorkspace } from '../../lib/queries';
 import { LoginPage } from '../../pages/login';
-import { LogoMark } from './logo';
 import { AppShell } from './app-shell';
+import { LogoMark } from './logo';
 
 export function RootLayout() {
   const me = useMe();
@@ -13,7 +13,7 @@ export function RootLayout() {
   useLive(signedIn, me.data?.name);
 
   const needsLogin = me.error instanceof ApiError && me.error.status === 401;
-  if (needsLogin) return <LoginPage />;
+  if (needsLogin || location.pathname.startsWith('/invite/')) return <LoginPage />;
 
   if (me.isLoading || ws.isLoading) {
     return (
@@ -28,7 +28,9 @@ export function RootLayout() {
       <div className="flex h-dvh flex-col items-center justify-center gap-3 text-center">
         <LogoMark className="size-10" />
         <h1 className="text-base font-semibold">Atrium can't reach its server</h1>
-        <p className="max-w-sm text-sm text-muted-foreground">Check that the server is running, then reload this page.</p>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Check that the server is running, then reload this page.
+        </p>
       </div>
     );
   }

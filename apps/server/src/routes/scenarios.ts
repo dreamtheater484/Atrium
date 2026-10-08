@@ -31,7 +31,10 @@ export function scenarioRoutes(deps: Deps) {
     name: z.string().trim().min(1).max(120),
     description: z.string().max(5000).optional(),
     isTarget: z.boolean().optional(),
-    targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
+    targetDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullish(),
   });
   return [
     route({
@@ -68,7 +71,8 @@ export function scenarioRoutes(deps: Deps) {
       handler: async ({ params, body, ctx }) => {
         if (!canEditScenarios(ctx)) throw forbidden();
         const row = await asSystem(sql, async (tx) => {
-          if (body.isTarget) await tx`update scenarios set is_target = false where is_target and id <> ${params.id}`;
+          if (body.isTarget)
+            await tx`update scenarios set is_target = false where is_target and id <> ${params.id}`;
           const [r] = await tx`
             update scenarios set
               name = coalesce(${body.name ?? null}, name),
@@ -106,7 +110,8 @@ export function scenarioRoutes(deps: Deps) {
       params: idParams,
       handler: async ({ params, ctx }) => {
         if (!canEditScenarios(ctx)) throw forbidden();
-        const sets = await sql`select id from changesets where scenario_id = ${params.id} and kind = 'scenario' and status = 'draft'`;
+        const sets =
+          await sql`select id from changesets where scenario_id = ${params.id} and kind = 'scenario' and status = 'draft'`;
         for (const s of sets) {
           // Re-use the review path so history, derived fields and notifications stay consistent.
           await sql`update changesets set status = 'open', submitted_at = now() where id = ${s.id}`;

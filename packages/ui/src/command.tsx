@@ -4,7 +4,15 @@ import type * as React from 'react';
 import { cn } from './primitives';
 
 export function Command({ className, ...props }: React.ComponentProps<typeof C>) {
-  return <C className={cn('flex h-full w-full flex-col overflow-hidden rounded-xl bg-surface text-foreground', className)} {...props} />;
+  return (
+    <C
+      className={cn(
+        'flex h-full w-full flex-col overflow-hidden rounded-xl bg-surface text-foreground',
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export function CommandInput({ className, ...props }: React.ComponentProps<typeof C.Input>) {
@@ -12,7 +20,10 @@ export function CommandInput({ className, ...props }: React.ComponentProps<typeo
     <div className="flex items-center gap-2 border-b border-border px-3">
       <Search className="size-4 shrink-0 text-muted-foreground" />
       <C.Input
-        className={cn('flex h-11 w-full bg-transparent text-sm outline-none placeholder:text-subtle-foreground', className)}
+        className={cn(
+          'flex h-11 w-full bg-transparent text-sm outline-none placeholder:text-subtle-foreground',
+          className,
+        )}
         {...props}
       />
     </div>
@@ -20,7 +31,15 @@ export function CommandInput({ className, ...props }: React.ComponentProps<typeo
 }
 
 export function CommandList({ className, ...props }: React.ComponentProps<typeof C.List>) {
-  return <C.List className={cn('max-h-[min(60vh,440px)] scroll-py-1 overflow-y-auto overflow-x-hidden p-1', className)} {...props} />;
+  return (
+    <C.List
+      className={cn(
+        'max-h-[min(60vh,440px)] scroll-py-1 overflow-y-auto overflow-x-hidden p-1',
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export function CommandEmpty(props: React.ComponentProps<typeof C.Empty>) {

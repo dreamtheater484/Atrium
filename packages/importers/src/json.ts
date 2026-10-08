@@ -59,10 +59,13 @@ function isArrayOfObjects(v: unknown): v is JsonObject[] {
  * Reads JSON as sheets: an array of objects is one sheet; `{ "Applications": [...], ... }`
  * gives one sheet per key; `{ "id1": {...}, "id2": {...} }` is one sheet with a "key" column.
  */
-export function readJson(text: string, name: string): { sheets: ParsedSheet[]; warnings: string[] } {
+export function readJson(
+  text: string,
+  name: string,
+): { sheets: ParsedSheet[]; warnings: string[] } {
   let data: unknown;
   try {
-    data = JSON.parse(text.replace(/^﻿/, ''));
+    data = JSON.parse(text.replace(/^\uFEFF/, ''));
   } catch (err) {
     return { sheets: [], warnings: [`The file is not valid JSON: ${(err as Error).message}`] };
   }

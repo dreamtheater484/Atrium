@@ -26,7 +26,10 @@ export function DialogContent({
       >
         {children}
         {!hideClose && (
-          <D.Close className="absolute top-4 right-4 rounded-md p-1 text-muted-foreground transition hover:bg-surface-2 hover:text-foreground" aria-label="Close">
+          <D.Close
+            className="absolute top-4 right-4 rounded-md p-1 text-muted-foreground transition hover:bg-surface-2 hover:text-foreground"
+            aria-label="Close"
+          >
             <X className="size-4" />
           </D.Close>
         )}
@@ -42,10 +45,17 @@ export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLD
   return <div className={cn('flex items-center justify-end gap-2', className)} {...props} />;
 }
 export function DialogTitle({ className, ...props }: React.ComponentProps<typeof D.Title>) {
-  return <D.Title className={cn('text-[15px] font-semibold tracking-tight', className)} {...props} />;
+  return (
+    <D.Title className={cn('text-[15px] font-semibold tracking-tight', className)} {...props} />
+  );
 }
-export function DialogDescription({ className, ...props }: React.ComponentProps<typeof D.Description>) {
-  return <D.Description className={cn('text-[13px] text-muted-foreground', className)} {...props} />;
+export function DialogDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof D.Description>) {
+  return (
+    <D.Description className={cn('text-[13px] text-muted-foreground', className)} {...props} />
+  );
 }
 
 /* ---------------- Sheet (side panel) ---------------- */
@@ -58,7 +68,9 @@ export function SheetContent({
 }: React.ComponentProps<typeof D.Content> & { side?: 'right' | 'left'; modal?: boolean }) {
   return (
     <D.Portal>
-      {modal && <D.Overlay className="fixed inset-0 z-40 bg-[oklch(0.2_0.02_262/0.12)] data-[state=open]:animate-in data-[state=open]:fade-in-0" />}
+      {modal && (
+        <D.Overlay className="fixed inset-0 z-40 bg-[oklch(0.2_0.02_262/0.12)] data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+      )}
       <D.Content
         className={cn(
           'fixed top-0 z-50 flex h-full w-[420px] max-w-[100vw] flex-col border-border bg-surface shadow-lg outline-none data-[state=open]:animate-in data-[state=open]:duration-200 data-[state=closed]:animate-out data-[state=closed]:duration-150',
@@ -79,7 +91,12 @@ export function SheetContent({
 export const Popover = P.Root;
 export const PopoverTrigger = P.Trigger;
 export const PopoverAnchor = P.Anchor;
-export function PopoverContent({ className, align = 'start', sideOffset = 6, ...props }: React.ComponentProps<typeof P.Content>) {
+export function PopoverContent({
+  className,
+  align = 'start',
+  sideOffset = 6,
+  ...props
+}: React.ComponentProps<typeof P.Content>) {
   return (
     <P.Portal>
       <P.Content
@@ -131,7 +148,12 @@ export const DropdownMenuTrigger = DM.Trigger;
 export const DropdownMenuGroup = DM.Group;
 export const DropdownMenuSub = DM.Sub;
 
-export function DropdownMenuContent({ className, sideOffset = 6, align = 'end', ...props }: React.ComponentProps<typeof DM.Content>) {
+export function DropdownMenuContent({
+  className,
+  sideOffset = 6,
+  align = 'end',
+  ...props
+}: React.ComponentProps<typeof DM.Content>) {
   return (
     <DM.Portal>
       <DM.Content
@@ -160,7 +182,12 @@ export function DropdownMenuItem({ className, ...props }: React.ComponentProps<t
 }
 
 export function DropdownMenuLabel({ className, ...props }: React.ComponentProps<typeof DM.Label>) {
-  return <DM.Label className={cn('px-2 pt-1.5 pb-1 text-[11px] font-medium text-muted-foreground', className)} {...props} />;
+  return (
+    <DM.Label
+      className={cn('px-2 pt-1.5 pb-1 text-[11px] font-medium text-muted-foreground', className)}
+      {...props}
+    />
+  );
 }
 
 export function DropdownMenuSeparator({ className }: { className?: string }) {
@@ -171,7 +198,11 @@ export function DropdownMenuRadioGroup(props: React.ComponentProps<typeof DM.Rad
   return <DM.RadioGroup {...props} />;
 }
 
-export function DropdownMenuRadioItem({ className, children, ...props }: React.ComponentProps<typeof DM.RadioItem>) {
+export function DropdownMenuRadioItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof DM.RadioItem>) {
   return (
     <DM.RadioItem
       className={cn(
@@ -190,19 +221,34 @@ export function DropdownMenuRadioItem({ className, children, ...props }: React.C
   );
 }
 
-export function DropdownMenuSubTrigger({ className, ...props }: React.ComponentProps<typeof DM.SubTrigger>) {
+export function DropdownMenuSubTrigger({
+  className,
+  ...props
+}: React.ComponentProps<typeof DM.SubTrigger>) {
   return (
     <DM.SubTrigger
-      className={cn('flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] outline-none data-[highlighted]:bg-surface-2 data-[state=open]:bg-surface-2 [&_svg]:size-4 [&_svg]:text-muted-foreground', className)}
+      className={cn(
+        'flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] outline-none data-[highlighted]:bg-surface-2 data-[state=open]:bg-surface-2 [&_svg]:size-4 [&_svg]:text-muted-foreground',
+        className,
+      )}
       {...props}
     />
   );
 }
 
-export function DropdownMenuSubContent({ className, ...props }: React.ComponentProps<typeof DM.SubContent>) {
+export function DropdownMenuSubContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof DM.SubContent>) {
   return (
     <DM.Portal>
-      <DM.SubContent className={cn('z-50 min-w-44 rounded-xl border border-border bg-surface p-1 shadow-lg', className)} {...props} />
+      <DM.SubContent
+        className={cn(
+          'z-50 min-w-44 rounded-xl border border-border bg-surface p-1 shadow-lg',
+          className,
+        )}
+        {...props}
+      />
     </DM.Portal>
   );
 }

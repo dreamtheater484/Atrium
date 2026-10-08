@@ -13,7 +13,13 @@ import type {
   WorkspaceInfo,
 } from '@atrium/schema';
 import { toast } from '@atrium/ui';
-import { keepPreviousData, QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { ApiError, api } from './api';
 import { useUi } from './store';
 
@@ -25,7 +31,8 @@ export const queryClient = new QueryClient({
       retry: (count, err) => !(err instanceof ApiError && err.status < 500) && count < 2,
     },
     mutations: {
-      onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Something went wrong. Try again.'),
+      onError: (err) =>
+        toast.error(err instanceof ApiError ? err.message : 'Something went wrong. Try again.'),
     },
   },
 });
@@ -37,13 +44,22 @@ export function useScenario(): string | undefined {
 }
 
 export function useWorkspace() {
-  return useQuery({ queryKey: ['workspace'], queryFn: () => api<WorkspaceInfo>('/workspace'), staleTime: 10_000 });
+  return useQuery({
+    queryKey: ['workspace'],
+    queryFn: () => api<WorkspaceInfo>('/workspace'),
+    staleTime: 10_000,
+  });
 }
 
 export type Me = CurrentUser & { homeRole: string };
 
 export function useMe() {
-  return useQuery({ queryKey: ['me'], queryFn: () => api<Me>('/me'), staleTime: 60_000, retry: false });
+  return useQuery({
+    queryKey: ['me'],
+    queryFn: () => api<Me>('/me'),
+    staleTime: 60_000,
+    retry: false,
+  });
 }
 
 export function useCounts() {
@@ -84,7 +100,9 @@ export function useElements(params: ElementListParams, opts: { enabled?: boolean
   });
 }
 
-export type ElementDetailWithSuggestions = ElementDetail & { suggestedRelations: SuggestedRelation[] };
+export type ElementDetailWithSuggestions = ElementDetail & {
+  suggestedRelations: SuggestedRelation[];
+};
 
 export function useElement(id: string | null | undefined) {
   const scenario = useScenario();
@@ -95,12 +113,18 @@ export function useElement(id: string | null | undefined) {
   });
 }
 
-export function useSearch(q: string, opts: { types?: ElementType[]; layer?: 'org' | 'reference' | 'all'; limit?: number } = {}) {
+export function useSearch(
+  q: string,
+  opts: { types?: ElementType[]; layer?: 'org' | 'reference' | 'all'; limit?: number } = {},
+) {
   const scenario = useScenario();
   return useQuery({
     queryKey: ['model', 'search', q, scenario, opts],
     queryFn: ({ signal }) =>
-      api<SearchHit[]>('/search', { query: { q, scenario, types: opts.types, layer: opts.layer, limit: opts.limit }, signal }),
+      api<SearchHit[]>('/search', {
+        query: { q, scenario, types: opts.types, layer: opts.layer, limit: opts.limit },
+        signal,
+      }),
     enabled: q.trim().length > 0,
     placeholderData: keepPreviousData,
     staleTime: 5_000,
@@ -139,7 +163,11 @@ export function useUpdateElement() {
       const prev = qc.getQueryData<ElementDetailWithSuggestions>(key);
       if (prev) {
         const { attributes, ...rest } = patch;
-        const next = { ...prev, ...(rest as object), attributes: { ...prev.attributes } } as ElementDetailWithSuggestions;
+        const next = {
+          ...prev,
+          ...(rest as object),
+          attributes: { ...prev.attributes },
+        } as ElementDetailWithSuggestions;
         for (const [k, v] of Object.entries(attributes ?? {})) {
           if (v === null || v === '') delete next.attributes[k];
           else next.attributes[k] = v;
@@ -161,7 +189,8 @@ export function useCreateElement() {
   const scenario = useScenario();
   const invalidate = useInvalidateModel();
   return useMutation({
-    mutationFn: (input: CreateElementInput) => api<EditResponse>('/elements', { body: input, query: { scenario } }),
+    mutationFn: (input: CreateElementInput) =>
+      api<EditResponse>('/elements', { body: input, query: { scenario } }),
     onSuccess: (res) => {
       announce(res.mode);
       invalidate();
@@ -173,7 +202,8 @@ export function useDeleteElement() {
   const scenario = useScenario();
   const invalidate = useInvalidateModel();
   return useMutation({
-    mutationFn: (id: string) => api<EditResponse>(`/elements/${id}`, { method: 'DELETE', query: { scenario } }),
+    mutationFn: (id: string) =>
+      api<EditResponse>(`/elements/${id}`, { method: 'DELETE', query: { scenario } }),
     onSuccess: (res) => {
       announce(res.mode);
       invalidate();
@@ -185,7 +215,8 @@ export function useCreateRelation() {
   const scenario = useScenario();
   const invalidate = useInvalidateModel();
   return useMutation({
-    mutationFn: (input: CreateRelationInput) => api<EditResponse>('/relations', { body: input, query: { scenario } }),
+    mutationFn: (input: CreateRelationInput) =>
+      api<EditResponse>('/relations', { body: input, query: { scenario } }),
     onSuccess: (res) => {
       announce(res.mode);
       invalidate();
@@ -197,7 +228,8 @@ export function useDeleteRelation() {
   const scenario = useScenario();
   const invalidate = useInvalidateModel();
   return useMutation({
-    mutationFn: (id: string) => api<EditResponse>(`/relations/${id}`, { method: 'DELETE', query: { scenario } }),
+    mutationFn: (id: string) =>
+      api<EditResponse>(`/relations/${id}`, { method: 'DELETE', query: { scenario } }),
     onSuccess: (res) => {
       announce(res.mode);
       invalidate();

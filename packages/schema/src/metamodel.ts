@@ -75,7 +75,12 @@ export interface ElementTypeDef {
   hasLifecycle: boolean;
 }
 
-const rating = (key: string, label: string, help: string, aliases: string[] = []): AttributeDef => ({
+const rating = (
+  key: string,
+  label: string,
+  help: string,
+  aliases: string[] = [],
+): AttributeDef => ({
   key,
   label,
   kind: 'rating',
@@ -283,7 +288,12 @@ export const ELEMENT_TYPE_DEFS: Record<ElementType, ElementTypeDef> = {
         aliases: ['frequency', 'schedule'],
         column: true,
       },
-      { key: 'docs', label: 'Documentation', kind: 'url', aliases: ['docs', 'documentation', 'spec'] },
+      {
+        key: 'docs',
+        label: 'Documentation',
+        kind: 'url',
+        aliases: ['docs', 'documentation', 'spec'],
+      },
     ],
     aliases: ['interface', 'interfaces', 'api', 'apis', 'integration', 'integrations'],
     hasLifecycle: true,
@@ -297,7 +307,9 @@ export const ELEMENT_TYPE_DEFS: Record<ElementType, ElementTypeDef> = {
     layer: 'data',
     hierarchical: true,
     qualityCore: ['description', 'owner', 'domain'],
-    expectedRelations: [{ relation: 'stores', direction: 'in', label: 'Managed by an application' }],
+    expectedRelations: [
+      { relation: 'stores', direction: 'in', label: 'Managed by an application' },
+    ],
     attributes: [
       {
         key: 'sensitivity',
@@ -378,7 +390,9 @@ export const ELEMENT_TYPE_DEFS: Record<ElementType, ElementTypeDef> = {
     layer: 'strategy',
     hierarchical: false,
     qualityCore: ['description', 'owner'],
-    expectedRelations: [{ relation: 'impacts', direction: 'out', label: 'Changes at least one element' }],
+    expectedRelations: [
+      { relation: 'impacts', direction: 'out', label: 'Changes at least one element' },
+    ],
     attributes: [
       {
         key: 'status',
@@ -415,7 +429,15 @@ export const ELEMENT_TYPE_DEFS: Record<ElementType, ElementTypeDef> = {
       { key: 'progress', label: 'Progress', kind: 'percent', aliases: ['progress', '% complete'] },
       { key: 'sponsor', label: 'Sponsor', kind: 'text', aliases: ['sponsor'] },
     ],
-    aliases: ['initiative', 'initiatives', 'project', 'projects', 'programme', 'program', 'roadmap'],
+    aliases: [
+      'initiative',
+      'initiatives',
+      'project',
+      'projects',
+      'programme',
+      'program',
+      'roadmap',
+    ],
     hasLifecycle: false,
   },
   principle: {
@@ -428,7 +450,13 @@ export const ELEMENT_TYPE_DEFS: Record<ElementType, ElementTypeDef> = {
     hierarchical: false,
     qualityCore: ['description', 'owner'],
     attributes: [
-      { key: 'rationale', label: 'Rationale', kind: 'longtext', quality: true, aliases: ['rationale', 'why'] },
+      {
+        key: 'rationale',
+        label: 'Rationale',
+        kind: 'longtext',
+        quality: true,
+        aliases: ['rationale', 'why'],
+      },
       { key: 'implications', label: 'Implications', kind: 'longtext', aliases: ['implications'] },
     ],
     aliases: ['principle', 'principles'],
@@ -478,7 +506,13 @@ export const ELEMENT_TYPE_DEFS: Record<ElementType, ElementTypeDef> = {
         help: 'Technology names this standard is about, such as "PostgreSQL" or "Java 8"',
         aliases: ['technologies', 'match', 'applies to technology'],
       },
-      { key: 'rule', label: 'Rule', kind: 'longtext', quality: true, aliases: ['rule', 'statement'] },
+      {
+        key: 'rule',
+        label: 'Rule',
+        kind: 'longtext',
+        quality: true,
+        aliases: ['rule', 'statement'],
+      },
     ],
     aliases: ['standard', 'standards', 'guideline', 'guidelines', 'policy', 'policies'],
     hasLifecycle: false,
@@ -502,9 +536,28 @@ export const ELEMENT_TYPE_DEFS: Record<ElementType, ElementTypeDef> = {
         aliases: ['status'],
         column: true,
       },
-      { key: 'date', label: 'Date', kind: 'date', quality: true, aliases: ['date', 'decided'], column: true },
-      { key: 'context', label: 'Context', kind: 'longtext', quality: true, aliases: ['context', 'problem'] },
-      { key: 'decision', label: 'Decision', kind: 'longtext', quality: true, aliases: ['decision', 'outcome'] },
+      {
+        key: 'date',
+        label: 'Date',
+        kind: 'date',
+        quality: true,
+        aliases: ['date', 'decided'],
+        column: true,
+      },
+      {
+        key: 'context',
+        label: 'Context',
+        kind: 'longtext',
+        quality: true,
+        aliases: ['context', 'problem'],
+      },
+      {
+        key: 'decision',
+        label: 'Decision',
+        kind: 'longtext',
+        quality: true,
+        aliases: ['decision', 'outcome'],
+      },
       {
         key: 'consequences',
         label: 'Consequences',
@@ -724,7 +777,11 @@ export const CORE_FIELDS = [
     ],
   },
   { key: 'domain', label: 'Domain', aliases: ['domain', 'business domain', 'area', 'division'] },
-  { key: 'parent', label: 'Parent', aliases: ['parent', 'parent capability', 'belongs to', 'level 1'] },
+  {
+    key: 'parent',
+    label: 'Parent',
+    aliases: ['parent', 'parent capability', 'belongs to', 'level 1'],
+  },
   {
     key: 'lifecycle',
     label: 'Lifecycle',
@@ -736,7 +793,11 @@ export const CORE_FIELDS = [
     aliases: ['classification', 'confidentiality', 'security classification'],
   },
   { key: 'tags', label: 'Tags', aliases: ['tags', 'labels', 'keywords'] },
-  { key: 'team', label: 'Team', aliases: ['team', 'owning team', 'squad', 'it owner', 'support team'] },
+  {
+    key: 'team',
+    label: 'Team',
+    aliases: ['team', 'owning team', 'squad', 'it owner', 'support team'],
+  },
   {
     key: 'external_id',
     label: 'External ID',

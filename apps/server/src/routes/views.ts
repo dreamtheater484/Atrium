@@ -5,9 +5,19 @@ import { route } from '../http/route';
 import { ask } from '../services/ask';
 import type { Deps } from '../services/deps';
 import { overview } from '../services/stats';
-import { capabilityMap, type GraphMode, graph, impact, landscape, roadmap } from '../services/views';
+import {
+  capabilityMap,
+  type GraphMode,
+  graph,
+  impact,
+  landscape,
+  roadmap,
+} from '../services/views';
 
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional();
+const date = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .optional();
 
 export function viewRoutes(deps: Deps) {
   return [
@@ -18,7 +28,11 @@ export function viewRoutes(deps: Deps) {
       tag: 'Views',
       access: 'any',
       query: z.object({ scenario: z.string().optional(), at: date }),
-      handler: async ({ query, ctx }) => overview(deps, ctx, { scenarioId: await resolveScenario(deps.sql, query.scenario), at: query.at }),
+      handler: async ({ query, ctx }) =>
+        overview(deps, ctx, {
+          scenarioId: await resolveScenario(deps.sql, query.scenario),
+          at: query.at,
+        }),
     }),
     route({
       method: 'GET',
@@ -27,9 +41,15 @@ export function viewRoutes(deps: Deps) {
       tag: 'Views',
       access: 'any',
       params: idParams,
-      query: z.object({ scenario: z.string().optional(), depth: z.coerce.number().int().min(1).max(8).optional() }),
+      query: z.object({
+        scenario: z.string().optional(),
+        depth: z.coerce.number().int().min(1).max(8).optional(),
+      }),
       handler: async ({ params, query, ctx }) =>
-        impact(deps, ctx, params.id, { scenarioId: await resolveScenario(deps.sql, query.scenario), depth: query.depth }),
+        impact(deps, ctx, params.id, {
+          scenarioId: await resolveScenario(deps.sql, query.scenario),
+          depth: query.depth,
+        }),
     }),
     route({
       method: 'GET',
@@ -51,7 +71,9 @@ export function viewRoutes(deps: Deps) {
         graph(deps, ctx, {
           ...query,
           mode: query.mode as GraphMode | undefined,
-          types: query.types?.filter((t) => (ELEMENT_TYPES as readonly string[]).includes(t)) as ElementType[] | undefined,
+          types: query.types?.filter((t) => (ELEMENT_TYPES as readonly string[]).includes(t)) as
+            | ElementType[]
+            | undefined,
           scenarioId: await resolveScenario(deps.sql, query.scenario),
         }),
     }),
@@ -69,7 +91,10 @@ export function viewRoutes(deps: Deps) {
         pack: z.string().optional(),
       }),
       handler: async ({ query, ctx }) =>
-        capabilityMap(deps, ctx, { ...query, scenarioId: await resolveScenario(deps.sql, query.scenario) }),
+        capabilityMap(deps, ctx, {
+          ...query,
+          scenarioId: await resolveScenario(deps.sql, query.scenario),
+        }),
     }),
     route({
       method: 'GET',
@@ -77,8 +102,16 @@ export function viewRoutes(deps: Deps) {
       summary: 'Elements grouped by domain',
       tag: 'Views',
       access: 'any',
-      query: z.object({ scenario: z.string().optional(), at: date, type: z.enum(ELEMENT_TYPES).optional() }),
-      handler: async ({ query, ctx }) => landscape(deps, ctx, { ...query, scenarioId: await resolveScenario(deps.sql, query.scenario) }),
+      query: z.object({
+        scenario: z.string().optional(),
+        at: date,
+        type: z.enum(ELEMENT_TYPES).optional(),
+      }),
+      handler: async ({ query, ctx }) =>
+        landscape(deps, ctx, {
+          ...query,
+          scenarioId: await resolveScenario(deps.sql, query.scenario),
+        }),
     }),
     route({
       method: 'GET',
@@ -87,7 +120,8 @@ export function viewRoutes(deps: Deps) {
       tag: 'Views',
       access: 'any',
       query: z.object({ scenario: z.string().optional() }),
-      handler: async ({ query, ctx }) => roadmap(deps, ctx, { scenarioId: await resolveScenario(deps.sql, query.scenario) }),
+      handler: async ({ query, ctx }) =>
+        roadmap(deps, ctx, { scenarioId: await resolveScenario(deps.sql, query.scenario) }),
     }),
     route({
       method: 'POST',
@@ -96,7 +130,8 @@ export function viewRoutes(deps: Deps) {
       tag: 'Views',
       access: 'any',
       body: z.object({ q: z.string().min(1).max(500), scenario: z.string().optional() }),
-      handler: async ({ body, ctx }) => ask(deps, ctx, body.q, await resolveScenario(deps.sql, body.scenario)),
+      handler: async ({ body, ctx }) =>
+        ask(deps, ctx, body.q, await resolveScenario(deps.sql, body.scenario)),
     }),
   ];
 }

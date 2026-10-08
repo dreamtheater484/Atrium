@@ -16,6 +16,7 @@ import {
 import { Link, useNavigate } from '@tanstack/react-router';
 import {
   Bot,
+  CalendarRange,
   ChartColumn,
   ChevronsLeft,
   ChevronsRight,
@@ -28,7 +29,6 @@ import {
   Search,
   Settings,
   Sun,
-  CalendarRange,
 } from 'lucide-react';
 import { type ReactNode, useEffect } from 'react';
 import { api } from '../../lib/api';
@@ -91,7 +91,9 @@ function Sidebar() {
               <item.icon className="size-[18px] shrink-0" strokeWidth={2} />
               {!collapsed && <span className="flex-1">{item.label}</span>}
               {!collapsed && item.to === '/changes' && reviews > 0 && (
-                <span className="rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground tabular">{reviews}</span>
+                <span className="rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground tabular">
+                  {reviews}
+                </span>
               )}
             </Link>
           </Tooltip>
@@ -111,8 +113,12 @@ function Sidebar() {
               <Avatar name={me?.name ?? 'You'} />
               {!collapsed && (
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px] font-medium">{me?.name ?? 'You'}</span>
-                  <span className="block truncate text-[11px] text-muted-foreground">{ws?.name ?? 'Atrium'}</span>
+                  <span className="block truncate text-[13px] font-medium">
+                    {me?.name ?? 'You'}
+                  </span>
+                  <span className="block truncate text-[11px] text-muted-foreground">
+                    {ws?.name ?? 'Atrium'}
+                  </span>
                 </span>
               )}
             </button>
@@ -142,7 +148,10 @@ function Sidebar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onSelect={async () => {
-                    await fetch('/api/auth/logout', { method: 'POST', headers: { 'x-atrium-csrf': '1' } });
+                    await fetch('/api/auth/logout', {
+                      method: 'POST',
+                      headers: { 'x-atrium-csrf': '1' },
+                    });
                     window.location.assign('/');
                   }}
                 >
@@ -155,7 +164,10 @@ function Sidebar() {
         <Button
           variant="ghost"
           size="sm"
-          className={cn('w-full justify-start text-muted-foreground', collapsed && 'justify-center')}
+          className={cn(
+            'w-full justify-start text-muted-foreground',
+            collapsed && 'justify-center',
+          )}
           onClick={() => ui.set({ sidebarCollapsed: !collapsed })}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
@@ -173,7 +185,8 @@ function PresenceAvatars() {
   const others = people.filter((p) => p.userId !== me?.id);
   if (!others.length) return null;
   return (
-    <div className="flex items-center -space-x-1.5" aria-label="People online">
+    // biome-ignore lint/a11y/useSemanticElements: a row of avatars, not a form group
+    <div className="flex items-center -space-x-1.5" role="group" aria-label="People online">
       {others.slice(0, 4).map((p) => (
         <Tooltip key={p.userId} content={`${p.name} is online`}>
           <span>
@@ -181,7 +194,9 @@ function PresenceAvatars() {
           </span>
         </Tooltip>
       ))}
-      {others.length > 4 && <span className="pl-2 text-xs text-muted-foreground">+{others.length - 4}</span>}
+      {others.length > 4 && (
+        <span className="pl-2 text-xs text-muted-foreground">+{others.length - 4}</span>
+      )}
     </div>
   );
 }
@@ -212,7 +227,8 @@ function useGlobalShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      const typing = target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+      const typing =
+        target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         ui.set({ commandOpen: !ui.get().commandOpen });

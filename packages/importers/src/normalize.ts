@@ -1,13 +1,13 @@
 import {
+  attributeDef,
   CLASSIFICATIONS,
   type ElementType,
   LIFECYCLE_PHASES,
-  attributeDef,
   typeDef,
 } from '@atrium/schema';
 import { enumFamilyFor, matchEnum, optionLabels } from './enum-synonyms';
 import { cleanText, singleLine } from './text';
-import type { ColumnTarget, CoreField, NormalizeOptions, NormalizedValue } from './types';
+import type { ColumnTarget, CoreField, NormalizedValue, NormalizeOptions } from './types';
 import {
   isBlank,
   parseBoolean,
@@ -113,7 +113,10 @@ function normalizeAttribute(
         return { value: undefined, warning: `Could not read "${show(raw)}" as a percentage` };
       }
       if (n < 0 || n > 100) {
-        return { value: Math.min(100, Math.max(0, n)), warning: `${label} "${show(raw)}" capped to 0–100%` };
+        return {
+          value: Math.min(100, Math.max(0, n)),
+          warning: `${label} "${show(raw)}" capped to 0–100%`,
+        };
       }
       return { value: n };
     }
@@ -124,7 +127,10 @@ function normalizeAttribute(
     case 'rating': {
       const n = parseRating(raw);
       return n === undefined
-        ? { value: undefined, warning: `Could not read "${show(raw)}" as a 1–5 rating for ${label}` }
+        ? {
+            value: undefined,
+            warning: `Could not read "${show(raw)}" as a 1–5 rating for ${label}`,
+          }
         : { value: n };
     }
     case 'boolean': {

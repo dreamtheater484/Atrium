@@ -1,7 +1,7 @@
 import { toast } from '@atrium/ui';
 import { useEffect } from 'react';
-import { createStore } from './store';
 import { queryClient } from './queries';
+import { createStore } from './store';
 
 export interface PresenceEntry {
   userId: string;
@@ -10,7 +10,10 @@ export interface PresenceEntry {
   editing: string | null;
 }
 
-export const presence = createStore<{ people: PresenceEntry[]; connected: boolean }>({ people: [], connected: false });
+export const presence = createStore<{ people: PresenceEntry[]; connected: boolean }>({
+  people: [],
+  connected: false,
+});
 
 let socket: WebSocket | null = null;
 let lastViewing: string | null = null;

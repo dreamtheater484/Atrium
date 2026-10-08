@@ -83,13 +83,26 @@ function rateLimited(tokenId: string, perMinute: number): boolean {
 
 const lastUsedWrites = new Map<string, number>();
 
-export async function authenticateToken(sql: Sql, raw: string, ip: string, mode: 'solo' | 'team'): Promise<RequestContext> {
-  const rows = await asSystem(sql, (tx) => tx`
+export async function authenticateToken(
+  sql: Sql,
+  raw: string,
+  ip: string,
+  mode: 'solo' | 'team',
+): Promise<RequestContext> {
+  const rows = await asSystem(
+    sql,
+    (tx) => tx`
     select t.*, u.name as user_name, u.role as user_role, u.team_ids as user_team_ids, u.disabled as user_disabled
     from api_tokens t left join users u on u.id = t.user_id
-    where t.token_hash = ${sha256(raw)}`);
+    where t.token_hash = ${sha256(raw)}`,
+  );
   const t = rows[0];
-  if (!t || t.revokedAt || (t.expiresAt && new Date(t.expiresAt as string) < new Date()) || t.userDisabled) {
+  if (
+    !t ||
+    t.revokedAt ||
+    (t.expiresAt && new Date(t.expiresAt as string) < new Date()) ||
+    t.userDisabled
+  ) {
     throw unauthorized('This token is not valid. It may have expired or been revoked.');
   }
   const token: TokenInfo = {
@@ -104,12 +117,19 @@ export async function authenticateToken(sql: Sql, raw: string, ip: string, mode:
     client: (t.client as string) ?? null,
   };
   if (rateLimited(token.id, token.rateLimitPerMinute)) {
-    throw new HttpError(429, 'Too many requests for this token. Try again in a minute.', 'rate_limited');
+    throw new HttpError(
+      429,
+      'Too many requests for this token. Try again in a minute.',
+      'rate_limited',
+    );
   }
   const last = lastUsedWrites.get(token.id) ?? 0;
   if (Date.now() - last > 60_000) {
     lastUsedWrites.set(token.id, Date.now());
-    void asSystem(sql, (tx) => tx`update api_tokens set last_used_at = now() where id = ${token.id}`).catch(() => {});
+    void asSystem(
+      sql,
+      (tx) => tx`update api_tokens set last_used_at = now() where id = ${token.id}`,
+    ).catch(() => {});
   }
   return {
     kind: 'token',
@@ -129,7 +149,12 @@ export async function authenticateToken(sql: Sql, raw: string, ip: string, mode:
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /** Resolves who is calling for every request and enforces the route's access level. */
-export function registerAuth(app: FastifyInstance, sql: Sql, config: Config, soloUser: () => UserRow | null) {
+export function registerAuth(
+  app: FastifyInstance,
+  sql: Sql,
+  config: Config,
+  soloUser: () => UserRow | null,
+) {
   app.decorateRequest('ctx', null as unknown as RequestContext);
   app.addHook('onRequest', async (req: FastifyRequest) => {
     const access = req.routeOptions.config?.access ?? 'user';
@@ -139,13 +164,18 @@ export function registerAuth(app: FastifyInstance, sql: Sql, config: Config, sol
     if (config.mode === 'solo' && config.host === '127.0.0.1') {
       const host = (req.headers.host ?? '').replace(/:\d+$/, '').toLowerCase();
       if (!['localhost', '127.0.0.1', '[::1]'].includes(host) && !host.endsWith('.localhost')) {
-        throw new HttpError(421, 'Atrium only answers requests for localhost in solo mode.', 'misdirected');
+        throw new HttpError(
+          421,
+          'Atrium only answers requests for localhost in solo mode.',
+          'misdirected',
+        );
       }
     }
     const header = req.headers.authorization;
     if (header?.startsWith('Bearer ')) {
       req.ctx = await authenticateToken(sql, header.slice(7).trim(), ip, config.mode);
-      if (access === 'user') throw new HttpError(403, 'This endpoint is for people, not tokens.', 'forbidden');
+      if (access === 'user')
+        throw new HttpError(403, 'This endpoint is for people, not tokens.', 'forbidden');
       return;
     }
     if (config.mode === 'solo') {
@@ -154,9 +184,12 @@ export function registerAuth(app: FastifyInstance, sql: Sql, config: Config, sol
     } else {
       const cookie = req.cookies?.[SESSION_COOKIE];
       if (cookie) {
-        const rows = await asSystem(sql, (tx) => tx`
+        const rows = await asSystem(
+          sql,
+          (tx) => tx`
           select u.* from sessions s join users u on u.id = s.user_id
-          where s.id = ${sha256(cookie)} and s.expires_at > now() and not u.disabled`);
+          where s.id = ${sha256(cookie)} and s.expires_at > now() and not u.disabled`,
+        );
         if (rows[0]) req.ctx = userContext(rows[0] as unknown as UserRow, 'team', ip);
       }
       req.ctx ??= ANONYMOUS(config.mode, ip);

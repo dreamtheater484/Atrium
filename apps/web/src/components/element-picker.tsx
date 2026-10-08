@@ -59,7 +59,10 @@ export function ElementPicker({
   const setOpen = onOpenChange ?? setOpenState;
   const [q, setQ] = useState('');
   const small = types.every((t) => t === 'domain' || t === 'team');
-  const all = useElements({ types, layer, limit: 300, sort: 'name' }, { enabled: open && (small || !q) });
+  const all = useElements(
+    { types, layer, limit: 300, sort: 'name' },
+    { enabled: open && (small || !q) },
+  );
   const found = useSearch(q, { types, layer, limit: 30 });
   const items = useMemo(() => {
     const list = q ? (found.data ?? []) : (all.data?.items ?? []);
@@ -67,7 +70,13 @@ export function ElementPicker({
   }, [q, found.data, all.data, exclude]);
 
   return (
-    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQ(''); }}>
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) setQ('');
+      }}
+    >
       <PopoverTrigger asChild>
         {trigger ?? (
           <button
@@ -81,6 +90,7 @@ export function ElementPicker({
               <>
                 <TypeIcon type={value.type} size="xs" />
                 <span className="flex-1 truncate">{value.name}</span>
+                {/* biome-ignore lint/a11y/useSemanticElements: sits inside the trigger button, which can't contain another button */}
                 <span
                   role="button"
                   tabIndex={-1}
@@ -122,25 +132,31 @@ export function ElementPicker({
                   >
                     <TypeIcon type={e.type} size="xs" />
                     <span className="flex-1 truncate">{e.name}</span>
-                    {'domainName' in e && e.domainName && <span className="truncate text-[11px] text-muted-foreground">{e.domainName}</span>}
+                    {'domainName' in e && e.domainName && (
+                      <span className="truncate text-[11px] text-muted-foreground">
+                        {e.domainName}
+                      </span>
+                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>
             )}
-            {onCreate && q.trim() && !items.some((i) => i.name.toLowerCase() === q.trim().toLowerCase()) && (
-              <CommandGroup>
-                <CommandItem
-                  value={`create:${q}`}
-                  onSelect={() => {
-                    onCreate(q.trim());
-                    setOpen(false);
-                    setQ('');
-                  }}
-                >
-                  <Plus /> Create “{q.trim()}”
-                </CommandItem>
-              </CommandGroup>
-            )}
+            {onCreate &&
+              q.trim() &&
+              !items.some((i) => i.name.toLowerCase() === q.trim().toLowerCase()) && (
+                <CommandGroup>
+                  <CommandItem
+                    value={`create:${q}`}
+                    onSelect={() => {
+                      onCreate(q.trim());
+                      setOpen(false);
+                      setQ('');
+                    }}
+                  >
+                    <Plus /> Create “{q.trim()}”
+                  </CommandItem>
+                </CommandGroup>
+              )}
           </CommandList>
         </Command>
       </PopoverContent>

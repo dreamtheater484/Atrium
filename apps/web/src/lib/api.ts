@@ -45,13 +45,25 @@ export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
   const text = await res.text();
   const data = text ? JSON.parse(text) : undefined;
   if (!res.ok) {
-    throw new ApiError(res.status, data?.message ?? `Request failed (${res.status})`, data?.error ?? 'error', data?.details);
+    throw new ApiError(
+      res.status,
+      data?.message ?? `Request failed (${res.status})`,
+      data?.error ?? 'error',
+      data?.details,
+    );
   }
   return data as T;
 }
 
-export async function download(path: string, query?: Record<string, QueryValue>, fallbackName = 'export') {
-  const res = await fetch(`/api/v1${path}${qs(query)}`, { credentials: 'same-origin', headers: { 'x-atrium-csrf': '1' } });
+export async function download(
+  path: string,
+  query?: Record<string, QueryValue>,
+  fallbackName = 'export',
+) {
+  const res = await fetch(`/api/v1${path}${qs(query)}`, {
+    credentials: 'same-origin',
+    headers: { 'x-atrium-csrf': '1' },
+  });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new ApiError(res.status, data.message ?? 'Export failed', data.error ?? 'error');

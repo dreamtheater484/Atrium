@@ -55,7 +55,10 @@ export function Select({
         >
           <S.Viewport>
             {allowClear && value && (
-              <S.Item value={CLEAR} className="flex cursor-pointer items-center rounded-lg px-2 py-1.5 text-[13px] text-muted-foreground outline-none data-[highlighted]:bg-surface-2">
+              <S.Item
+                value={CLEAR}
+                className="flex cursor-pointer items-center rounded-lg px-2 py-1.5 text-[13px] text-muted-foreground outline-none data-[highlighted]:bg-surface-2"
+              >
                 <S.ItemText>Clear</S.ItemText>
               </S.Item>
             )}
@@ -66,7 +69,9 @@ export function Select({
                 className="relative flex cursor-pointer items-center gap-2 rounded-lg py-1.5 pr-7 pl-2 text-[13px] outline-none select-none data-[highlighted]:bg-surface-2"
               >
                 <S.ItemText>{o.label}</S.ItemText>
-                {o.hint && <span className="ml-auto text-[11px] text-muted-foreground">{o.hint}</span>}
+                {o.hint && (
+                  <span className="ml-auto text-[11px] text-muted-foreground">{o.hint}</span>
+                )}
                 <S.ItemIndicator className="absolute right-2">
                   <Check className="size-3.5 text-primary" />
                 </S.ItemIndicator>
@@ -105,7 +110,11 @@ export function Checkbox({ className, ...props }: React.ComponentProps<typeof CB
       {...props}
     >
       <CB.Indicator className="text-primary-foreground">
-        {props.checked === 'indeterminate' ? <span className="block h-0.5 w-2 rounded bg-current" /> : <Check className="size-3" strokeWidth={3} />}
+        {props.checked === 'indeterminate' ? (
+          <span className="block h-0.5 w-2 rounded bg-current" />
+        ) : (
+          <Check className="size-3" strokeWidth={3} />
+        )}
       </CB.Indicator>
     </CB.Root>
   );
@@ -114,7 +123,12 @@ export function Checkbox({ className, ...props }: React.ComponentProps<typeof CB
 /* ---------------- Tabs ---------------- */
 export const Tabs = TB.Root;
 export function TabsList({ className, ...props }: React.ComponentProps<typeof TB.List>) {
-  return <TB.List className={cn('flex items-center gap-1 border-b border-border', className)} {...props} />;
+  return (
+    <TB.List
+      className={cn('flex items-center gap-1 border-b border-border', className)}
+      {...props}
+    />
+  );
 }
 export function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TB.Trigger>) {
   return (

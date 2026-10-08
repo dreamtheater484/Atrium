@@ -48,7 +48,12 @@ export function EChart({
 }: {
   option: EChartsOption;
   height?: number | string;
-  onClick?: (params: { name: string; data: unknown; dataIndex: number; seriesIndex: number }) => void;
+  onClick?: (params: {
+    name: string;
+    data: unknown;
+    dataIndex: number;
+    seriesIndex: number;
+  }) => void;
   className?: string;
   ariaLabel?: string;
 }) {
@@ -79,5 +84,13 @@ export function EChart({
     chart.current?.setOption({ animationDuration: 500, ...option }, true);
   }, [option, resolved]);
 
-  return <div ref={ref} role="img" aria-label={ariaLabel} className={className} style={{ height, width: '100%', cursor: onClick ? 'pointer' : undefined }} />;
+  return (
+    <div
+      ref={ref}
+      role="img"
+      aria-label={ariaLabel}
+      className={className}
+      style={{ height, width: '100%', cursor: onClick ? 'pointer' : undefined }}
+    />
+  );
 }

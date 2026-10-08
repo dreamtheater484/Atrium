@@ -7,17 +7,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Skeleton,
-  toast,
   TypeIcon,
+  toast,
 } from '@atrium/ui';
 import { useNavigate } from '@tanstack/react-router';
-import { Dialog as D } from 'radix-ui';
 import { Expand, Link2, MoreHorizontal, Network, Trash2, X, Zap } from 'lucide-react';
+import { Dialog as D } from 'radix-ui';
 import { useEffect, useMemo } from 'react';
 import { setViewing } from '../lib/live';
 import { useDeleteElement, useElement, useElements } from '../lib/queries';
 import { inspect, useUi } from '../lib/store';
-import { CoreFields, ElementHeaderMeta, HealthPanel, Relations, Suggestions, TitleField } from './element-editor';
+import {
+  CoreFields,
+  ElementHeaderMeta,
+  HealthPanel,
+  Relations,
+  Suggestions,
+  TitleField,
+} from './element-editor';
 
 /**
  * The inspector: click anything anywhere and its details open on the right,
@@ -30,7 +37,10 @@ export function Inspector() {
   const navigate = useNavigate();
   const remove = useDeleteElement();
   const domains = useElements({ type: 'domain', limit: 200 }, { enabled: !!id });
-  const domainNames = useMemo(() => new Map((domains.data?.items ?? []).map((d) => [d.id, d.name])), [domains.data]);
+  const domainNames = useMemo(
+    () => new Map((domains.data?.items ?? []).map((d) => [d.id, d.name])),
+    [domains.data],
+  );
 
   useEffect(() => {
     setViewing(id);
@@ -47,7 +57,12 @@ export function Inspector() {
           onInteractOutside={(e) => {
             // Keep the panel open while clicking around the page; it follows your selection.
             const target = e.target as HTMLElement;
-            if (target.closest('main') || target.closest('[data-radix-popper-content-wrapper]') || target.closest('[role="dialog"]')) e.preventDefault();
+            if (
+              target.closest('main') ||
+              target.closest('[data-radix-popper-content-wrapper]') ||
+              target.closest('[role="dialog"]')
+            )
+              e.preventDefault();
           }}
           onOpenAutoFocus={(e) => e.preventDefault()}
           className="no-print fixed top-14 right-0 bottom-0 z-40 flex w-[440px] max-w-[100vw] flex-col border-l border-border bg-surface shadow-lg outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right-6 data-[state=open]:duration-200"
@@ -56,14 +71,30 @@ export function Inspector() {
           <D.Title className="sr-only">{el?.name ?? 'Details'}</D.Title>
           <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
             {el && <TypeIcon type={el.type} size="sm" />}
-            <span className="text-xs font-medium text-muted-foreground">{el ? typeDef(el.type).label : 'Loading'}</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              {el ? typeDef(el.type).label : 'Loading'}
+            </span>
             <div className="flex-1" />
             {el && (
               <>
-                <Button size="sm" variant="ghost" onClick={() => navigate({ to: '/explore', search: { view: 'graph', focus: el.id, type: el.type } })}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>
+                    navigate({
+                      to: '/explore',
+                      search: { view: 'graph', focus: el.id, type: el.type },
+                    })
+                  }
+                >
                   <Zap /> Impact
                 </Button>
-                <Button size="icon-sm" variant="ghost" aria-label="Open full page" onClick={() => navigate({ to: '/e/$id', params: { id: el.id } })}>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label="Open full page"
+                  onClick={() => navigate({ to: '/e/$id', params: { id: el.id } })}
+                >
                   <Expand />
                 </Button>
                 <DropdownMenu>
@@ -81,7 +112,14 @@ export function Inspector() {
                     >
                       <Link2 /> Copy link
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => navigate({ to: '/explore', search: { view: 'graph', focus: el.id, type: el.type } })}>
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        navigate({
+                          to: '/explore',
+                          search: { view: 'graph', focus: el.id, type: el.type },
+                        })
+                      }
+                    >
                       <Network /> Show in graph
                     </DropdownMenuItem>
                     {el.layer === 'org' && (
@@ -97,7 +135,10 @@ export function Inspector() {
                                 if (res.mode === 'direct') {
                                   toast(`Removed ${name}`, {
                                     description: 'You can undo this from Changes → History.',
-                                    action: { label: 'Undo', onClick: () => void undoLast(res.changesetId) },
+                                    action: {
+                                      label: 'Undo',
+                                      onClick: () => void undoLast(res.changesetId),
+                                    },
                                   });
                                 }
                               },
@@ -145,7 +186,12 @@ export function Inspector() {
                     <h4 className="mb-2 text-xs font-semibold">Contains · {el.children.length}</h4>
                     <div className="flex flex-wrap gap-1.5">
                       {el.children.map((c) => (
-                        <button key={c.id} type="button" onClick={() => inspect(c.id)} className="rounded-lg border border-border px-2 py-0.5 text-[13px] hover:bg-surface-2">
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => inspect(c.id)}
+                          className="rounded-lg border border-border px-2 py-0.5 text-[13px] hover:bg-surface-2"
+                        >
                           {c.name}
                         </button>
                       ))}

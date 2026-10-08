@@ -1,6 +1,14 @@
 import { z } from 'zod';
 
-export const CHANGESET_KINDS = ['direct', 'suggestion', 'scenario', 'import', 'sync', 'pack', 'undo'] as const;
+export const CHANGESET_KINDS = [
+  'direct',
+  'suggestion',
+  'scenario',
+  'import',
+  'sync',
+  'pack',
+  'undo',
+] as const;
 export type ChangesetKind = (typeof CHANGESET_KINDS)[number];
 
 /**

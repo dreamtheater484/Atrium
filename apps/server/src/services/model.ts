@@ -7,8 +7,8 @@ import {
   type Element,
   type ElementType,
   lifecycleAt,
-  type Relation,
   RELATION_TYPE_DEFS,
+  type Relation,
   slugify,
   todayIso,
   typeDef,
@@ -51,9 +51,21 @@ export interface EditResult<T = Element> {
 }
 
 /** Types that get a readable key automatically ("billing-service"). */
-const KEYED_TYPES = new Set<ElementType>(['application', 'interface', 'technology', 'team', 'domain', 'data_object']);
+const KEYED_TYPES = new Set<ElementType>([
+  'application',
+  'interface',
+  'technology',
+  'team',
+  'domain',
+  'data_object',
+]);
 
-export function decideMode(ctx: RequestContext, el: Element | null, index: ModelIndex, opts: EditOptions): EditMode {
+export function decideMode(
+  ctx: RequestContext,
+  el: Element | null,
+  index: ModelIndex,
+  opts: EditOptions,
+): EditMode {
   if (opts.mode) return opts.mode;
   if (opts.scenarioId) {
     if (!canEditScenarios(ctx)) throw forbidden('Only architects can change scenarios.');
@@ -76,7 +88,8 @@ async function targetChangeset(
   title: string,
 ): Promise<{ id: string; compress: boolean }> {
   if (opts.changesetId) return { id: opts.changesetId, compress: mode !== 'direct' };
-  if (mode === 'scenario') return { id: await scenarioWorkset(db, ctx, opts.scenarioId!), compress: true };
+  if (mode === 'scenario')
+    return { id: await scenarioWorkset(db, ctx, opts.scenarioId!), compress: true };
   if (mode === 'suggestion') {
     if (ctx.kind !== 'user') {
       const id = await openChangeset(db, ctx, {
@@ -113,7 +126,8 @@ export async function autofillNew(
   const now = new Date().toISOString();
   const parent = index.get(input.parentId ?? null);
   if (input.parentId && !parent) throw badRequest('The parent does not exist.');
-  if (parent && parent.type !== input.type) throw badRequest(`The parent must also be a ${typeDef(input.type).label.toLowerCase()}.`);
+  if (parent && parent.type !== input.type)
+    throw badRequest(`The parent must also be a ${typeDef(input.type).label.toLowerCase()}.`);
   const domainId = input.domainId ?? parent?.domainId ?? null;
   const domain = index.get(domainId);
   const attributes: Record<string, unknown> = { ...(input.attributes ?? {}) };
@@ -127,7 +141,8 @@ export async function autofillNew(
     personName ??
     null;
 
-  let classification = input.classification ?? parent?.classification ?? domain?.classification ?? 'internal';
+  let classification =
+    input.classification ?? parent?.classification ?? domain?.classification ?? 'internal';
   if (!input.classification && input.type === 'data_object') {
     const s = attributes.sensitivity as string | undefined;
     if (s && s !== 'none' && classification === 'internal') classification = 'confidential';
@@ -135,12 +150,15 @@ export async function autofillNew(
 
   const lifecycleDates = input.lifecycleDates ?? {};
   const fromDates = lifecycleAt(null, lifecycleDates, todayIso());
-  const lifecycle = input.lifecycle ?? (fromDates && fromDates !== 'not_yet' ? fromDates : fromDates === 'not_yet' ? 'plan' : null);
+  const lifecycle =
+    input.lifecycle ??
+    (fromDates && fromDates !== 'not_yet' ? fromDates : fromDates === 'not_yet' ? 'plan' : null);
 
   if (input.type === 'technology') await fillTechnology(deps, input.name, attributes);
 
   const key =
-    input.key ?? (KEYED_TYPES.has(input.type) ? uniqueKey(slugify(input.name), input.type, index) : null);
+    input.key ??
+    (KEYED_TYPES.has(input.type) ? uniqueKey(slugify(input.name), input.type, index) : null);
 
   const el: Element = {
     id: randomUUID(),
@@ -181,7 +199,11 @@ async function fillTechnology(deps: Deps, name: string, attributes: Record<strin
     if (v) attributes.version = v;
   }
   if (!attributes.eol_date) {
-    const info = await deps.eol.lookup(name, attributes.product as string, attributes.version as string);
+    const info = await deps.eol.lookup(
+      name,
+      attributes.product as string,
+      attributes.version as string,
+    );
     if (info?.eolDate) {
       attributes.eol_date = info.eolDate;
       attributes._eol = { product: info.product, cycle: info.cycle, source: info.source };
@@ -192,13 +214,27 @@ async function fillTechnology(deps: Deps, name: string, attributes: Record<strin
 
 export function applyPatch(current: Element, patch: UpdateElementInput): Element {
   const next: Element = { ...current, attributes: { ...current.attributes } };
-  const simple = ['name', 'key', 'description', 'domainId', 'parentId', 'owner', 'lifecycle', 'classification', 'tags', 'externalIds'] as const;
+  const simple = [
+    'name',
+    'key',
+    'description',
+    'domainId',
+    'parentId',
+    'owner',
+    'lifecycle',
+    'classification',
+    'tags',
+    'externalIds',
+  ] as const;
   for (const f of simple) {
-    if (patch[f] !== undefined) (next as Record<string, unknown>)[f] = patch[f] ?? (f === 'description' ? '' : null);
+    if (patch[f] !== undefined)
+      (next as Record<string, unknown>)[f] = patch[f] ?? (f === 'description' ? '' : null);
   }
   if (patch.tags === null) next.tags = [];
   if (patch.lifecycleDates !== undefined) {
-    next.lifecycleDates = Object.fromEntries(Object.entries(patch.lifecycleDates).filter(([, v]) => !!v));
+    next.lifecycleDates = Object.fromEntries(
+      Object.entries(patch.lifecycleDates).filter(([, v]) => !!v),
+    );
     if (patch.lifecycle === undefined) {
       const at = lifecycleAt(null, next.lifecycleDates, todayIso());
       if (at && at !== 'not_yet') next.lifecycle = at;
@@ -217,7 +253,10 @@ export function applyPatch(current: Element, patch: UpdateElementInput): Element
     const suggestions = { ...current.suggestions };
     for (const f of Object.keys(suggestions)) {
       const [head, attr] = f.split('.');
-      if ((attr && patch.attributes?.[attr] !== undefined) || (!attr && (patch as Record<string, unknown>)[head!] !== undefined)) {
+      if (
+        (attr && patch.attributes?.[attr] !== undefined) ||
+        (!attr && (patch as Record<string, unknown>)[head!] !== undefined)
+      ) {
         delete suggestions[f];
       }
     }
@@ -232,7 +271,8 @@ function validateElement(el: Element, index: ModelIndex) {
     if (!def.hierarchical) throw badRequest(`${def.plural} can't have a parent.`);
     const parent = index.get(el.parentId);
     if (!parent) throw badRequest('The parent does not exist.');
-    if (parent.type !== el.type) throw badRequest(`The parent must also be a ${def.label.toLowerCase()}.`);
+    if (parent.type !== el.type)
+      throw badRequest(`The parent must also be a ${def.label.toLowerCase()}.`);
     // no cycles
     let cur: Element | undefined = parent;
     const seen = new Set<string>();
@@ -245,7 +285,7 @@ function validateElement(el: Element, index: ModelIndex) {
   }
   if (el.domainId) {
     const d = index.get(el.domainId);
-    if (!d || d.type !== 'domain') throw badRequest('The domain does not exist.');
+    if (d?.type !== 'domain') throw badRequest('The domain does not exist.');
   }
   if (el.key) {
     const clash = index.byKey(el.type, el.key);
@@ -255,9 +295,19 @@ function validateElement(el: Element, index: ModelIndex) {
   }
 }
 
-async function afterDirectWrite(deps: Deps, ctx: RequestContext, ids: Array<string | null | undefined>, scenarioId?: string | null) {
+async function afterDirectWrite(
+  deps: Deps,
+  ctx: RequestContext,
+  ids: Array<string | null | undefined>,
+  scenarioId?: string | null,
+) {
   deps.store.bump();
-  deps.hub.broadcast({ type: 'model.changed', ids: ids.filter(Boolean) as string[], by: actorName(ctx), scenarioId });
+  deps.hub.broadcast({
+    type: 'model.changed',
+    ids: ids.filter(Boolean) as string[],
+    by: actorName(ctx),
+    scenarioId,
+  });
 }
 
 function afterIndirectWrite(
@@ -269,13 +319,28 @@ function afterIndirectWrite(
   ids: string[],
 ) {
   if (mode === 'scenario') {
-    deps.hub.broadcast({ type: 'model.changed', ids, by: actorName(ctx), scenarioId: opts.scenarioId });
+    deps.hub.broadcast({
+      type: 'model.changed',
+      ids,
+      by: actorName(ctx),
+      scenarioId: opts.scenarioId,
+    });
   } else if (ctx.kind !== 'user' && !opts.changesetId) {
-    deps.hub.broadcast({ type: 'changeset.updated', id: changesetId, status: 'open', title: opts.proposal?.title ?? 'New suggestion', by: actorName(ctx) });
+    deps.hub.broadcast({
+      type: 'changeset.updated',
+      id: changesetId,
+      status: 'open',
+      title: opts.proposal?.title ?? 'New suggestion',
+      by: actorName(ctx),
+    });
   }
 }
 
-async function stateFor(deps: Deps, ctx: RequestContext, opts: EditOptions): Promise<ResolvedState> {
+async function stateFor(
+  deps: Deps,
+  ctx: RequestContext,
+  opts: EditOptions,
+): Promise<ResolvedState> {
   return resolveState(deps.store, deps.sql, ctx, { scenarioId: opts.scenarioId });
 }
 
@@ -294,10 +359,21 @@ export async function createElement(
     const cs = await targetChangeset(tx, ctx, mode, opts, `Added ${el.name}`);
     await recordChange(tx, cs.id, 'create', 'element', el.id, null, el, cs.compress);
     if (mode === 'direct') {
-      await applyChangeToBase(tx, { op: 'create', entity: 'element', entityId: el.id, before: null, after: el }, actorName(ctx));
+      await applyChangeToBase(
+        tx,
+        { op: 'create', entity: 'element', entityId: el.id, before: null, after: el },
+        actorName(ctx),
+      );
       await refreshDerived(tx, [el.id]);
     }
-    if (ctx.kind === 'token') await audit(tx, ctx, 'element.propose_create', { type: 'element', id: el.id }, { name: el.name, type: el.type });
+    if (ctx.kind === 'token')
+      await audit(
+        tx,
+        ctx,
+        'element.propose_create',
+        { type: 'element', id: el.id },
+        { name: el.name, type: el.type },
+      );
     return cs.id;
   });
   if (mode === 'direct') await afterDirectWrite(deps, ctx, [el.id]);
@@ -321,7 +397,10 @@ export async function updateElement(
   }
   const mode = decideMode(ctx, current, index, opts);
   let next = applyPatch(current, patch);
-  if (next.type === 'technology' && (patch.name || patch.attributes?.version || patch.attributes?.product)) {
+  if (
+    next.type === 'technology' &&
+    (patch.name || patch.attributes?.version || patch.attributes?.product)
+  ) {
     if (current.attributes._eol || !current.attributes.eol_date) {
       delete next.attributes.eol_date;
       delete next.attributes._eol;
@@ -332,15 +411,31 @@ export async function updateElement(
     next.key = uniqueKey(slugify(next.name), next.type, index, next.id);
   }
   validateElement(next, index);
-  next = { ...next, ...index.derive(next), updatedAt: new Date().toISOString(), updatedBy: actorName(ctx) };
+  next = {
+    ...next,
+    ...index.derive(next),
+    updatedAt: new Date().toISOString(),
+    updatedBy: actorName(ctx),
+  };
   const changesetId = await withScope(deps.sql, ctx.scope, async (tx) => {
     const cs = await targetChangeset(tx, ctx, mode, opts, `Edited ${current.name}`);
     await recordChange(tx, cs.id, 'update', 'element', id, current, next, cs.compress);
     if (mode === 'direct') {
-      await applyChangeToBase(tx, { op: 'update', entity: 'element', entityId: id, before: current, after: next }, actorName(ctx));
+      await applyChangeToBase(
+        tx,
+        { op: 'update', entity: 'element', entityId: id, before: current, after: next },
+        actorName(ctx),
+      );
       await refreshDerived(tx, [id, current.domainId, next.domainId]);
     }
-    if (ctx.kind === 'token') await audit(tx, ctx, 'element.propose_update', { type: 'element', id }, { fields: Object.keys(patch) });
+    if (ctx.kind === 'token')
+      await audit(
+        tx,
+        ctx,
+        'element.propose_update',
+        { type: 'element', id },
+        { fields: Object.keys(patch) },
+      );
     return cs.id;
   });
   if (mode === 'direct') await afterDirectWrite(deps, ctx, [id]);
@@ -348,7 +443,12 @@ export async function updateElement(
   return { item: next, mode, changesetId };
 }
 
-export async function deleteElement(deps: Deps, ctx: RequestContext, id: string, opts: EditOptions = {}): Promise<EditResult> {
+export async function deleteElement(
+  deps: Deps,
+  ctx: RequestContext,
+  id: string,
+  opts: EditOptions = {},
+): Promise<EditResult> {
   const state = await stateFor(deps, ctx, opts);
   const index = new ModelIndex(state);
   const current = index.get(id);
@@ -363,7 +463,11 @@ export async function deleteElement(deps: Deps, ctx: RequestContext, id: string,
       const moved = { ...child, parentId: current.parentId };
       await recordChange(tx, cs.id, 'update', 'element', childId, child, moved, cs.compress);
       if (mode === 'direct') {
-        await applyChangeToBase(tx, { op: 'update', entity: 'element', entityId: childId, before: child, after: moved }, actorName(ctx));
+        await applyChangeToBase(
+          tx,
+          { op: 'update', entity: 'element', entityId: childId, before: child, after: moved },
+          actorName(ctx),
+        );
       }
     }
     // Record the relations that go with it, so undo brings them back.
@@ -372,8 +476,15 @@ export async function deleteElement(deps: Deps, ctx: RequestContext, id: string,
     }
     await recordChange(tx, cs.id, 'delete', 'element', id, current, null, cs.compress);
     if (mode === 'direct') {
-      const res = await applyChangeToBase(tx, { op: 'delete', entity: 'element', entityId: id, before: current, after: null }, actorName(ctx));
-      await refreshDerived(tx, res.touched.filter((t) => t !== id));
+      const res = await applyChangeToBase(
+        tx,
+        { op: 'delete', entity: 'element', entityId: id, before: current, after: null },
+        actorName(ctx),
+      );
+      await refreshDerived(
+        tx,
+        res.touched.filter((t) => t !== id),
+      );
     }
     return cs.id;
   });
@@ -410,7 +521,9 @@ export async function createRelation(
   const state = await stateFor(deps, ctx, opts);
   const index = new ModelIndex(state);
   const { source } = validateRelation(input, index);
-  const existing = index.outgoing(input.sourceId, input.type).find((r) => r.targetId === input.targetId);
+  const existing = index
+    .outgoing(input.sourceId, input.type)
+    .find((r) => r.targetId === input.targetId);
   if (existing) return { item: existing, mode: 'direct', changesetId: '' };
   const mode = decideMode(ctx, source, index, opts);
   const rel: Relation = {
@@ -426,10 +539,21 @@ export async function createRelation(
     const cs = await targetChangeset(tx, ctx, mode, opts, `Linked ${source.name}`);
     await recordChange(tx, cs.id, 'create', 'relation', rel.id, null, rel, cs.compress);
     if (mode === 'direct') {
-      await applyChangeToBase(tx, { op: 'create', entity: 'relation', entityId: rel.id, before: null, after: rel }, actorName(ctx));
+      await applyChangeToBase(
+        tx,
+        { op: 'create', entity: 'relation', entityId: rel.id, before: null, after: rel },
+        actorName(ctx),
+      );
       await refreshDerived(tx, [rel.sourceId, rel.targetId]);
     }
-    if (ctx.kind === 'token') await audit(tx, ctx, 'relation.propose_create', { type: 'relation', id: rel.id }, { type: rel.type });
+    if (ctx.kind === 'token')
+      await audit(
+        tx,
+        ctx,
+        'relation.propose_create',
+        { type: 'relation', id: rel.id },
+        { type: rel.type },
+      );
     return cs.id;
   });
   if (mode === 'direct') await afterDirectWrite(deps, ctx, [rel.sourceId, rel.targetId]);
@@ -437,7 +561,12 @@ export async function createRelation(
   return { item: rel, mode, changesetId };
 }
 
-export async function deleteRelation(deps: Deps, ctx: RequestContext, id: string, opts: EditOptions = {}): Promise<EditResult<Relation>> {
+export async function deleteRelation(
+  deps: Deps,
+  ctx: RequestContext,
+  id: string,
+  opts: EditOptions = {},
+): Promise<EditResult<Relation>> {
   const state = await stateFor(deps, ctx, opts);
   const index = new ModelIndex(state);
   const rel = state.relations.get(id);
@@ -447,7 +576,11 @@ export async function deleteRelation(deps: Deps, ctx: RequestContext, id: string
     const cs = await targetChangeset(tx, ctx, mode, opts, 'Removed a link');
     await recordChange(tx, cs.id, 'delete', 'relation', id, rel, null, cs.compress);
     if (mode === 'direct') {
-      await applyChangeToBase(tx, { op: 'delete', entity: 'relation', entityId: id, before: rel, after: null }, actorName(ctx));
+      await applyChangeToBase(
+        tx,
+        { op: 'delete', entity: 'relation', entityId: id, before: rel, after: null },
+        actorName(ctx),
+      );
       await refreshDerived(tx, [rel.sourceId, rel.targetId]);
     }
     return cs.id;

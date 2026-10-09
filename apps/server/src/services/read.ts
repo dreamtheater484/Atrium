@@ -10,10 +10,12 @@ import {
   RELATION_TYPE_DEFS,
   type RelationView,
   type SuggestedRelation,
+  todayIso,
   typeDef,
 } from '@atrium/schema';
 import type { RequestContext } from '../auth/context';
 import { notFound } from '../http/errors';
+import { appCost } from './costs';
 import type { Deps } from './deps';
 import { ModelIndex } from './model-index';
 import { canEditDirectly } from './policy';
@@ -31,6 +33,8 @@ export interface ListQuery {
   pack?: string;
   /** Only elements with missing information. */
   gaps?: boolean;
+  /** Only elements missing this field, e.g. attributes.eol_date or relation.integration. */
+  missing?: string;
   /** Model date (YYYY-MM-DD) for lifecycle filtering. */
   at?: string;
   sort?: string;
@@ -41,6 +45,8 @@ export interface ListQuery {
 }
 
 export function toRow(el: Element, index: ModelIndex, marks?: ResolvedState['marks']): ElementRow {
+  const shared =
+    el.type === 'application' ? appCost(index, el.id).shares.reduce((s, x) => s + x.amount, 0) : 0;
   return {
     ...el,
     domainName: index.domainName(el),
@@ -50,6 +56,7 @@ export function toRow(el: Element, index: ModelIndex, marks?: ResolvedState['mar
     capabilityNames: index.targets(el.id, 'supports').map((t) => t.name),
     relationCount: index.outgoing(el.id).length + index.incoming(el.id).length,
     mark: marks?.added.has(el.id) ? 'added' : marks?.changed.has(el.id) ? 'changed' : undefined,
+    ...(shared ? { contractCost: Math.round(shared) } : {}),
   };
 }
 
@@ -86,6 +93,14 @@ export async function listElements(deps: Deps, ctx: RequestContext, q: ListQuery
     return true;
   });
   if (q.gaps) items = items.filter((e) => e.quality < 100);
+  if (q.missing) {
+    const at = q.at ?? todayIso();
+    items = items.filter(
+      (e) =>
+        lifecycleAt(e.lifecycle, e.lifecycleDates, at) !== 'retired' &&
+        missingFields(e, index.relCounts(e.id)).some((m) => m.field === q.missing),
+    );
+  }
   const rows = items.map((e) => toRow(e, index, state.marks));
   const sort = q.sort ?? 'name';
   const dir = q.dir === 'desc' ? -1 : 1;
@@ -187,5 +202,21 @@ export async function elementDetail(
         : undefined,
     pendingSuggestions: Number(pending?.n ?? 0),
     suggestedRelations: suggestedRelations.filter((s) => s.matches.length),
+    ...(el.type === 'application' ? { cost: appCost(index, id) } : {}),
+    ...(el.type === 'contract' ? { split: contractSplit(index, el) } : {}),
   };
+}
+
+/** How a contract's cost is shared out over the live applications it covers. */
+function contractSplit(index: ModelIndex, contract: Element) {
+  let applications = 0;
+  let share = 0;
+  for (const a of index.ofType('application')) {
+    const s = appCost(index, a.id).shares.find((x) => x.contractId === contract.id);
+    if (s) {
+      applications++;
+      share = s.amount;
+    }
+  }
+  return { applications, share: Math.round(share) };
 }

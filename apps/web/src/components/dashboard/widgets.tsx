@@ -1,6 +1,7 @@
 import { enumLabel, type Health } from '@atrium/schema';
 import {
   Badge,
+  Button,
   type ChartPalette,
   cn,
   formatDate,
@@ -10,10 +11,66 @@ import {
   Progress,
   TypeIcon,
 } from '@atrium/ui';
+import { Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Overview } from '../../lib/overview';
 import { inspect } from '../../lib/store';
 import { EChart, type EChartsOption } from '../charts/echart';
+import { openResearch } from '../research/research-dialog';
+
+/** "Known for 52 of 63 applications · €2.4M estimated" */
+export function costCoverage(data: Overview): string {
+  const c = data.completeness.cost;
+  const parts = [
+    c.known < c.total
+      ? `Known for ${c.known} of ${c.total} applications`
+      : 'Known for every application',
+  ];
+  if (c.estimated) parts.push(`${formatMoney(c.estimated)} estimated`);
+  return parts.join(' · ');
+}
+
+const pct = (n: number, total: number) => (total ? Math.round((n / total) * 100) : 100);
+
+function CompletenessRow({
+  label,
+  known,
+  total,
+  detail,
+  onClick,
+  action,
+}: {
+  label: string;
+  known: number;
+  total: number;
+  detail: string;
+  onClick: () => void;
+  action?: ReactNode;
+}) {
+  const p = pct(known, total);
+  return (
+    <div className="flex flex-col gap-1 rounded-lg px-2 py-1.5 hover:bg-surface-2">
+      <button type="button" onClick={onClick} className="flex flex-col gap-1 text-left">
+        <span className="flex w-full items-baseline gap-2 text-[13px]">
+          <span className="font-medium">{label}</span>
+          <span className="text-xs text-muted-foreground tabular">
+            {known} of {total}
+          </span>
+          <span className="ml-auto text-xs font-medium tabular">{p}%</span>
+        </span>
+        <Progress
+          value={p}
+          tone={p >= 90 ? 'good' : p >= 60 ? 'watch' : 'act'}
+          label={`${label}: ${p}% known`}
+        />
+      </button>
+      <span className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">{detail}</span>
+        {action}
+      </span>
+    </div>
+  );
+}
 
 export type WidgetSize = 's' | 'm' | 'l';
 
@@ -214,8 +271,8 @@ export const WIDGETS: WidgetDef[] = [
       <Kpi
         label="Annual run cost"
         value={formatMoney(data.applications.cost)}
-        hint="Sum of application costs"
-        onClick={() => go('/explore?type=application')}
+        hint={costCoverage(data)}
+        onClick={() => go('/explore?type=application&missing=attributes.annual_cost')}
       />
     ),
   },
@@ -313,17 +370,26 @@ export const WIDGETS: WidgetDef[] = [
     audience: ['manager'],
     render: ({ data, p }) => {
       const rows = data.applications.byDomain.filter((d) => d.cost > 0);
+      const c = data.completeness.cost;
       return (
-        <EChart
-          option={bars(
-            rows.map((d) => d.name),
-            rows.map((d) => d.cost),
-            p,
-            true,
-          )}
-          height={260}
-          ariaLabel="Cost per domain"
-        />
+        <div className="flex flex-col gap-1">
+          <EChart
+            option={bars(
+              rows.map((d) => d.name),
+              rows.map((d) => d.cost),
+              p,
+              true,
+            )}
+            height={250}
+            ariaLabel="Cost per domain"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            {c.known < c.total ? `Costs known for ${c.known} of ${c.total} applications. ` : ''}
+            {c.viaContracts
+              ? 'Contract costs are shared evenly by the applications they cover.'
+              : ''}
+          </p>
+        </div>
       );
     },
     slide: ({ data }) => ({
@@ -552,7 +618,11 @@ export const WIDGETS: WidgetDef[] = [
                 {t.apps.length} applications
               </span>
             </span>
-            <Badge tone={t.past ? 'act' : 'watch'}>{formatDate(t.eolDate)}</Badge>
+            <Badge tone={t.past ? 'act' : 'watch'}>
+              {!t.past && t.onExtended && t.extendedDate
+                ? `Extended to ${formatDate(t.extendedDate)}`
+                : formatDate(t.eolDate)}
+            </Badge>
           </Row>
         ))}
       </div>
@@ -662,6 +732,77 @@ export const WIDGETS: WidgetDef[] = [
     ),
   },
   {
+    id: 'completeness',
+    title: 'Data completeness',
+    description: 'How complete costs, integrations and support dates are',
+    size: 'm',
+    audience: ['architect', 'manager'],
+    render: ({ data, go }) => {
+      const c = data.completeness;
+      const money = [
+        c.cost.viaContracts ? `${formatMoney(c.cost.viaContracts)} through contracts` : null,
+        c.cost.estimated ? `${formatMoney(c.cost.estimated)} estimated` : null,
+      ].filter(Boolean);
+      return (
+        <div className="flex flex-col gap-1.5">
+          <CompletenessRow
+            label="Run costs"
+            known={c.cost.known}
+            total={c.cost.total}
+            detail={money.join(' · ') || 'Applications with an annual cost'}
+            onClick={() => go('/explore?type=application&missing=attributes.annual_cost')}
+          />
+          <CompletenessRow
+            label="Integrations"
+            known={c.integrations.mapped + c.integrations.standalone}
+            total={c.integrations.total}
+            detail={`Applications with mapped integrations${c.integrations.standalone ? `, or marked standalone (${c.integrations.standalone})` : ''}`}
+            onClick={() => go('/explore?type=application&missing=relation.integration')}
+          />
+          <CompletenessRow
+            label="End-of-support dates"
+            known={c.support.known}
+            total={c.support.total}
+            detail="Versioned technologies and vendor products"
+            onClick={() => go('/explore?missing=attributes.eol_date')}
+            action={
+              c.support.known < c.support.total ? (
+                <Button size="sm" variant="soft" onClick={openResearch}>
+                  <Sparkles /> Find dates
+                </Button>
+              ) : null
+            }
+          />
+        </div>
+      );
+    },
+    slide: ({ data }) => {
+      const c = data.completeness;
+      const row = (label: string, known: number, total: number) => [
+        label,
+        `${known} of ${total}`,
+        {
+          text: `${pct(known, total)}%`,
+          tone: pct(known, total) >= 90 ? 'good' : pct(known, total) >= 60 ? 'watch' : 'act',
+        },
+      ];
+      return {
+        kind: 'table',
+        title: 'Data completeness',
+        columns: ['Data', 'Known', 'Share'],
+        rows: [
+          row('Run costs', c.cost.known, c.cost.total),
+          row(
+            'Integrations',
+            c.integrations.mapped + c.integrations.standalone,
+            c.integrations.total,
+          ),
+          row('End-of-support dates', c.support.known, c.support.total),
+        ],
+      };
+    },
+  },
+  {
     id: 'radar',
     title: 'Technology radar',
     description: 'Technologies per ring',
@@ -756,6 +897,7 @@ export const TEMPLATES: DashboardSpec[] = [
       w('time'),
       w('risks'),
       w('initiatives'),
+      w('completeness'),
     ],
   },
   {
@@ -785,6 +927,7 @@ export const TEMPLATES: DashboardSpec[] = [
       w('kpi-healthy'),
       w('kpi-eol'),
       w('coverage'),
+      w('completeness'),
       w('quality-gaps'),
       w('lifecycle'),
       w('health-by-domain'),

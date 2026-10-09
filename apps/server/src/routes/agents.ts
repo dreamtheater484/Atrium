@@ -194,6 +194,8 @@ export function backendFor(deps: Deps, ctx: RequestContext): AtriumBackend {
         const r = computeImpact(idx, el.id);
         return {
           summary: r.summary,
+          // Tells the agent the list may be incomplete (applications without mapped integrations).
+          ...(r.caveat ? { caveat: r.caveat } : {}),
           affected: r.nodes.map((n) => ({
             name: n.element.name,
             key: n.element.key,

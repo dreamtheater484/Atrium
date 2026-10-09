@@ -7,6 +7,7 @@ export const ELEMENT_TYPES = [
   'interface',
   'data_object',
   'technology',
+  'contract',
   'initiative',
   'principle',
   'standard',
@@ -37,6 +38,10 @@ export const RADAR_RINGS = ['adopt', 'trial', 'assess', 'hold'] as const;
 export type RadarRing = (typeof RADAR_RINGS)[number];
 
 export const HOSTING = ['on_premise', 'private_cloud', 'public_cloud', 'saas'] as const;
+/** Versioned products have end-of-support dates; rolling releases and managed services don't. */
+export const SUPPORT_MODELS = ['versioned', 'rolling', 'managed'] as const;
+/** Whether a cost is a real figure or an estimate. */
+export const COST_BASIS = ['actual', 'estimate'] as const;
 export const TECH_CATEGORIES = [
   'language',
   'runtime',
@@ -116,6 +121,11 @@ export const ENUM_LABELS: Record<string, string> = {
   private_cloud: 'Private cloud',
   public_cloud: 'Public cloud',
   saas: 'SaaS',
+  versioned: 'Versioned releases',
+  rolling: 'Rolling releases',
+  managed: 'Managed by the provider',
+  actual: 'Actual',
+  estimate: 'Estimate',
   language: 'Language',
   runtime: 'Runtime',
   framework: 'Framework',

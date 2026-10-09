@@ -8,6 +8,7 @@ import { exportRoutes } from './export';
 import { importRoutes } from './import';
 import { packRoutes } from './packs';
 import { peopleRoutes } from './people';
+import { researchRoutes } from './research';
 import { scenarioRoutes } from './scenarios';
 import { viewRoutes } from './views';
 import { webhookRoutes } from './webhooks';
@@ -26,5 +27,6 @@ export function allRoutes(deps: Deps): AnyRoute[] {
     ...packRoutes(deps),
     ...exportRoutes(deps),
     ...webhookRoutes(deps),
+    ...researchRoutes(deps),
   ];
 }

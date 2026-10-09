@@ -70,9 +70,11 @@ export function systemRoutes(deps: Deps) {
           hasData: orgCount > 0,
           scenarios: scenarios.map(toScenario),
           features: {
-            ai: deps.ai.name === 'off' ? 'off' : 'mock',
+            ai:
+              deps.ai.name === 'off' ? 'off' : deps.research.name === 'anthropic' ? 'live' : 'mock',
             eolLookup: config.eolLookup,
             sso: !!config.oidc,
+            research: { label: deps.research.label, live: deps.research.live },
           },
         };
       },

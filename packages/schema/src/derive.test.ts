@@ -48,7 +48,37 @@ describe('quality', () => {
         lifecycle: 'active',
       },
     );
-    expect(computeQuality(full, { out: { supports: 1, owned_by: 1 }, in: {} })).toBe(100);
+    expect(computeQuality(full, { out: { supports: 1, owned_by: 1 }, in: { flows_to: 1 } })).toBe(
+      100,
+    );
+  });
+
+  it('expects integrations unless the application is marked standalone', () => {
+    const rels = { out: { supports: 1, owned_by: 1 }, in: {} };
+    const fields = (attrs: Record<string, unknown>) =>
+      missingFields(app(attrs), rels).map((m) => m.field);
+    expect(fields({})).toContain('relation.integration');
+    expect(fields({ standalone: true })).not.toContain('relation.integration');
+    expect(
+      missingFields(app(), { out: { depends_on: 1 }, in: {} }).map((m) => m.field),
+    ).not.toContain('relation.integration');
+  });
+
+  it('expects an end-of-support date only for vendor products', () => {
+    const fields = (attrs: Record<string, unknown>) =>
+      missingFields(app(attrs)).map((m) => m.field);
+    expect(fields({ vendor: 'Oracle', hosting: 'on_premise' })).toContain('attributes.eol_date');
+    expect(fields({ vendor: 'Salesforce', hosting: 'saas' })).not.toContain('attributes.eol_date');
+    expect(fields({ vendor: 'Acme Telco (in-house)' })).not.toContain('attributes.eol_date');
+    expect(fields({})).not.toContain('attributes.eol_date');
+  });
+
+  it('does not expect end-of-support dates for rolling releases or managed services', () => {
+    const tech = (attrs: Record<string, unknown>) =>
+      missingFields({ ...app(attrs), type: 'technology' }).map((m) => m.field);
+    expect(tech({})).toContain('attributes.eol_date');
+    expect(tech({ support_model: 'rolling' })).not.toContain('attributes.eol_date');
+    expect(tech({ support_model: 'managed' })).not.toContain('attributes.eol_date');
   });
 
   it('reference elements always count as complete', () => {
@@ -66,6 +96,44 @@ describe('health', () => {
     );
     expect(h.health).toBe('act');
     expect(h.reasons[0]).toContain('Java 8');
+  });
+  it('treats paid extended support as watch, and its end as act', () => {
+    const tech = (attrs: Record<string, unknown>) =>
+      computeHealth({ ...app(attrs), type: 'technology' }, [], today);
+    expect(tech({ eol_date: '2026-01-01' }).health).toBe('act');
+    const offered = tech({ eol_date: '2026-01-01', extended_support_date: '2028-06-30' });
+    expect(offered.health).toBe('act');
+    expect(offered.reasons[0]).toContain('available until 2028-06-30');
+    const ext = tech({
+      eol_date: '2026-01-01',
+      extended_support_date: '2028-06-30',
+      extended_support: true,
+    });
+    expect(ext.health).toBe('watch');
+    expect(ext.reasons[0]).toContain('extended support until 2028-06-30');
+    expect(tech({ eol_date: '2024-01-01', extended_support_date: '2025-01-01' }).health).toBe(
+      'act',
+    );
+    expect(tech({ eol_date: '2027-03-01' }).health).toBe('watch');
+    expect(tech({ eol_date: '2030-01-01' }).health).toBe('good');
+  });
+  it('uses extended support of the technologies an application runs on', () => {
+    const h = computeHealth(
+      app({ technical_fit: 4, business_fit: 4 }),
+      [{ name: 'RHEL 7', eolDate: '2024-06-30', extendedDate: '2028-06-30', onExtended: true }],
+      today,
+    );
+    expect(h.health).toBe('watch');
+    expect(h.reasons[0]).toContain('extended support');
+  });
+  it('flags an application whose own vendor support has ended', () => {
+    const h = computeHealth(
+      app({ vendor: 'Oracle', technical_fit: 4, business_fit: 4, eol_date: '2025-12-31' }),
+      [],
+      today,
+    );
+    expect(h.health).toBe('act');
+    expect(h.reasons[0]).toContain('Vendor support ended');
   });
   it('watches average fit', () => {
     expect(computeHealth(app({ technical_fit: 3, business_fit: 4 }), [], today).health).toBe(

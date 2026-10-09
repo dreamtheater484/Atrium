@@ -14,9 +14,13 @@ interface Cycle {
   eol: string | boolean;
   releaseDate?: string;
   lts?: boolean | string;
+  extendedSupport?: string | boolean;
 }
 
-const out: Record<string, Array<{ c: string; eol: string | boolean; r?: string }>> = {};
+const out: Record<
+  string,
+  Array<{ c: string; eol: string | boolean; r?: string; x?: string | boolean }>
+> = {};
 for (const product of Object.keys(EOL_PRODUCTS)) {
   const res = await fetch(`https://endoflife.date/api/${product}.json`);
   if (!res.ok) {
@@ -24,7 +28,12 @@ for (const product of Object.keys(EOL_PRODUCTS)) {
     continue;
   }
   const cycles = (await res.json()) as Cycle[];
-  out[product] = cycles.map((c) => ({ c: String(c.cycle), eol: c.eol, r: c.releaseDate }));
+  out[product] = cycles.map((c) => ({
+    c: String(c.cycle),
+    eol: c.eol,
+    r: c.releaseDate,
+    ...(c.extendedSupport !== undefined ? { x: c.extendedSupport } : {}),
+  }));
   console.log(`${product}: ${cycles.length} cycles`);
 }
 const file = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'eol-snapshot.json');

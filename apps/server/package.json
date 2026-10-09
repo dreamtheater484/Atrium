@@ -13,6 +13,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.132.1",
     "@atrium/db": "workspace:*",
     "@atrium/demo-data": "workspace:*",
     "@atrium/exporters": "workspace:*",

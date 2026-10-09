@@ -244,16 +244,19 @@ function WorkspaceTab() {
           <dt className="text-muted-foreground">Address for agents and CI</dt>
           <dd className="font-mono text-xs">{ws.publicUrl}</dd>
           <dt className="text-muted-foreground">Suggestions</dt>
+          <dd>{ws.features.ai === 'off' ? 'Off' : 'Built-in rules (works offline)'}</dd>
+          <dt className="text-muted-foreground">End-of-support dates</dt>
           <dd>
-            {ws.features.ai === 'mock'
-              ? 'Built-in rules (works offline)'
-              : ws.features.ai === 'live'
-                ? 'AI assistant'
-                : 'Off'}
-          </dd>
-          <dt className="text-muted-foreground">End-of-life lookups</dt>
-          <dd>
-            {ws.features.eolLookup ? 'Live from endoflife.date' : 'Bundled snapshot (offline)'}
+            {ws.features.eolLookup ? 'Live from endoflife.date' : 'Bundled endoflife.date snapshot'}
+            {ws.features.research.live && ws.features.ai === 'live'
+              ? `, then ${ws.features.research.label}`
+              : ''}
+            {ws.features.ai !== 'live' && (
+              <span className="block text-xs text-muted-foreground">
+                To let Claude search vendor sites for the rest, set ATRIUM_AI=anthropic and
+                ANTHROPIC_API_KEY on the server. Results always come back for review.
+              </span>
+            )}
           </dd>
           <dt className="text-muted-foreground">Single sign-on</dt>
           <dd>{ws.features.sso ? 'Configured' : 'Not configured'}</dd>

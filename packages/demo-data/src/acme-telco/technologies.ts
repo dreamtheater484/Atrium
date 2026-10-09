@@ -17,6 +17,11 @@ interface TechSpec {
   radar: Radar;
   /** End of (public or premier) support, YYYY-MM-DD. */
   eol?: string;
+  /** End of paid extended support the vendor offers, YYYY-MM-DD. */
+  extended?: string;
+  /** Acme pays for that extended support. */
+  onExtended?: boolean;
+  supportModel?: 'versioned' | 'rolling' | 'managed';
   lifecycle: LifecyclePhase;
   owner: string;
   description: string;
@@ -42,6 +47,7 @@ const specs: TechSpec[] = [
     version: '8',
     radar: 'hold',
     eol: '2022-03-31',
+    extended: '2030-12-31',
     lifecycle: 'phase_out',
     owner: 'Jeroen Visser',
     description:
@@ -244,6 +250,8 @@ const specs: TechSpec[] = [
     version: '2.7',
     radar: 'hold',
     eol: '2023-11-24',
+    extended: '2029-06-30',
+    onExtended: true,
     lifecycle: 'phase_out',
     owner: 'Jeroen Visser',
     description:
@@ -339,6 +347,7 @@ const specs: TechSpec[] = [
     version: '19',
     radar: 'hold',
     eol: '2029-12-31',
+    extended: '2032-12-31',
     lifecycle: 'active',
     owner: 'Lucas Moreau',
     description:
@@ -476,6 +485,7 @@ const specs: TechSpec[] = [
     category: 'platform',
     vendor: 'Salesforce',
     version: 'Winter 27',
+    supportModel: 'rolling',
     radar: 'adopt',
     lifecycle: 'active',
     owner: 'Carlos Mendes',
@@ -509,6 +519,7 @@ const specs: TechSpec[] = [
     version: '8',
     radar: 'adopt',
     eol: '2029-05-31',
+    extended: '2033-05-31',
     lifecycle: 'active',
     owner: 'Lucas Moreau',
     description: 'Standard Linux for on-premise servers and Kubernetes nodes.',
@@ -555,6 +566,7 @@ const specs: TechSpec[] = [
     version: '2016',
     radar: 'hold',
     eol: '2027-01-12',
+    extended: '2030-01-12',
     lifecycle: 'active',
     owner: 'Lucas Moreau',
     description: 'Windows Server 2016; extended support ends in January 2027.',
@@ -606,6 +618,9 @@ export const technologies: SeedElement[] = specs.map((t) => ({
     version: t.version,
     radar: t.radar,
     eol_date: t.eol,
+    extended_support_date: t.extended,
+    extended_support: t.onExtended,
+    support_model: t.supportModel,
   }),
 }));
 

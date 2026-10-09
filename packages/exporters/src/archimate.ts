@@ -22,6 +22,7 @@ export const ARCHIMATE_ELEMENT_TYPES: Record<ElementType, string> = {
   interface: 'ApplicationInterface',
   data_object: 'DataObject',
   technology: 'SystemSoftware',
+  contract: 'Contract',
   initiative: 'WorkPackage',
   principle: 'Principle',
   standard: 'Constraint',
@@ -53,12 +54,13 @@ export const ARCHIMATE_RELATIONSHIPS: Record<RelationType, RelationMapping> = {
   impacts: { type: 'Influence' },
   maps_to: { type: 'Association' },
   replaces: { type: 'Association', name: 'replaces' },
+  covers: { type: 'Association', name: 'covers' },
 };
 
 /** Archi-style folders used in the <organizations> section. */
 const FOLDERS: Array<{ label: string; types: string[] }> = [
   { label: 'Strategy', types: ['Capability'] },
-  { label: 'Business', types: ['BusinessActor', 'BusinessProcess'] },
+  { label: 'Business', types: ['BusinessActor', 'BusinessProcess', 'Contract'] },
   { label: 'Application', types: ['ApplicationComponent', 'ApplicationInterface', 'DataObject'] },
   { label: 'Technology & Physical', types: ['SystemSoftware'] },
   { label: 'Motivation', types: ['Principle', 'Constraint', 'Assessment'] },

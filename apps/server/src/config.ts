@@ -25,7 +25,16 @@ export interface Config {
   webDist: string | null;
   /** Look up end-of-life dates on endoflife.date. Off means only the bundled snapshot is used. */
   eolLookup: boolean;
-  ai: 'mock' | 'off';
+  /** mock: rule-based help only. anthropic: Claude researches end-of-support dates on the web. */
+  ai: 'mock' | 'off' | 'anthropic';
+  aiModel: string;
+  aiEffort: 'low' | 'medium' | 'high';
+  /** The most sensitive classification whose product names may be sent to the AI provider. */
+  aiMaxClassification: 'public' | 'internal' | 'confidential' | 'restricted';
+  /** Most items one research run looks up (each costs a few cents). */
+  researchLimit: number;
+  /** Canned research results for tests and demos (JSON file), used by the mock provider. */
+  researchFixtures: string | null;
   oidc: OidcConfig | null;
   secureCookies: boolean;
   logLevel: string;
@@ -77,7 +86,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     workspaceName: env.ATRIUM_WORKSPACE_NAME ?? 'Atrium',
     webDist: findWebDist(),
     eolLookup: bool(env.ATRIUM_EOL_LOOKUP, false),
-    ai: env.ATRIUM_AI === 'off' ? 'off' : 'mock',
+    ai: env.ATRIUM_AI === 'off' ? 'off' : env.ATRIUM_AI === 'anthropic' ? 'anthropic' : 'mock',
+    aiModel: env.ATRIUM_AI_MODEL || 'claude-opus-5-5',
+    aiEffort:
+      (['low', 'medium', 'high'] as const).find((e) => e === env.ATRIUM_AI_EFFORT) ?? 'medium',
+    aiMaxClassification:
+      (['public', 'internal', 'confidential', 'restricted'] as const).find(
+        (c) => c === env.ATRIUM_AI_MAX_CLASSIFICATION,
+      ) ?? 'internal',
+    researchLimit: Math.max(1, Math.min(500, Number(env.ATRIUM_RESEARCH_LIMIT) || 50)),
+    researchFixtures: env.ATRIUM_RESEARCH_FIXTURES || null,
     oidc,
     secureCookies: bool(env.ATRIUM_SECURE_COOKIES, publicUrl.startsWith('https://')),
     logLevel: env.LOG_LEVEL ?? 'warn',

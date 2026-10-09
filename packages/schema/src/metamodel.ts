@@ -1,4 +1,5 @@
 import {
+  COST_BASIS,
   CRITICALITY,
   DATA_SENSITIVITY,
   DECISION_STATUS,
@@ -13,6 +14,7 @@ import {
   STANDARD_CATEGORY,
   STANDARD_EFFECT,
   STANDARD_LEVEL,
+  SUPPORT_MODELS,
   TECH_CATEGORIES,
   TIME_RATINGS,
 } from './enums';
@@ -40,6 +42,10 @@ export interface AttributeDef {
   derived?: boolean;
   /** Counts towards the data-quality score when empty. */
   quality?: boolean;
+  /** Only expected (for quality) when this returns true, e.g. end of support for vendor products. */
+  expectedWhen?: (attributes: Record<string, unknown>) => boolean;
+  /** Not expected when the element has this incoming relation, e.g. cost paid by a contract. */
+  waivedByIncoming?: RelationType;
   /** Alternative column headers recognised by the import wizard. */
   aliases?: string[];
   /** Shown in the default table columns for this type. */
@@ -67,12 +73,39 @@ export interface ElementTypeDef {
   /** Core fields that count towards data quality. */
   qualityCore: Array<'description' | 'owner' | 'domain' | 'lifecycle'>;
   /** Relations this type is expected to have (counts towards quality). */
-  expectedRelations?: Array<{ relation: RelationType; direction: 'out' | 'in'; label: string }>;
+  expectedRelations?: ExpectedRelation[];
   attributes: AttributeDef[];
   /** Sheet names / words that identify this type during import. */
   aliases: string[];
   /** Uses lifecycle phases and dates. */
   hasLifecycle: boolean;
+}
+
+export interface ExpectedRelation {
+  /** One relation type, or several where any of them will do. */
+  relation: RelationType | RelationType[];
+  direction: 'out' | 'in' | 'any';
+  label: string;
+  /** Name used in the missing-field id (relation.<key>); defaults to the relation type. */
+  key?: string;
+  /** A boolean attribute that, when true, says this relation is not needed. */
+  waivedBy?: string;
+}
+
+const NOT_VENDOR = /in-?house|internal|own development|self-built|bespoke|custom-built/i;
+
+/**
+ * Software bought from a vendor and run by the organisation has an end-of-support date.
+ * In-house software and SaaS do not (the provider keeps SaaS current).
+ */
+export function isVendorProduct(attributes: Record<string, unknown>): boolean {
+  const vendor = typeof attributes.vendor === 'string' ? attributes.vendor.trim() : '';
+  return !!vendor && !NOT_VENDOR.test(vendor) && attributes.hosting !== 'saas';
+}
+
+/** Versioned technologies have end-of-support dates; rolling releases and managed services don't. */
+export function hasSupportDates(attributes: Record<string, unknown>): boolean {
+  return attributes.support_model !== 'rolling' && attributes.support_model !== 'managed';
 }
 
 const rating = (
@@ -179,6 +212,13 @@ export const ELEMENT_TYPE_DEFS: Record<ElementType, ElementTypeDef> = {
     expectedRelations: [
       { relation: 'supports', direction: 'out', label: 'Supports at least one capability' },
       { relation: 'owned_by', direction: 'out', label: 'Owned by a team' },
+      {
+        key: 'integration',
+        relation: ['flows_to', 'depends_on', 'exposes', 'consumes'],
+        direction: 'any',
+        label: 'Integrations with other applications',
+        waivedBy: 'standalone',
+      },
     ],
     attributes: [
       {
@@ -205,8 +245,18 @@ export const ELEMENT_TYPE_DEFS: Record<ElementType, ElementTypeDef> = {
         label: 'Annual cost',
         kind: 'currency',
         quality: true,
+        help: 'Its own yearly cost. Costs paid through a contract are added automatically.',
+        waivedByIncoming: 'covers',
         aliases: ['cost', 'annual cost', 'yearly cost', 'tco', 'run cost', 'costs', 'budget'],
         column: true,
+      },
+      {
+        key: 'cost_basis',
+        label: 'Cost basis',
+        kind: 'enum',
+        options: COST_BASIS,
+        help: 'Is the annual cost an actual figure or an estimate?',
+        aliases: ['cost basis', 'cost type', 'cost accuracy'],
       },
       {
         key: 'users',
@@ -243,6 +293,43 @@ export const ELEMENT_TYPE_DEFS: Record<ElementType, ElementTypeDef> = {
         'technical quality',
         'tech fit',
       ]),
+      {
+        key: 'eol_date',
+        label: 'End of support',
+        kind: 'date',
+        quality: true,
+        expectedWhen: isVendorProduct,
+        help: 'When the vendor stops standard support. Not needed for in-house software or SaaS.',
+        aliases: [
+          'end of support',
+          'end of life',
+          'eol',
+          'eos',
+          'vendor support end',
+          'support end',
+        ],
+      },
+      {
+        key: 'extended_support_date',
+        label: 'Extended support until',
+        kind: 'date',
+        help: 'Until when the vendor offers paid extended support',
+        aliases: ['extended support until', 'extended support end', 'extended support date'],
+      },
+      {
+        key: 'extended_support',
+        label: 'On extended support',
+        kind: 'boolean',
+        help: "We pay for the vendor's extended support",
+        aliases: ['on extended support', 'extended support purchased', 'esu'],
+      },
+      {
+        key: 'standalone',
+        label: 'Standalone',
+        kind: 'boolean',
+        help: 'Exchanges no data with other applications',
+        aliases: ['standalone', 'no integrations'],
+      },
       { key: 'url', label: 'Link', kind: 'url', aliases: ['url', 'link', 'website'] },
     ],
     aliases: [
@@ -370,16 +457,113 @@ export const ELEMENT_TYPE_DEFS: Record<ElementType, ElementTypeDef> = {
         column: true,
       },
       {
+        key: 'support_model',
+        label: 'Support model',
+        kind: 'enum',
+        options: SUPPORT_MODELS,
+        help: "Versioned products have end-of-support dates; rolling releases and managed services don't",
+        aliases: ['support model', 'release model'],
+      },
+      {
         key: 'eol_date',
-        label: 'End of life',
+        label: 'End of support',
         kind: 'date',
+        quality: true,
+        expectedWhen: hasSupportDates,
         aliases: ['eol', 'end of life', 'end of support', 'eos'],
-        help: 'Filled automatically from endoflife.date when available',
+        help: 'Filled in automatically from endoflife.date, or found by research',
         column: true,
+      },
+      {
+        key: 'extended_support_date',
+        label: 'Extended support until',
+        kind: 'date',
+        help: 'Until when the vendor offers paid extended support',
+        aliases: ['extended support until', 'extended support end', 'extended support date'],
+      },
+      {
+        key: 'extended_support',
+        label: 'On extended support',
+        kind: 'boolean',
+        help: "We pay for the vendor's extended support",
+        aliases: ['on extended support', 'extended support purchased', 'esu'],
       },
     ],
     aliases: ['technology', 'technologies', 'tech', 'stack', 'platform', 'platforms', 'component'],
     hasLifecycle: true,
+  },
+  contract: {
+    type: 'contract',
+    label: 'Contract',
+    plural: 'Contracts',
+    description:
+      'A licence, subscription or support agreement. Its cost is shared by what it covers.',
+    icon: 'file-signature',
+    layer: 'business',
+    hierarchical: false,
+    qualityCore: ['description', 'owner'],
+    expectedRelations: [
+      { relation: 'covers', direction: 'out', label: 'Covers at least one application' },
+    ],
+    attributes: [
+      {
+        key: 'vendor',
+        label: 'Vendor',
+        kind: 'text',
+        quality: true,
+        aliases: ['vendor', 'supplier', 'provider', 'licensor'],
+        column: true,
+      },
+      {
+        key: 'annual_cost',
+        label: 'Annual cost',
+        kind: 'currency',
+        quality: true,
+        help: 'Split evenly over the applications it covers',
+        aliases: ['cost', 'annual cost', 'yearly cost', 'contract value', 'annual value', 'fee'],
+        column: true,
+      },
+      {
+        key: 'cost_basis',
+        label: 'Cost basis',
+        kind: 'enum',
+        options: COST_BASIS,
+        aliases: ['cost basis', 'cost type'],
+      },
+      {
+        key: 'end_date',
+        label: 'Contract end',
+        kind: 'date',
+        quality: true,
+        aliases: ['end', 'end date', 'expiry', 'expires', 'renewal date', 'term end'],
+        column: true,
+      },
+      {
+        key: 'notice',
+        label: 'Notice period',
+        kind: 'text',
+        aliases: ['notice', 'notice period', 'cancellation period'],
+      },
+      {
+        key: 'reference',
+        label: 'Contract number',
+        kind: 'text',
+        aliases: ['contract number', 'contract id', 'agreement number', 'po number'],
+      },
+    ],
+    aliases: [
+      'contract',
+      'contracts',
+      'licence',
+      'licences',
+      'license',
+      'licenses',
+      'agreement',
+      'agreements',
+      'subscription',
+      'subscriptions',
+    ],
+    hasLifecycle: false,
   },
   initiative: {
     type: 'initiative',
@@ -598,6 +782,7 @@ export const RELATION_TYPES = [
   'impacts',
   'maps_to',
   'replaces',
+  'covers',
 ] as const;
 export type RelationType = (typeof RELATION_TYPES)[number];
 
@@ -732,6 +917,15 @@ export const RELATION_TYPE_DEFS: Record<RelationType, RelationTypeDef> = {
     to: ['application', 'technology', 'decision', 'interface'],
     impact: 'none',
     description: 'The source succeeds the target.',
+  },
+  covers: {
+    type: 'covers',
+    label: 'covers',
+    inverseLabel: 'covered by',
+    from: ['contract'],
+    to: ['application', 'technology'],
+    impact: 'none',
+    description: 'A contract pays for this application or technology.',
   },
 };
 

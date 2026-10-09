@@ -40,6 +40,7 @@ import { useTheme } from '../../lib/theme';
 import { ConnectAgentDialog } from '../agents/connect-agent-dialog';
 import { ImportWizard } from '../import/import-wizard';
 import { Inspector } from '../inspector';
+import { ResearchDialog } from '../research/research-dialog';
 import { AddDialog } from './add-dialog';
 import { AddMenu } from './add-menu';
 import { CommandPalette } from './command-palette';
@@ -262,6 +263,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AddDialog />
       <ImportWizard />
       <ConnectAgentDialog />
+      <ResearchDialog />
       <GlobalDropZone />
     </div>
   );

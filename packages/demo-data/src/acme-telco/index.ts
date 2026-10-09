@@ -1,6 +1,7 @@
 import type { SeedDataset } from '../types';
 import { applicationRelations, applications } from './applications';
 import { capabilities } from './capabilities';
+import { contractRelations, contracts } from './contracts';
 import { domains, teams } from './domains-teams';
 import { decisions, governanceRelations, principles, standards } from './governance';
 import { initiativeRelations, initiatives } from './initiatives';
@@ -30,6 +31,7 @@ export const acmeTelco: SeedDataset = {
     ...processes,
     ...technologies,
     ...applications,
+    ...contracts,
     ...interfaces,
     ...dataObjects,
     ...principles,
@@ -41,6 +43,7 @@ export const acmeTelco: SeedDataset = {
     ...processRelations,
     ...applicationRelations,
     ...technologyRelations,
+    ...contractRelations,
     ...interfaceRelations,
     ...dataRelations,
     ...landscapeRelations,

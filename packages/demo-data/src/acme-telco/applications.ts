@@ -33,6 +33,14 @@ interface AppSpec {
   hosting?: Hosting;
   /** EUR per year */
   cost?: number;
+  /** The cost is an estimate rather than an actual figure. */
+  estimate?: boolean;
+  /** End of vendor support (vendor products run by Acme), YYYY-MM-DD. */
+  eol?: string;
+  /** End of paid extended vendor support, YYYY-MM-DD. */
+  extended?: string;
+  /** Exchanges no data with other applications. */
+  standalone?: boolean;
   users?: number;
   criticality?: Criticality;
   time?: TimeRating;
@@ -210,6 +218,7 @@ const specs: AppSpec[] = [
     vendor: 'Callisto CX',
     product: 'Callisto Contact',
     hosting: 'saas',
+    estimate: true,
     cost: 610_000,
     users: 1_400,
     criticality: 'mission_critical',
@@ -340,6 +349,7 @@ const specs: AppSpec[] = [
     product: 'Shopline Commerce',
     version: '8.2',
     hosting: 'public_cloud',
+    estimate: true,
     cost: 330_000,
     users: 400_000,
     criticality: 'high',
@@ -395,6 +405,7 @@ const specs: AppSpec[] = [
     product: 'Pelago CPQ',
     version: '2026.2',
     hosting: 'saas',
+    estimate: true,
     cost: 280_000,
     users: 420,
     criticality: 'medium',
@@ -550,6 +561,7 @@ const specs: AppSpec[] = [
     tags: ['bss', 'billing'],
     cmdb: 'CI-101105',
     vendor: 'Mediora',
+    eol: '2026-12-31',
     product: 'Mediora Flow',
     version: '6.1',
     hosting: 'on_premise',
@@ -797,7 +809,6 @@ const specs: AppSpec[] = [
     product: 'Netrix Service Inventory',
     version: '9.1',
     hosting: 'on_premise',
-    cost: 540_000,
     users: 260,
     criticality: 'high',
     time: 'tolerate',
@@ -847,6 +858,8 @@ const specs: AppSpec[] = [
     tags: ['oss', 'assurance'],
     cmdb: 'CI-101012',
     vendor: 'Orbis Telecom Software',
+    eol: '2026-06-30',
+    extended: '2028-06-30',
     product: 'Orbis TT',
     version: '6.4',
     hosting: 'on_premise',
@@ -931,7 +944,6 @@ const specs: AppSpec[] = [
     product: 'Netrix Inventory',
     version: '7.3',
     hosting: 'on_premise',
-    cost: 900_000,
     users: 480,
     criticality: 'mission_critical',
     time: 'migrate',
@@ -958,7 +970,6 @@ const specs: AppSpec[] = [
     product: 'Netrix Assure',
     version: '8.2',
     hosting: 'on_premise',
-    cost: 750_000,
     users: 220,
     criticality: 'mission_critical',
     time: 'tolerate',
@@ -985,7 +996,6 @@ const specs: AppSpec[] = [
     product: 'Netrix Perform',
     version: '5.5',
     hosting: 'on_premise',
-    cost: 430_000,
     users: 150,
     criticality: 'high',
     time: 'tolerate',
@@ -1200,6 +1210,7 @@ const specs: AppSpec[] = [
     vendor: 'Roamwise',
     product: 'Roamwise Clearing',
     hosting: 'saas',
+    estimate: true,
     cost: 310_000,
     users: 15,
     criticality: 'high',
@@ -1422,6 +1433,7 @@ const specs: AppSpec[] = [
     tags: ['risk', 'compliance'],
     cmdb: 'CI-103720',
     vendor: 'Complyon',
+    standalone: true,
     product: 'Complyon GRC',
     version: '2025.4',
     cost: 95_000,
@@ -1743,6 +1755,10 @@ function toElement(s: AppSpec): SeedElement {
       version: s.version,
       hosting: s.hosting,
       annual_cost: s.cost,
+      cost_basis: s.estimate ? 'estimate' : undefined,
+      eol_date: s.eol,
+      extended_support_date: s.extended,
+      standalone: s.standalone,
       users: s.users,
       criticality: s.criticality,
       time: s.time,

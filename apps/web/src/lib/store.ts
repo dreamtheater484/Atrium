@@ -58,6 +58,7 @@ export interface UiState {
   importOpen: boolean;
   importFiles: File[];
   connectAgentOpen: boolean;
+  researchOpen: boolean;
   sidebarCollapsed: boolean;
   notation: 'cards' | 'archimate';
 }
@@ -73,6 +74,7 @@ export const ui = createStore<UiState>(
     importOpen: false,
     importFiles: [],
     connectAgentOpen: false,
+    researchOpen: false,
     sidebarCollapsed: false,
     notation: 'cards',
   },

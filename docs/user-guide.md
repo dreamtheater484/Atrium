@@ -30,6 +30,33 @@ remembers your choices for the next file with the same columns. Undo removes the
 domain from its parent, version and end-of-life dates for technology, likely capabilities for an
 application) are accepted one by one or with *Accept all*.
 
+**Data completeness.** Home and the dashboards show how much of the picture is known, so a total
+never looks more complete than it is:
+- *Run costs*: applications with a cost, either their own or a share of a contract. Mark a cost
+  as an *Estimate* (Cost basis) and dashboards say how much of the total is estimated.
+- *Integrations*: applications with at least one mapped data flow, dependency or interface. Tick
+  *Standalone* for those that really exchange nothing. Impact analysis warns when applications in
+  the chain have no mapped integrations, because the real impact may then be larger.
+- *End-of-support dates*: versioned technologies and vendor products (not in-house software or
+  SaaS). Set *Support model* to rolling releases or managed service for products without dates.
+Click a row to see exactly what is missing.
+
+**Contracts.** Add a contract (licence, subscription, support agreement) with its yearly cost and
+link it to the applications or technologies it *covers*. Its cost is shared evenly over the
+applications it covers, including those running on a covered technology, so lump-sum deals show
+up in cost per domain and per capability without double counting.
+
+**Find end-of-support dates.** *Find dates* on Home or the dashboard looks up missing dates:
+endoflife.date first, then (when an AI provider is connected) Claude searches the vendor's site.
+Only product names, vendors and versions are looked up, and nothing classified above *internal*.
+Results arrive as one suggestion in *Changes*, each with the page it came from and a quote; drop
+the ones you don't trust and approve the rest. Dates found this way are checked again after six
+months.
+
+**Extended support.** *Extended support until* records how long a vendor sells paid extended
+support. Tick *On extended support* when you actually pay for it: then the item counts as
+"watch" until that date instead of "act".
+
 **Views.**
 - *Capability map*: coloured by health, cost, lifecycle, coverage, TIME, importance or quality.
 - *Graph*: starts with domains and how much they talk to each other; click a domain to see its

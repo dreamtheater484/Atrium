@@ -81,6 +81,8 @@ export interface ElementListParams {
   layer?: 'org' | 'reference' | 'all';
   pack?: string;
   gaps?: boolean;
+  /** Only elements missing this field, e.g. attributes.eol_date or relation.integration. */
+  missing?: string;
   at?: string;
   sort?: string;
   dir?: 'asc' | 'desc';

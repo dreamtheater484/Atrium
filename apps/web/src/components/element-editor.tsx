@@ -20,6 +20,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  formatDate,
+  formatMoney,
   HealthBadge,
   LifecycleBadge,
   Progress,
@@ -169,6 +171,39 @@ export function QualityMeter({
   );
 }
 
+interface SupportInfo {
+  source?: string;
+  by?: string;
+  url?: string | null;
+  checkedAt?: string;
+}
+
+/** Where an end-of-support date comes from: endoflife.date or research (with its source). */
+function SupportSource({ info }: { info: SupportInfo }) {
+  const link = info.url ? (
+    <a
+      href={info.url}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="text-primary hover:underline"
+    >
+      source
+    </a>
+  ) : null;
+  return (
+    <span className="px-1.5 text-[11px] text-muted-foreground">
+      {info.source === 'research' ? (
+        <>
+          Found by research{info.checkedAt ? ` on ${formatDate(info.checkedAt)}` : ''}
+          {link ? <> · {link}</> : null}
+        </>
+      ) : (
+        <>Filled in automatically from endoflife.date{link ? <> · {link}</> : null}</>
+      )}
+    </span>
+  );
+}
+
 export function CoreFields({
   el,
   compact,
@@ -277,8 +312,20 @@ export function CoreFields({
             disabled={readOnly || a.derived}
           />
           {a.key === 'eol_date' && el.attributes._eol ? (
+            <SupportSource info={el.attributes._eol as SupportInfo} />
+          ) : null}
+          {a.key === 'annual_cost' && el.cost?.shares.length ? (
             <span className="px-1.5 text-[11px] text-muted-foreground">
-              Filled in automatically from endoflife.date
+              Plus {formatMoney(el.cost.shares.reduce((s, x) => s + x.amount, 0))} from{' '}
+              {el.cost.shares.map((x) => x.name).join(', ')}: {formatMoney(el.cost.total)} a year in
+              all
+            </span>
+          ) : null}
+          {a.key === 'annual_cost' && el.split ? (
+            <span className="px-1.5 text-[11px] text-muted-foreground">
+              {el.split.applications
+                ? `Shared by ${el.split.applications} application${el.split.applications === 1 ? '' : 's'}: ${formatMoney(el.split.share)} each`
+                : 'Covers no live application yet: link it to the applications or technologies it pays for'}
             </span>
           ) : null}
         </FieldRow>

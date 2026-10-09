@@ -30,6 +30,9 @@ services:
       ATRIUM_PUBLIC_URL: https://${ATRIUM_DOMAIN}
       ATRIUM_WORKSPACE_NAME: ${ATRIUM_WORKSPACE_NAME:-Atrium}
       ATRIUM_EOL_LOOKUP: ${ATRIUM_EOL_LOOKUP:-true}
+      # Optional: let Claude research end-of-support dates on vendor sites (results are reviewed).
+      ATRIUM_AI: ${ATRIUM_AI:-mock}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # Single sign-on (optional): any OpenID Connect provider, e.g. Microsoft Entra ID, Okta, Google.
       OIDC_ISSUER: ${OIDC_ISSUER:-}
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}

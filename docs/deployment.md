@@ -86,6 +86,23 @@ plenty for hundreds of people; the database is where the data lives.
 Take a backup first (see above), then pull or build the new image and restart the container.
 Database migrations run automatically at start-up (`node migrate.js` runs them on their own if your platform prefers a separate step).
 
+## Researching end-of-support dates
+
+Atrium fills in end-of-support dates from endoflife.date by itself. For what that doesn't cover
+(vendor applications, commercial middleware), it can ask Claude to search the vendor's site:
+
+```bash
+ATRIUM_AI=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Then use **Find dates** on the dashboard or home page. What is sent: product names, vendors and
+versions, only for elements classified `internal` or lower (change with
+`ATRIUM_AI_MAX_CLASSIFICATION`). What comes back: dates with the page they were found on and a
+quote from it, as one suggestion to review. Results without a source are dropped. Each lookup
+costs a few cents (web search plus tokens); one run looks up at most `ATRIUM_RESEARCH_LIMIT`
+items, and products checked recently are skipped.
+
 ## Settings
 
 | Variable | Default | Meaning |
@@ -97,7 +114,12 @@ Database migrations run automatically at start-up (`node migrate.js` runs them o
 | `ATRIUM_WORKSPACE_NAME` | `Atrium` | Name shown in the app and exports (admins can change it in Settings) |
 | `ATRIUM_ALLOWED_HOSTS` | | Extra host names solo mode answers to, comma separated |
 | `ATRIUM_EOL_LOOKUP` | `false` | Look up end-of-life dates on endoflife.date (otherwise a bundled snapshot is used) |
-| `ATRIUM_AI` | `mock` | `mock`: rule-based suggestions that need no external service. `off`: none |
+| `ATRIUM_AI` | `mock` | `mock`: rule-based suggestions, no external service. `anthropic`: also lets Claude research end-of-support dates on the web. `off`: none |
+| `ANTHROPIC_API_KEY` | | Needed for `ATRIUM_AI=anthropic` |
+| `ATRIUM_AI_MODEL` | `claude-opus-5-5` | The Claude model used for research |
+| `ATRIUM_AI_EFFORT` | `medium` | `low`, `medium` or `high`: how thoroughly Claude searches |
+| `ATRIUM_AI_MAX_CLASSIFICATION` | `internal` | Elements classified above this are never researched |
+| `ATRIUM_RESEARCH_LIMIT` | `50` | Most items one research run looks up |
 | `ATRIUM_SECURE_COOKIES` | `true` when the public URL is https | Secure session cookies |
 | `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | | Single sign-on |
 | `OIDC_LABEL` | `Single sign-on` | Button text on the sign-in page |

@@ -28,7 +28,7 @@ interface PendingChange {
 }
 
 export interface CommitOptions {
-  kind: 'direct' | 'suggestion' | 'import' | 'sync' | 'pack' | 'scenario';
+  kind: 'direct' | 'suggestion' | 'import' | 'sync' | 'pack' | 'scenario' | 'research';
   mode: 'direct' | 'suggestion' | 'scenario';
   title: string;
   description?: string;

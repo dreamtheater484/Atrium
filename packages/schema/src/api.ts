@@ -34,6 +34,18 @@ export interface ElementDetail extends Element {
   /** Present when the element only exists, or differs, in the selected scenario. */
   scenarioMark?: 'added' | 'changed' | 'removed';
   pendingSuggestions: number;
+  /** Applications: own cost plus shares of the contracts that cover them. */
+  cost?: CostBreakdown;
+  /** Contracts: how the cost is shared out. */
+  split?: { applications: number; share: number };
+}
+
+export interface CostBreakdown {
+  own: number | null;
+  shares: Array<{ contractId: string; name: string; amount: number; estimate: boolean }>;
+  total: number;
+  known: boolean;
+  estimated: number;
 }
 
 export interface SearchHit {
@@ -69,6 +81,8 @@ export interface ImpactResult {
   root: ElementSummary;
   nodes: ImpactNode[];
   summary: string;
+  /** Why the impact may be larger than shown, e.g. applications without mapped integrations. */
+  caveat?: string;
 }
 
 export interface GraphNode {
@@ -162,7 +176,22 @@ export interface WorkspaceInfo {
   elementCount: number;
   hasData: boolean;
   scenarios: Scenario[];
-  features: { ai: 'mock' | 'live' | 'off'; eolLookup: boolean; sso: boolean };
+  features: {
+    ai: 'mock' | 'live' | 'off';
+    eolLookup: boolean;
+    sso: boolean;
+    /** Who researches support dates, e.g. "Claude (claude-opus-5-5) with web search". */
+    research: { label: string; live: boolean };
+  };
+}
+
+/** Where a researched value comes from, shown next to the change for the reviewer. */
+export interface Evidence {
+  by: string;
+  url: string | null;
+  quote: string | null;
+  confidence: 'high' | 'medium' | 'low' | null;
+  note: string | null;
 }
 
 export interface ChangesetDetail extends Changeset {
@@ -174,8 +203,11 @@ export interface ChangesetDetail extends Changeset {
     name: string;
     type: string;
     fields: Array<{ field: string; label: string; before: unknown; after: unknown }>;
+    evidence?: Evidence;
   }>;
   canReview: boolean;
+  /** The reviewer may drop single changes before approving (research results). */
+  canDrop: boolean;
 }
 
 /** A row in the Explore table. */
@@ -187,6 +219,8 @@ export interface ElementRow extends Element {
   capabilityNames: string[];
   relationCount: number;
   mark?: 'added' | 'changed' | 'removed';
+  /** Applications: share of contract costs on top of their own cost. */
+  contractCost?: number;
 }
 
 export interface SuggestedRelation {

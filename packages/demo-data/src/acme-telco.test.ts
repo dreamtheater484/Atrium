@@ -460,9 +460,23 @@ describe('Acme Telco dataset: content', () => {
 
   it('has a realistic data-quality spread for "Fill the gaps"', () => {
     const apps = ofType('application').filter((a) => a.lifecycle !== 'retired');
-    const incomplete = apps.filter((a) => missingFields(asQualityInput(a)).length > 0);
+    // End-of-support dates of vendor products are left for research to find, so they are
+    // counted separately from the hand-made gaps.
+    // Applications paid for by a contract need no cost of their own.
+    const covered = new Set(ds.relations.filter((r) => r.type === 'covers').map((r) => r.to));
+    const gaps = (a: SeedElement) =>
+      missingFields(asQualityInput(a)).filter(
+        (m) =>
+          m.field !== 'attributes.eol_date' &&
+          !(m.field === 'attributes.annual_cost' && covered.has(a.ref)),
+      );
+    const incomplete = apps.filter((a) => gaps(a).length > 0);
     expect(incomplete.length).toBeGreaterThanOrEqual(8);
     expect(incomplete.length).toBeLessThanOrEqual(15);
+    const noSupportDates = apps.filter((a) =>
+      missingFields(asQualityInput(a)).some((m) => m.field === 'attributes.eol_date'),
+    );
+    expect(noSupportDates.length).toBeGreaterThanOrEqual(10);
     for (const a of apps) {
       expect(a.description === undefined || a.description.length >= 15, a.ref).toBe(true);
     }
@@ -486,7 +500,11 @@ describe('Acme Telco dataset: content', () => {
     });
     expect(pastEol.length).toBeGreaterThanOrEqual(4);
     expect(soon.length).toBeGreaterThanOrEqual(3);
-    expect(pastEol.every((t) => health(t).health === 'act')).toBe(true);
+    // Past end of support is "act", unless Acme pays for extended support (then "watch").
+    expect(
+      pastEol.every((t) => health(t).health === (t.attributes?.extended_support ? 'watch' : 'act')),
+    ).toBe(true);
+    expect(pastEol.some((t) => t.attributes?.extended_support)).toBe(true);
     const names = pastEol.map((t) => t.name);
     for (const n of [
       'Java 8',

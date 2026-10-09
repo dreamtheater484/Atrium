@@ -1,5 +1,12 @@
-import { ELEMENT_TYPE_LIST, type ElementType, type MapOverlay, typeDef } from '@atrium/schema';
 import {
+  ELEMENT_TYPE_DEFS,
+  ELEMENT_TYPE_LIST,
+  type ElementType,
+  type MapOverlay,
+  typeDef,
+} from '@atrium/schema';
+import {
+  Badge,
   Button,
   cn,
   DropdownMenu,
@@ -17,7 +24,17 @@ import {
 } from '@atrium/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { Blocks, Download, LayoutGrid, Network, Plus, Radar, Search, Table2 } from 'lucide-react';
+import {
+  Blocks,
+  Download,
+  LayoutGrid,
+  Network,
+  Plus,
+  Radar,
+  Search,
+  Table2,
+  X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { TimeSlider } from '../components/time-slider';
 import { CapabilityMapView } from '../components/views/capability-map';
@@ -34,9 +51,24 @@ const GROUPS: Array<{ label: string; types: ElementType[] }> = [
   { label: 'Business', types: ['capability', 'business_process', 'domain'] },
   { label: 'Applications and data', types: ['application', 'interface', 'data_object'] },
   { label: 'Technology', types: ['technology'] },
+  { label: 'Contracts', types: ['contract'] },
   { label: 'Change and governance', types: ['initiative', 'decision', 'standard', 'principle'] },
   { label: 'People', types: ['team'] },
 ];
+
+/** "end of support", "integrations with other applications"... for the filter chip. */
+function missingLabel(type: ElementType | undefined, field: string): string {
+  const def = type ? ELEMENT_TYPE_DEFS[type] : null;
+  const [kind, key] = field.split('.');
+  if (kind === 'attributes') {
+    const attrs = def ? def.attributes : ELEMENT_TYPE_LIST.flatMap((d) => d.attributes);
+    return (attrs.find((a) => a.key === key)?.label ?? key ?? '').toLowerCase();
+  }
+  const rel = def?.expectedRelations?.find(
+    (r) => (r.key ?? (Array.isArray(r.relation) ? r.relation[0] : r.relation)) === key,
+  );
+  return (rel?.label ?? key ?? '').toLowerCase();
+}
 
 function viewsFor(type: ElementType | undefined): ExploreView[] {
   switch (type) {
@@ -84,7 +116,7 @@ export function ExplorePage() {
   });
   const hasPacks = (packs.data ?? []).some((p) => p.installed);
   const scenario = useScenario();
-  const type = search.type ?? (search.gaps ? undefined : 'application');
+  const type = search.type ?? (search.gaps || search.missing ? undefined : 'application');
   const available = viewsFor(type);
   const view =
     search.view && available.includes(search.view)
@@ -240,6 +272,19 @@ export function ExplorePage() {
               aria-label="Health filter"
             />
           )}
+        {view === 'table' && search.missing && (
+          <Badge tone="primary" className="gap-1">
+            Missing {missingLabel(type, search.missing)}
+            <button
+              type="button"
+              aria-label="Show everything"
+              className="-mr-1 rounded hover:bg-primary/10"
+              onClick={() => set({ missing: undefined })}
+            >
+              <X className="size-3" />
+            </button>
+          </Badge>
+        )}
         {view === 'table' && (
           <label className="flex items-center gap-2 text-[13px] text-muted-foreground">
             <Switch
@@ -284,6 +329,7 @@ export function ExplorePage() {
             type={type}
             q={search.q}
             gaps={search.gaps}
+            missing={search.missing}
             health={search.health}
             layer={search.layer}
             onToggleGaps={() => {

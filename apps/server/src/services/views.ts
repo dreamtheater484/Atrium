@@ -17,9 +17,10 @@ import {
 } from '@atrium/schema';
 import type { RequestContext } from '../auth/context';
 import { notFound } from '../http/errors';
+import { appCost } from './costs';
 import type { Deps } from './deps';
 import { ModelIndex } from './model-index';
-import { capabilityCost } from './stats';
+import { capabilityCost, hasIntegrations } from './stats';
 import { type ResolvedState, resolveState } from './store';
 
 const worst = (hs: Array<Health | null>): Health | null =>
@@ -78,10 +79,18 @@ export function computeImpact(index: ModelIndex, rootId: string, maxDepth = 4): 
       ([t, n]) =>
         `${n} ${n === 1 ? typeDef(t).label.toLowerCase() : typeDef(t).plural.toLowerCase()}`,
     );
+  // Missing integrations hide impact: say so rather than look complete.
+  const unmapped = [root, ...nodes.map((n) => index.get(n.element.id)!)].filter(
+    (e) =>
+      e.type === 'application' && e.attributes.standalone !== true && !hasIntegrations(index, e),
+  );
+  const caveat = unmapped.length
+    ? `${unmapped.length === 1 ? `${unmapped[0]!.name} has` : `${unmapped.length} applications here have`} no mapped integrations, so the real impact may be larger.`
+    : undefined;
   const summary = nodes.length
     ? `Changing ${root.name} affects ${parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]}${nodes.some((n) => n.depth > 1) ? ', directly or through others' : ''}.`
     : `Nothing else in the model depends on ${root.name}.`;
-  return { root: index.summary(root), nodes, summary };
+  return { root: index.summary(root), nodes, summary, ...(caveat ? { caveat } : {}) };
 }
 
 export async function impact(
@@ -130,7 +139,12 @@ function toNode(index: ModelIndex, state: ResolvedState, e: Element): GraphNode 
     layer: e.layer,
     mark: markOf(state, e.id),
     attributes: {
-      annual_cost: e.attributes.annual_cost,
+      annual_cost:
+        e.type === 'application'
+          ? appCost(index, e.id).known
+            ? Math.round(appCost(index, e.id).total)
+            : undefined
+          : e.attributes.annual_cost,
       time: e.attributes.time,
       hosting: e.attributes.hosting,
       vendor: e.attributes.vendor,
@@ -192,6 +206,7 @@ export async function graph(
       edges: [...edges.values()],
       truncated: false,
       summary: result.summary,
+      ...(result.caveat ? { note: result.caveat } : {}),
     };
   }
 
@@ -389,7 +404,7 @@ function applicationOverview(
     const own = apps.filter((a) => a.domainId === d.id);
     n.attributes = {
       app_count: own.length,
-      annual_cost: own.reduce((sum, a) => sum + (Number(a.attributes.annual_cost) || 0), 0),
+      annual_cost: Math.round(own.reduce((sum, a) => sum + appCost(index, a.id, at).total, 0)),
       act: own.filter((a) => a.health === 'act').length,
     };
     return n;
@@ -438,7 +453,7 @@ export async function capabilityMap(
     const cost =
       layer === 'org'
         ? capabilityCost(index, c.id)
-        : uniqueApps.reduce((s, a) => s + Number(a.attributes.annual_cost ?? 0), 0);
+        : uniqueApps.reduce((s, a) => s + appCost(index, a.id, at).total, 0);
     return {
       id: c.id,
       name: c.name,
@@ -453,7 +468,7 @@ export async function capabilityMap(
           health: a.health,
           time: (a.attributes.time as string) ?? null,
           lifecycle: a.lifecycle,
-          cost: Number(a.attributes.annual_cost ?? 0),
+          cost: Math.round(appCost(index, a.id, at).total),
         }))
         .sort((a, b) => a.name.localeCompare(b.name)),
       cost,
@@ -473,7 +488,7 @@ export async function capabilityMap(
         a.name.localeCompare(b.name),
     )
     .map((c) => build(c, 1));
-  for (const id of appIds) totalCost += Number(index.get(id)?.attributes.annual_cost ?? 0);
+  for (const id of appIds) totalCost += appCost(index, id, at).total;
   return {
     roots,
     totals: { capabilities: caps.length, applications: appIds.size, cost: totalCost },

@@ -4,11 +4,17 @@ import {
   type ElementSummary,
   type ElementType,
   type Health,
+  hasSupportDates,
+  isVendorProduct,
   lifecycleAt,
   missingFields,
+  relationCount,
+  supportStatus,
   todayIso,
+  typeDef,
 } from '@atrium/schema';
 import type { RequestContext } from '../auth/context';
+import { appCost, costModel } from './costs';
 import type { Deps } from './deps';
 import { ModelIndex } from './model-index';
 import { resolveState } from './store';
@@ -19,6 +25,7 @@ export interface Overview {
   counts: Partial<Record<ElementType, number>>;
   applications: {
     total: number;
+    /** Own costs plus active contracts, each counted once. */
     cost: number;
     health: Record<Health | 'unknown', number>;
     byLifecycle: Record<string, number>;
@@ -45,7 +52,12 @@ export interface Overview {
     id: string;
     name: string;
     eolDate: string;
+    /** Out of support (not covered by extended support we pay for). */
     past: boolean;
+    /** Until when the vendor offers paid extended support. */
+    extendedDate: string | null;
+    /** We pay for that extended support. */
+    onExtended: boolean;
     apps: Array<{ id: string; name: string }>;
   }>;
   initiatives: Array<{
@@ -65,6 +77,8 @@ export interface Overview {
     costByCapability: Array<{ id: string; name: string; cost: number; health: Health | null }>;
   };
   technology: { total: number; byRadar: Record<string, number> };
+  /** How complete the data behind the numbers is. */
+  completeness: Completeness;
   myServices: Array<
     ElementSummary & {
       domainName: string | null;
@@ -74,6 +88,38 @@ export interface Overview {
       standards: number;
     }
   >;
+}
+
+export interface Completeness {
+  cost: {
+    /** Live applications with a known cost (their own figure or a contract share). */
+    known: number;
+    total: number;
+    /** Money that is an estimate rather than an actual figure. */
+    estimated: number;
+    /** Contract money shared out over applications. */
+    viaContracts: number;
+    /** Contract money that covers no live application. */
+    unallocated: number;
+  };
+  integrations: { mapped: number; standalone: number; total: number };
+  /** End-of-support dates for versioned technologies and vendor products. */
+  support: { known: number; total: number };
+}
+
+const INTEGRATION = typeDef('application').expectedRelations!.find((r) => r.key === 'integration')!;
+
+/** Live applications that exchange data with others (or are marked standalone). */
+export function hasIntegrations(index: ModelIndex, app: Element): boolean {
+  return relationCount(INTEGRATION, index.relCounts(app.id)) > 0;
+}
+
+/** Elements that should have an end-of-support date. */
+export function needsSupportDates(e: Element): boolean {
+  if (e.layer !== 'org') return false;
+  if (e.type === 'technology') return hasSupportDates(e.attributes);
+  if (e.type === 'application') return isVendorProduct(e.attributes);
+  return false;
 }
 
 /** Splits an application's cost evenly over the capabilities it supports. */
@@ -91,7 +137,7 @@ export function capabilityCost(index: ModelIndex, capId: string): number {
         1,
         index.targets(app.id, 'supports').filter((t) => t.type === 'capability').length,
       );
-      total += Number(app.attributes.annual_cost ?? 0) / n;
+      total += appCost(index, app.id).total / n;
     }
   }
   return Math.round(total);
@@ -117,6 +163,8 @@ export async function overview(
   for (const e of org) counts[e.type] = (counts[e.type] ?? 0) + 1;
 
   const apps = org.filter((e) => e.type === 'application' && alive(e));
+  const costs = costModel(index, at);
+  const costOf = (a: Element) => appCost(index, a.id, at).total;
   const health = { good: 0, watch: 0, act: 0, unknown: 0 };
   const byLifecycle: Record<string, number> = {};
   const byTime: Record<string, number> = {};
@@ -125,10 +173,8 @@ export async function overview(
     string | null,
     { id: string | null; name: string; count: number; cost: number; act: number }
   >();
-  let cost = 0;
   for (const a of apps) {
-    const c = Number(a.attributes.annual_cost ?? 0);
-    cost += c;
+    const c = costOf(a);
     health[a.health ?? 'unknown']++;
     const phase = lifecycleAt(a.lifecycle, a.lifecycleDates, at) as string | null;
     byLifecycle[phase ?? 'unknown'] = (byLifecycle[phase ?? 'unknown'] ?? 0) + 1;
@@ -174,15 +220,14 @@ export async function overview(
     .filter((a) => a.health === 'act' || a.health === 'watch')
     .sort(
       (a, b) =>
-        (a.health === 'act' ? -1 : 1) - (b.health === 'act' ? -1 : 1) ||
-        Number(b.attributes.annual_cost ?? 0) - Number(a.attributes.annual_cost ?? 0),
+        (a.health === 'act' ? -1 : 1) - (b.health === 'act' ? -1 : 1) || costOf(b) - costOf(a),
     )
     .slice(0, 10)
     .map((a) => ({
       ...index.summary(a),
       reasons: a.healthReasons,
       domainName: index.domainName(a),
-      cost: Number(a.attributes.annual_cost ?? 0),
+      cost: costOf(a),
     }));
 
   const horizon = addDaysIso(at, 365);
@@ -197,7 +242,16 @@ export async function overview(
       id: t.id,
       name: t.name,
       eolDate: t.attributes.eol_date as string,
-      past: (t.attributes.eol_date as string) < at,
+      past: ['ended', 'extendable'].includes(
+        supportStatus(
+          t.attributes.eol_date as string,
+          t.attributes.extended_support_date as string | undefined,
+          at,
+          t.attributes.extended_support === true,
+        ) ?? '',
+      ),
+      extendedDate: (t.attributes.extended_support_date as string) ?? null,
+      onExtended: t.attributes.extended_support === true,
       apps: index
         .sources(t.id, 'uses')
         .filter((a) => a.type === 'application' && alive(a))
@@ -255,6 +309,27 @@ export async function overview(
     byRadar[r] = (byRadar[r] ?? 0) + 1;
   }
 
+  const supportScope = org.filter((e) => needsSupportDates(e) && alive(e));
+  const completeness: Completeness = {
+    cost: {
+      known: apps.filter((a) => appCost(index, a.id, at).known).length,
+      total: apps.length,
+      estimated: Math.round(costs.estimated),
+      viaContracts: Math.round(costs.viaContracts),
+      unallocated: Math.round(costs.unallocated),
+    },
+    integrations: {
+      mapped: apps.filter((a) => hasIntegrations(index, a)).length,
+      standalone: apps.filter((a) => a.attributes.standalone === true && !hasIntegrations(index, a))
+        .length,
+      total: apps.length,
+    },
+    support: {
+      known: supportScope.filter((e) => typeof e.attributes.eol_date === 'string').length,
+      total: supportScope.length,
+    },
+  };
+
   const myServices = ctx.teamIds.length
     ? org
         .filter(
@@ -278,7 +353,7 @@ export async function overview(
     counts,
     applications: {
       total: apps.length,
-      cost,
+      cost: Math.round(costs.total),
       health,
       byLifecycle,
       byTime,
@@ -291,7 +366,7 @@ export async function overview(
           name: a.name,
           business: Number(a.attributes.business_fit),
           technical: Number(a.attributes.technical_fit),
-          cost: Number(a.attributes.annual_cost ?? 0),
+          cost: costOf(a),
           time: (a.attributes.time as string) ?? null,
         })),
     },
@@ -306,6 +381,7 @@ export async function overview(
     initiatives,
     capabilities: { total: caps.length, withoutApps, overlaps, costByCapability },
     technology: { total: techs.length, byRadar },
+    completeness,
     myServices,
   };
 }

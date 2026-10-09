@@ -6,6 +6,7 @@ import {
   ELEMENT_TYPE_DEFS,
   type Element,
   type ElementType,
+  type Evidence,
   enumLabel,
   RELATION_TYPE_DEFS,
   type Relation,
@@ -157,9 +158,30 @@ export async function changesetDetail(
       return enumLabel(v);
     return v;
   };
+  const evidence = (after: unknown): Evidence | undefined => {
+    const e = (after as Element | null)?.attributes?._eol as
+      | {
+          source?: string;
+          by?: string;
+          url?: string;
+          quote?: string;
+          confidence?: string;
+          note?: string;
+        }
+      | undefined;
+    if (!e || (e.source !== 'research' && e.source !== 'live')) return undefined;
+    return {
+      by: e.by ?? 'endoflife.date',
+      url: e.url ?? null,
+      quote: e.quote ?? null,
+      confidence: (e.confidence as Evidence['confidence']) ?? null,
+      note: e.note ?? null,
+    };
+  };
   return {
     ...cs,
     canReview: cs.status === 'open' && canReview(ctx),
+    canDrop: cs.status === 'open' && cs.kind === 'research' && canReview(ctx),
     changes: changes.map((c) => {
       if (c.entity === 'element') {
         const el = (c.after ?? c.before) as unknown as Element;
@@ -182,6 +204,7 @@ export async function changesetDetail(
           name: el.name,
           type: el.type,
           fields,
+          ...(cs.kind === 'research' ? { evidence: evidence(c.after) } : {}),
         };
       }
       const rel = (c.after ?? c.before) as unknown as Relation;
@@ -412,7 +435,10 @@ export async function discardChange(
   const cs = await loadChangeset(deps, changesetId);
   if (!['draft', 'open'].includes(cs.status))
     throw badRequest('Only pending changes can be edited.');
-  if (cs.authorId !== ctx.userId && !(cs.kind === 'scenario' && canReview(ctx))) throw forbidden();
+  // Reviewers may drop single research results they don't trust before approving the rest.
+  const reviewerMayDrop =
+    canReview(ctx) && (cs.kind === 'scenario' || (cs.kind === 'research' && cs.status === 'open'));
+  if (cs.authorId !== ctx.userId && !reviewerMayDrop) throw forbidden();
   await deps.sql`delete from changes where id = ${changeId} and changeset_id = ${changesetId}`;
   return { ok: true };
 }

@@ -1,0 +1,38 @@
+{
+  "wavecraft planner": {
+    "end_of_support": "2027-06-30",
+    "extended_support": "2028-06-30",
+    "support_model": "versioned",
+    "source_url": "https://wavecraft.example/support/lifecycle",
+    "quote": "Wavecraft Planner 9: end of standard support 30 June 2027; extended support until 30 June 2028.",
+    "confidence": "high",
+    "note": null
+  },
+  "service quality monitor": {
+    "end_of_support": "2026-12-31",
+    "extended_support": null,
+    "support_model": "versioned",
+    "source_url": "https://signalis.example/lifecycle",
+    "quote": "Signalis SQM 5.x reaches end of support on 31 December 2026.",
+    "confidence": "medium",
+    "note": "The version is not recorded in Atrium; this is the latest major version."
+  },
+  "amazon s3": {
+    "end_of_support": null,
+    "extended_support": null,
+    "support_model": "managed",
+    "source_url": "https://cloud.example/storage/service-terms",
+    "quote": "The service is updated continuously by the provider.",
+    "confidence": "high",
+    "note": null
+  },
+  "integration bus": {
+    "end_of_support": "2025-12-31",
+    "extended_support": null,
+    "support_model": "versioned",
+    "source_url": null,
+    "quote": null,
+    "confidence": "low",
+    "note": "No source found: this result has no link and is dropped."
+  }
+}

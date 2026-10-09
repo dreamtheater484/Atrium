@@ -103,6 +103,21 @@ function EditableCell({ row, def }: { row: ElementRow; def: AttributeDef }) {
         }}
       >
         {attrCell(def, row.attributes[def.key])}
+        {def.key === 'annual_cost' &&
+        row.attributes.cost_basis === 'estimate' &&
+        row.attributes.annual_cost !== undefined ? (
+          <span className="ml-1 text-[11px] text-muted-foreground" title="An estimate">
+            est.
+          </span>
+        ) : null}
+        {def.key === 'annual_cost' && row.contractCost ? (
+          <span
+            className="ml-1 text-[11px] text-muted-foreground tabular"
+            title="Share of contract costs"
+          >
+            +{formatMoney(row.contractCost)}
+          </span>
+        ) : null}
       </button>
     );
   }
@@ -133,18 +148,29 @@ export function TableView({
   type,
   q,
   gaps,
+  missing,
   health,
   layer,
 }: {
   type?: ElementType;
   q?: string;
   gaps?: boolean;
+  missing?: string;
   health?: string;
   layer?: 'org' | 'reference';
   onToggleGaps?: () => void;
 }) {
   const at = useUi((s) => s.at) ?? undefined;
-  const { data, isLoading } = useElements({ type, q, gaps, health, at, layer, limit: 5000 });
+  const { data, isLoading } = useElements({
+    type,
+    q,
+    gaps,
+    missing,
+    health,
+    at,
+    layer,
+    limit: 5000,
+  });
   const update = useUpdateElement();
   const remove = useDeleteElement();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -400,14 +426,15 @@ export function TableView({
       <EmptyState
         icon={<Plus />}
         title={
-          q || gaps || health
+          q || gaps || missing || health
             ? 'Nothing matches'
             : `No ${def?.plural.toLowerCase() ?? 'elements'} yet`
         }
         className="mt-16"
         action={
           !q &&
-          !gaps && (
+          !gaps &&
+          !missing && (
             <div className="flex gap-2">
               <Button variant="primary" onClick={() => openAdd(type ?? null)}>
                 Add {def?.label.toLowerCase() ?? 'something'}
@@ -417,7 +444,7 @@ export function TableView({
           )
         }
       >
-        {q || gaps || health
+        {q || gaps || missing || health
           ? 'Try a different filter.'
           : 'Add them one by one, import a spreadsheet, or paste rows straight from Excel.'}
       </EmptyState>

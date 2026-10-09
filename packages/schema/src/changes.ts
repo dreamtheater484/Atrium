@@ -8,6 +8,7 @@ export const CHANGESET_KINDS = [
   'sync',
   'pack',
   'undo',
+  'research',
 ] as const;
 export type ChangesetKind = (typeof CHANGESET_KINDS)[number];
 

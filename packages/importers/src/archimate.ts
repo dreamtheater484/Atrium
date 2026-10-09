@@ -15,6 +15,7 @@ const ELEMENT_TYPE_MAP: Record<string, ElementType> = {
   ApplicationInterface: 'interface',
   DataObject: 'data_object',
   BusinessObject: 'data_object',
+  Contract: 'contract',
   Node: 'technology',
   Device: 'technology',
   SystemSoftware: 'technology',
@@ -154,6 +155,10 @@ function mapRelationship(
     case 'Association':
       if (name && /^replaces$/i.test(name.trim()) && s.type === t.type)
         return rel('replaces', s, t);
+      if (s.type === 'contract' && (t.type === 'application' || t.type === 'technology'))
+        return rel('covers', s, t);
+      if (t.type === 'contract' && (s.type === 'application' || s.type === 'technology'))
+        return rel('covers', t, s);
       if (s.type === 'initiative') return rel('impacts', s, t);
       if (t.type === 'initiative') return rel('impacts', t, s);
       if (GOVERNING.includes(t.type) && !GOVERNING.includes(s.type))

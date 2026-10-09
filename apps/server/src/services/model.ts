@@ -206,7 +206,15 @@ async function fillTechnology(deps: Deps, name: string, attributes: Record<strin
     );
     if (info?.eolDate) {
       attributes.eol_date = info.eolDate;
-      attributes._eol = { product: info.product, cycle: info.cycle, source: info.source };
+      if (info.extendedDate && !attributes.extended_support_date)
+        attributes.extended_support_date = info.extendedDate;
+      attributes._eol = {
+        product: info.product,
+        cycle: info.cycle,
+        source: info.source,
+        url: `https://endoflife.date/${info.product}`,
+        ...(info.extendedDate ? { extended: true } : {}),
+      };
       if (!attributes.product) attributes.product = info.product;
     }
   }
@@ -245,8 +253,9 @@ export function applyPatch(current: Element, patch: UpdateElementInput): Element
       if (v === null || v === undefined || v === '') delete next.attributes[k];
       else next.attributes[k] = v;
     }
-    // A manually set end-of-life date is no longer "automatic".
-    if (patch.attributes.eol_date !== undefined) delete next.attributes._eol;
+    // A manually set end-of-support date is no longer "automatic" (research sends its source along).
+    if (patch.attributes.eol_date !== undefined && patch.attributes._eol === undefined)
+      delete next.attributes._eol;
   }
   // Accepting a value removes its pending suggestion.
   if (Object.keys(current.suggestions).length) {
@@ -403,6 +412,8 @@ export async function updateElement(
   ) {
     if (current.attributes._eol || !current.attributes.eol_date) {
       delete next.attributes.eol_date;
+      if ((current.attributes._eol as { extended?: boolean } | undefined)?.extended)
+        delete next.attributes.extended_support_date;
       delete next.attributes._eol;
       await fillTechnology(deps, next.name, next.attributes);
     }

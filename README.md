@@ -7,6 +7,9 @@ engineers (and their AI coding assistants) build with it.
 - **Effortless.** Drop in a spreadsheet, a CMDB export or an ArchiMate file. Atrium recognises
   the columns, merges duplicates and fills in what it can work out: versions, end-of-life dates,
   owners and likely links. No save buttons.
+- **Honest about gaps.** Dashboards say how complete costs, integrations and support dates are.
+  Lump-sum contracts are shared over what they cover, and missing end-of-support dates can be
+  researched (endoflife.date, then Claude with web search) and approved with their sources.
 - **Clear.** Capability maps, dependency graphs, landscapes, a technology radar, a roadmap with a
   time slider and role dashboards, all drawn from the data, in light and dark mode. Export to
   PowerPoint (native, editable charts), Excel, CSV and ArchiMate.

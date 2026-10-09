@@ -37,6 +37,8 @@ export interface Overview {
     name: string;
     eolDate: string;
     past: boolean;
+    extendedDate: string | null;
+    onExtended: boolean;
     apps: Array<{ id: string; name: string }>;
   }>;
   initiatives: Array<{
@@ -56,6 +58,17 @@ export interface Overview {
     costByCapability: Array<{ id: string; name: string; cost: number; health: Health | null }>;
   };
   technology: { total: number; byRadar: Record<string, number> };
+  completeness: {
+    cost: {
+      known: number;
+      total: number;
+      estimated: number;
+      viaContracts: number;
+      unallocated: number;
+    };
+    integrations: { mapped: number; standalone: number; total: number };
+    support: { known: number; total: number };
+  };
   myServices: Array<
     ElementSummary & {
       domainName: string | null;

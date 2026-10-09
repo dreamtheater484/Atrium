@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from '@playwright/test';
 
 /**
@@ -41,6 +42,12 @@ export default defineConfig({
     {
       command: 'node start-server.mjs solo 7401 solo',
       url: `${SOLO}/api/health`,
+      // Canned end-of-support research instead of a live AI provider.
+      env: {
+        ATRIUM_RESEARCH_FIXTURES: fileURLToPath(
+          new URL('./fixtures/research.json', import.meta.url),
+        ),
+      },
       reuseExistingServer: false,
       stdout: 'ignore',
       stderr: 'pipe',

@@ -9,6 +9,7 @@ import { NoAssistant } from '../services/ai';
 import type { Deps } from '../services/deps';
 import { EolService } from '../services/eol';
 import { RealtimeHub } from '../services/realtime';
+import { MockResearcher } from '../services/researchers';
 import { clearModel, loadDataset } from '../services/seed';
 import { ModelStore } from '../services/store';
 
@@ -24,6 +25,7 @@ try {
     hub: new RealtimeHub(),
     eol: new EolService(sql, false),
     ai: new NoAssistant(),
+    research: new MockResearcher('off', null),
   };
   if (process.argv.includes('--reset')) {
     await clearModel(deps);

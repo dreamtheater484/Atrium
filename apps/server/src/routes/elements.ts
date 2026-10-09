@@ -34,6 +34,10 @@ const listQuery = z.object({
   layer: z.enum(['org', 'reference', 'all']).optional(),
   pack: z.string().optional(),
   gaps: boolParam,
+  missing: z
+    .string()
+    .regex(/^(attributes|relation)\.[a-z_]+$|^(owner|description|domainId|lifecycle)$/)
+    .optional(),
   at: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)

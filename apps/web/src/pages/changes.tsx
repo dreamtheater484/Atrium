@@ -1,5 +1,5 @@
-import type { Changeset, Scenario } from '@atrium/schema';
-import { RELATION_TYPE_DEFS } from '@atrium/schema';
+import type { Changeset, Evidence, Scenario } from '@atrium/schema';
+import { enumLabel, RELATION_TYPE_DEFS } from '@atrium/schema';
 import {
   Avatar,
   Badge,
@@ -24,6 +24,7 @@ import {
   Bot,
   Check,
   CircleSlash,
+  ExternalLink,
   FlaskConical,
   GitPullRequestArrow,
   History,
@@ -75,6 +76,47 @@ function fmt(v: unknown): string {
   return String(v);
 }
 
+function host(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
+
+/** Where a researched date comes from, so the reviewer can check it in one click. */
+function EvidenceNote({ e }: { e: Evidence }) {
+  return (
+    <div className="mt-2 flex flex-col gap-1 rounded-lg bg-surface-2 px-2.5 py-2 text-[12px]">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="text-muted-foreground">Source</span>
+        {e.url ? (
+          <a
+            href={e.url}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="inline-flex min-w-0 items-center gap-1 truncate font-medium text-primary hover:underline"
+          >
+            {host(e.url)} <ExternalLink className="size-3 shrink-0" />
+          </a>
+        ) : (
+          <span>—</span>
+        )}
+        {e.confidence && (
+          <Badge
+            tone={e.confidence === 'high' ? 'good' : e.confidence === 'medium' ? 'watch' : 'act'}
+          >
+            {enumLabel(e.confidence)} confidence
+          </Badge>
+        )}
+        <span className="ml-auto text-[11px] text-muted-foreground">{e.by}</span>
+      </div>
+      {e.quote && <q className="text-muted-foreground italic">{e.quote}</q>}
+      {e.note && <p className="text-muted-foreground">{e.note}</p>}
+    </div>
+  );
+}
+
 function Detail({ id, onDone }: { id: string; onDone: () => void }) {
   const { data } = useChangeset(id);
   const action = useChangesetAction();
@@ -122,11 +164,13 @@ function Detail({ id, onDone }: { id: string; onDone: () => void }) {
           <p className="text-[13px] text-muted-foreground">
             {data.authorName} · {timeAgo(data.submittedAt ?? data.createdAt)} ·{' '}
             {data.changes.length} change{data.changes.length === 1 ? '' : 's'}
-            {data.authorKind === 'agent'
-              ? ' · proposed by an AI coding agent'
-              : data.authorKind === 'ci'
-                ? ' · synced from a repository'
-                : ''}
+            {data.kind === 'research'
+              ? ' · found by research, check the sources'
+              : data.authorKind === 'agent'
+                ? ' · proposed by an AI coding agent'
+                : data.authorKind === 'ci'
+                  ? ' · synced from a repository'
+                  : ''}
           </p>
         </div>
         <StatusBadge c={data} />
@@ -181,11 +225,13 @@ function Detail({ id, onDone }: { id: string; onDone: () => void }) {
                     ? 'Removed'
                     : `${c.fields.length} field${c.fields.length === 1 ? '' : 's'}`}
               </span>
-              {(mineDraft || (data.kind === 'scenario' && data.status === 'draft')) && (
+              {(mineDraft ||
+                data.canDrop ||
+                (data.kind === 'scenario' && data.status === 'draft')) && (
                 <Button
                   size="icon-sm"
                   variant="ghost"
-                  aria-label="Drop this change"
+                  aria-label={`Drop the change to ${c.name}`}
                   onClick={() => discard.mutate(c.id)}
                 >
                   <X />
@@ -207,6 +253,7 @@ function Detail({ id, onDone }: { id: string; onDone: () => void }) {
                 ))}
               </div>
             )}
+            {c.evidence && <EvidenceNote e={c.evidence} />}
           </Card>
         ))}
         {data.changes.length === 0 && (

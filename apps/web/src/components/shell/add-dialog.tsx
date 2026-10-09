@@ -26,6 +26,7 @@ const ORDER: ElementType[] = [
   'interface',
   'data_object',
   'technology',
+  'contract',
   'initiative',
   'decision',
   'standard',

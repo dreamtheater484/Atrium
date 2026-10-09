@@ -179,14 +179,18 @@ export async function serviceContextMarkdown(
     lines.push(
       '## Technology',
       '',
-      '| Technology | Version | Radar | End of life |',
+      '| Technology | Version | Radar | End of support |',
       '|---|---|---|---|',
     );
     const today = new Date().toISOString().slice(0, 10);
     for (const t of techs) {
       const eol = t.attributes.eol_date as string | undefined;
+      const ext = t.attributes.extended_support_date as string | undefined;
+      const support = eol
+        ? `${eol}${eol < today ? ' ⚠ past' : ''}${ext ? ` (extended support until ${ext}${ext < today ? ', also past' : ''})` : ''}`
+        : '';
       lines.push(
-        `| ${t.name} | ${t.attributes.version ?? ''} | ${enumLabel(t.attributes.radar as string) || 'Not rated'} | ${eol ? `${eol}${eol < today ? ' ⚠ past' : ''}` : ''} |`,
+        `| ${t.name} | ${t.attributes.version ?? ''} | ${enumLabel(t.attributes.radar as string) || 'Not rated'} | ${support} |`,
       );
     }
     lines.push('');

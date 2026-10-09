@@ -72,6 +72,8 @@ export class ModelIndex {
     return this.targets(id, 'uses').map((t) => ({
       name: t.name,
       eolDate: (t.attributes.eol_date as string) ?? null,
+      extendedDate: (t.attributes.extended_support_date as string) ?? null,
+      onExtended: t.attributes.extended_support === true,
       radar: (t.attributes.radar as string) ?? null,
       lifecycle: t.lifecycle,
     }));

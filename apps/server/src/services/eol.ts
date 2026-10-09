@@ -12,7 +12,8 @@ export const EOL_PRODUCTS: Record<string, string[]> = {
   redis: ['redis'],
   elasticsearch: ['elasticsearch', 'elastic search'],
   mssqlserver: ['sql server', 'mssql', 'mssqlserver'],
-  'oracle-database': ['oracle database', 'oracle db', 'oracle'],
+  // Not plain 'oracle': WebLogic or SOA Suite would match Oracle Database.
+  'oracle-database': ['oracle database', 'oracle db'],
   'ibm-db2': ['db2'],
   'apache-cassandra': ['cassandra'],
   nodejs: ['node.js', 'nodejs', 'node js', 'node'],
@@ -71,6 +72,8 @@ interface SnapshotCycle {
   c: string;
   eol: string | boolean;
   r?: string;
+  /** End of paid extended support (a date), or whether it is offered at all. */
+  x?: string | boolean;
 }
 
 let snapshot: { fetchedAt: string; products: Record<string, SnapshotCycle[]> } | null = null;
@@ -120,6 +123,8 @@ export interface EolInfo {
   product: string;
   cycle: string;
   eolDate: string | null;
+  /** End of paid extended support, when the vendor offers it. */
+  extendedDate: string | null;
   supported: boolean | null;
   source: 'snapshot' | 'live';
 }
@@ -137,7 +142,8 @@ function matchCycle(cycles: SnapshotCycle[], version: string): SnapshotCycle | u
 function toInfo(product: string, cycle: SnapshotCycle, source: EolInfo['source']): EolInfo {
   const eolDate = typeof cycle.eol === 'string' ? cycle.eol : null;
   const supported = typeof cycle.eol === 'boolean' ? !cycle.eol : null;
-  return { product, cycle: cycle.c, eolDate, supported, source };
+  const extendedDate = typeof cycle.x === 'string' ? cycle.x : null;
+  return { product, cycle: cycle.c, eolDate, extendedDate, supported, source };
 }
 
 /** Looks up end of life from the bundled snapshot (works offline). */
@@ -178,8 +184,14 @@ export class EolService {
               cycle: string;
               eol: string | boolean;
               releaseDate?: string;
+              extendedSupport?: string | boolean;
             }>;
-            cycles = raw.map((c) => ({ c: String(c.cycle), eol: c.eol, r: c.releaseDate }));
+            cycles = raw.map((c) => ({
+              c: String(c.cycle),
+              eol: c.eol,
+              r: c.releaseDate,
+              ...(c.extendedSupport !== undefined ? { x: c.extendedSupport } : {}),
+            }));
             await this.sql`
               insert into eol_cache (product, data) values (${id}, ${this.sql.json(cycles as never)})
               on conflict (product) do update set data = excluded.data, fetched_at = now()`;

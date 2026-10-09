@@ -23,6 +23,8 @@ export interface ExploreSearch {
   /** Graph mode to open with, e.g. impact when coming from "Impact". */
   mode?: 'impact';
   gaps?: boolean;
+  /** Only elements missing this field, e.g. attributes.annual_cost or relation.integration. */
+  missing?: string;
   health?: string;
   layer?: 'org' | 'reference';
 }
@@ -49,6 +51,9 @@ const exploreRoute = createRoute({
     focus: str(s.focus),
     mode: s.mode === 'impact' ? 'impact' : undefined,
     gaps: s.gaps === true || s.gaps === 'true' ? true : undefined,
+    missing: /^(attributes|relation)\.[a-z_]+$/.test(String(s.missing ?? ''))
+      ? String(s.missing)
+      : undefined,
     health: str(s.health),
     layer: s.layer === 'reference' ? 'reference' : undefined,
   }),

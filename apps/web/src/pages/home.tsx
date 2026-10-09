@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { EChart, type EChartsOption, usePalette } from '../components/charts/echart';
+import { costCoverage, WIDGET_MAP } from '../components/dashboard/widgets';
 import { api } from '../lib/api';
 import { useChangesets, useChangesSummary } from '../lib/changes';
 import { type Overview, useOverview } from '../lib/overview';
@@ -362,6 +363,7 @@ function ArchitectHome() {
   const summary = useChangesSummary().data;
   const open = useChangesets({ status: 'open', limit: 5 }).data ?? [];
   const recent = useChangesets({ status: 'applied', limit: 6 }).data ?? [];
+  const p = usePalette();
   const navigate = useNavigate();
   if (!data) return <StatsSkeleton />;
   const total = Object.values(data.counts).reduce((s, n) => s + (n ?? 0), 0);
@@ -421,43 +423,54 @@ function ArchitectHome() {
         >
           <GapsList data={data} />
         </Section>
-        <Section
-          title="Waiting for review"
-          action={
-            <Button size="sm" variant="ghost" onClick={() => navigate({ to: '/changes' })}>
-              All
-            </Button>
-          }
-        >
-          <div className="flex flex-col">
-            {open.map((c) => (
-              <ListRow
-                key={c.id}
-                onClick={() => navigate({ to: '/changes', search: { id: c.id } })}
-              >
-                {c.authorKind === 'agent' ? (
-                  <span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-primary">
-                    <Bot className="size-3.5" />
+        <div className="flex flex-col gap-4">
+          <Section
+            title="Waiting for review"
+            action={
+              <Button size="sm" variant="ghost" onClick={() => navigate({ to: '/changes' })}>
+                All
+              </Button>
+            }
+          >
+            <div className="flex flex-col">
+              {open.map((c) => (
+                <ListRow
+                  key={c.id}
+                  onClick={() => navigate({ to: '/changes', search: { id: c.id } })}
+                >
+                  {c.authorKind === 'agent' ? (
+                    <span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-primary">
+                      <Bot className="size-3.5" />
+                    </span>
+                  ) : (
+                    <Avatar name={c.authorName ?? '?'} />
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{c.title}</span>
+                    <span className="block truncate text-[11px] text-muted-foreground">
+                      {c.authorName} · {c.changeCount} change{c.changeCount === 1 ? '' : 's'} ·{' '}
+                      {timeAgo(c.submittedAt ?? c.createdAt)}
+                    </span>
                   </span>
-                ) : (
-                  <Avatar name={c.authorName ?? '?'} />
-                )}
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{c.title}</span>
-                  <span className="block truncate text-[11px] text-muted-foreground">
-                    {c.authorName} · {c.changeCount} change{c.changeCount === 1 ? '' : 's'} ·{' '}
-                    {timeAgo(c.submittedAt ?? c.createdAt)}
-                  </span>
-                </span>
-              </ListRow>
-            ))}
-            {open.length === 0 && (
-              <p className="py-4 text-center text-[13px] text-muted-foreground">
-                Nothing to review.
-              </p>
-            )}
-          </div>
-        </Section>
+                </ListRow>
+              ))}
+              {open.length === 0 && (
+                <p className="py-4 text-center text-[13px] text-muted-foreground">
+                  Nothing to review.
+                </p>
+              )}
+            </div>
+          </Section>
+          <Section title="Data completeness" description="How far the numbers can be trusted">
+            {
+              WIDGET_MAP.get('completeness')!.render({
+                data,
+                p,
+                go: (to) => navigate({ to: to as never }),
+              }) as React.ReactNode
+            }
+          </Section>
+        </div>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
         <Section
@@ -681,7 +694,7 @@ function ManagerHome() {
         <Stat
           label="Annual run cost"
           value={formatMoney(data.applications.cost)}
-          hint="Sum of application costs"
+          hint={costCoverage(data)}
           icon={<Wallet />}
           onClick={() => navigate({ to: '/dashboards' })}
         />
@@ -738,7 +751,7 @@ function ManagerHome() {
         </Section>
         <Section
           title="Where the money goes"
-          description="Annual application cost per domain"
+          description={`Annual application cost per domain${data.completeness.cost.known < data.completeness.cost.total ? `, known for ${data.completeness.cost.known} of ${data.completeness.cost.total} applications` : ''}`}
           className="lg:col-span-2"
         >
           {costOption && <EChart option={costOption} height={260} ariaLabel="Cost per domain" />}

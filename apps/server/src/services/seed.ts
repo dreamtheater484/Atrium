@@ -131,7 +131,17 @@ export async function loadDataset(
         el.attributes.product as string,
         el.attributes.version as string,
       );
-      if (info?.eolDate) el.attributes.eol_date = info.eolDate;
+      if (info?.eolDate) {
+        el.attributes.eol_date = info.eolDate;
+        if (info.extendedDate) el.attributes.extended_support_date = info.extendedDate;
+        el.attributes._eol = {
+          product: info.product,
+          cycle: info.cycle,
+          source: info.source,
+          url: `https://endoflife.date/${info.product}`,
+          ...(info.extendedDate ? { extended: true } : {}),
+        };
+      }
     }
   }
   const relations = dataset.relations

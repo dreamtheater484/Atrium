@@ -10,6 +10,7 @@ import {
   typeDef,
 } from '@atrium/schema';
 import type { RequestContext } from '../auth/context';
+import { appCost, costModel } from './costs';
 import type { Deps } from './deps';
 import { ModelIndex } from './model-index';
 import { bestMatch, search } from './search';
@@ -181,7 +182,7 @@ export async function ask(
       const result = computeImpact(index, e.id);
       return reply(
         `Impact of changing or retiring ${e.name}`,
-        result.summary,
+        result.caveat ? `${result.summary} ${result.caveat}` : result.summary,
         result.nodes.map((n) => index.get(n.element.id)!),
         {
           label: 'Show the impact graph',
@@ -231,6 +232,7 @@ export async function ask(
 
   // Cost
   if (has(q, 'cost', 'spend', 'expensive', 'budget', 'money')) {
+    const costOf = (a: Element) => appCost(index, a.id).total;
     const e = findEntity(index, q, ['capability', 'domain', 'application']);
     if (e?.type === 'capability') {
       return reply(
@@ -241,24 +243,22 @@ export async function ask(
     }
     if (e?.type === 'domain') {
       const apps = org.filter((a) => a.type === 'application' && a.domainId === e.id);
-      const total = apps.reduce((s, a) => s + Number(a.attributes.annual_cost ?? 0), 0);
+      const total = apps.reduce((s, a) => s + costOf(a), 0);
+      const known = apps.filter((a) => appCost(index, a.id).known).length;
       return reply(
         `Cost of the ${e.name} domain`,
-        `${apps.length} applications in ${e.name} cost ${money(total)} a year.`,
-        apps.sort(
-          (a, b) => Number(b.attributes.annual_cost ?? 0) - Number(a.attributes.annual_cost ?? 0),
-        ),
+        `${apps.length} applications in ${e.name} cost ${money(total)} a year${known < apps.length ? ` (cost known for ${known} of them)` : ''}.`,
+        apps.sort((a, b) => costOf(b) - costOf(a)),
       );
     }
     const apps = org
       .filter((a) => a.type === 'application' && a.lifecycle !== 'retired')
-      .sort(
-        (a, b) => Number(b.attributes.annual_cost ?? 0) - Number(a.attributes.annual_cost ?? 0),
-      );
-    const total = apps.reduce((s, a) => s + Number(a.attributes.annual_cost ?? 0), 0);
+      .sort((a, b) => costOf(b) - costOf(a));
+    const model = costModel(index);
+    const known = apps.filter((a) => appCost(index, a.id).known).length;
     return reply(
       'The most expensive applications',
-      `The application portfolio costs ${money(total)} a year. These are the most expensive.`,
+      `The application portfolio costs ${money(model.total)} a year${known < apps.length ? `, as far as known: ${apps.length - known} of ${apps.length} applications have no cost yet` : ''}. These are the most expensive.`,
       apps.slice(0, 10),
       { label: 'Open the cost dashboard', to: '/dashboards' },
     );

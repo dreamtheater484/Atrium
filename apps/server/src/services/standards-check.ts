@@ -128,13 +128,22 @@ export async function checkAgainstStandards(
     const label = `${t.name}${t.version && !t.name.includes(t.version) ? ` ${t.version}` : ''}`;
     // End of life: model first, then endoflife.date
     let eol = t.element?.attributes.eol_date as string | undefined;
+    let ext = t.element?.attributes.extended_support_date as string | undefined;
+    const onExtended = t.element?.attributes.extended_support === true;
     if (!eol) {
       const product = inferProduct(t.name);
-      eol = product
-        ? (lookupEol(product, t.version ?? inferVersion(t.name))?.eolDate ?? undefined)
-        : undefined;
+      const info = product ? lookupEol(product, t.version ?? inferVersion(t.name)) : null;
+      eol = info?.eolDate ?? undefined;
+      ext = info?.extendedDate ?? undefined;
     }
-    if (eol && eol < today)
+    if (eol && eol < today && ext && ext >= today && onExtended)
+      findings.push({
+        level: 'warning',
+        rule: 'extended-support',
+        message: `${label} is past end of standard support (${eol}) and only on paid extended support until ${ext}. Plan the upgrade.`,
+        element: t.element && { id: t.element.id, name: t.element.name },
+      });
+    else if (eol && eol < today)
       findings.push({
         level: 'error',
         rule: 'end-of-life',

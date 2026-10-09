@@ -402,12 +402,20 @@ atrium/
 | CLI published to npm | The server hands out the CLI at `/cli/atrium.mjs` | It always matches the server version, and needs no npm name (§17). |
 | Videos recorded with Playwright | Sharp 2× screenshots, animated in Remotion | Deterministic, crisp at 1080p, and quick to re-render. |
 | — | Webhooks (signed, batched), added in phase 5 | Lets CI and chat tools react to model changes. |
+| — | Data completeness, contracts and end-of-support research, added after phase 5 | Missing costs, integrations and support dates are common; totals now say how complete they are. |
 
 **Not done yet**
 - **Performance targets** (50,000 elements, 2,000-node views under 1 second, search under 200 ms): designed for, but not load-tested.
-- **Real AI and a local model:** the provider interface, the mock and the rule-based fallbacks are in place. Switching one on is configuration.
+- **Real AI:** end-of-support research uses Claude with web search once `ATRIUM_AI=anthropic` and an API key are set (tested with canned results; no live call has been made yet). Other suggestions are still rule-based; a local model is not supported yet.
 - **Team server:** no SAML yet. No scheduled backups: backups are bundle exports, made by hand or by script. Migrations run automatically on start, but without a backup first, so take a backup before you update.
 - **Dashboard PowerPoint export:** the KPI slide layout needs polish.
 - **Video voiceover:** Kokoro on the CPU is final quality. A GPU is only needed to try other voices (see `apps/videos/voice/README.md`).
 - **Server code** is covered by the end-to-end tests rather than its own unit tests.
+
+**Added after phase 5 (2026-10-09)**
+- **Data completeness** on Home and dashboards: run costs known (own or through a contract, and how much is estimated), applications with mapped integrations (or marked standalone), and end-of-support dates known for versioned technologies and vendor products. Each links to exactly what is missing.
+- **Contracts** as an element type: a lump-sum licence or subscription is shared evenly over the applications it covers, directly or through a covered technology, without double counting.
+- **Impact analysis** warns when applications in the chain have no mapped integrations.
+- **Extended support**: dates from endoflife.date or research, and whether you pay for it ("watch" instead of "act").
+- **End-of-support research**: endoflife.date first, then Claude with web search; only product names, vendors and versions are sent, never anything above `internal`; results come back as one suggestion with a source and quote per date, and dates without a source are dropped.
 

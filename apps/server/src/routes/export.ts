@@ -209,7 +209,12 @@ const KPI_SLIDE = async (
     'kpi-cost': {
       label: 'Annual run cost',
       value: money(a.cost),
-      hint: 'Sum of application costs',
+      hint:
+        o.completeness.cost.known < o.completeness.cost.total
+          ? `Known for ${o.completeness.cost.known} of ${o.completeness.cost.total} applications${o.completeness.cost.estimated ? `, ${money(o.completeness.cost.estimated)} estimated` : ''}`
+          : o.completeness.cost.estimated
+            ? `${money(o.completeness.cost.estimated)} of it estimated`
+            : 'All applications and contracts',
     },
     'kpi-healthy': {
       label: 'Healthy',

@@ -8,6 +8,7 @@ import type { Deps } from './services/deps';
 import { refreshAllDerived } from './services/derived';
 import { EolService } from './services/eol';
 import { RealtimeHub } from './services/realtime';
+import { createResearcher } from './services/researchers';
 import { ModelStore } from './services/store';
 import { startWebhooks } from './services/webhooks';
 
@@ -26,6 +27,7 @@ const deps: Deps = {
   hub: new RealtimeHub(),
   eol: new EolService(sql, config.eolLookup),
   ai: config.ai === 'off' ? new NoAssistant() : new RuleBasedAssistant(),
+  research: createResearcher(config),
   onUserChanged: () => {
     if (config.mode === 'solo') void ensureSoloUser(sql).then((u) => (soloUser = u));
   },

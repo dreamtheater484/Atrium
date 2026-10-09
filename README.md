@@ -62,3 +62,7 @@ coding. See [apps/videos](apps/videos/README.md) to capture, voice and render th
 Version 0.1. Built in phases 0–5 of the [implementation plan](docs/implementation-plan.md). The
 TM Forum reference pack is prepared (importer and mappings) but ships without TM Forum content,
 which you load from your own licensed files.
+
+## Licence
+
+All rights reserved: the source is published to be read, not reused. See [LICENSE](LICENSE).

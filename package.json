@@ -1,6 +1,7 @@
 {
   "name": "atrium",
   "private": true,
+  "license": "UNLICENSED",
   "description": "Atrium: one shared, living map of your enterprise architecture.",
   "type": "module",
   "packageManager": "pnpm@12.10.1",

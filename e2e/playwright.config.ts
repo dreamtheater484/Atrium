@@ -15,6 +15,8 @@ export default defineConfig({
   // The journeys build on each other (sample → import → review), so they run in order.
   fullyParallel: false,
   workers: 1,
+  // Screenshot baselines are made on Windows; fonts render differently elsewhere (set E2E_SKIP_VISUAL).
+  grepInvert: process.env.E2E_SKIP_VISUAL ? /looks right/ : undefined,
   timeout: 90_000,
   expect: {
     timeout: 15_000,

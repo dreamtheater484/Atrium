@@ -9,7 +9,7 @@
 //   cli/atrium.js      the CLI, served at /cli/atrium.mjs
 //   public/            the web app (when apps/web has been built)
 import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
@@ -50,8 +50,11 @@ const copy = (from, to, filter) => {
 };
 copy(join(root, 'packages/db/migrations'), 'migrations');
 copy(join(here, 'src/data'), 'data');
-// Pack manifests and content only: a pack's importer code is bundled into main.js.
-copy(join(root, 'packs'), 'packs', (src) => !/[\\/](node_modules|src)([\\/]|$)/.test(src));
+// Pack manifests and content only: a pack's importer code is bundled into main.js. The path is
+// tested relative to packs/, as the checkout itself may sit in a folder called "src" (Docker).
+const packs = join(root, 'packs');
+const skip = /(^|[\\/])(node_modules|src|\.turbo)([\\/]|$)/;
+copy(packs, 'packs', (src) => !skip.test(relative(packs, src)));
 if (!copy(join(root, 'apps/cli/dist/atrium.js'), 'cli/atrium.js'))
   console.warn('apps/cli is not built yet: /cli/atrium.mjs will be missing.');
 if (!copy(join(root, 'apps/web/dist'), 'public'))

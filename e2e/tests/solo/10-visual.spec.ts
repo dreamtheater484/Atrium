@@ -6,6 +6,7 @@ const SCREENS: Array<[string, string]> = [
   ['home', '/'],
   ['capability-map', '/explore?type=capability&view=map'],
   ['applications', '/explore?type=application'],
+  ['framework', '/explore?pack=starter-capabilities&framework=capabilities'],
   ['dashboard', '/dashboards?id=portfolio'],
   ['roadmap', '/roadmap'],
 ];

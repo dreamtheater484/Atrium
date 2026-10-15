@@ -31,6 +31,8 @@ export interface ListQuery {
   health?: Health | 'unknown';
   layer?: 'org' | 'reference' | 'all';
   pack?: string;
+  /** Reference elements of one framework of the pack, e.g. etom. */
+  framework?: string;
   /** Only elements with missing information. */
   gaps?: boolean;
   /** Only elements missing this field, e.g. attributes.eol_date or relation.integration. */
@@ -57,6 +59,13 @@ export function toRow(el: Element, index: ModelIndex, marks?: ResolvedState['mar
     relationCount: index.outgoing(el.id).length + index.incoming(el.id).length,
     mark: marks?.added.has(el.id) ? 'added' : marks?.changed.has(el.id) ? 'changed' : undefined,
     ...(shared ? { contractCost: Math.round(shared) } : {}),
+    ...(el.layer === 'reference'
+      ? {
+          mappedFrom: index
+            .incoming(el.id, 'maps_to')
+            .filter((r) => index.get(r.sourceId)?.layer === 'org').length,
+        }
+      : {}),
   };
 }
 
@@ -74,6 +83,7 @@ export async function listElements(deps: Deps, ctx: RequestContext, q: ListQuery
   let items = [...state.elements.values()].filter((e) => {
     if (layer !== 'all' && e.layer !== layer) return false;
     if (q.pack && e.pack !== q.pack) return false;
+    if (q.framework && e.attributes.framework !== q.framework) return false;
     if (types && !types.includes(e.type)) return false;
     if (q.domainId && e.domainId !== q.domainId && e.id !== q.domainId) return false;
     if (q.parentId && e.parentId !== q.parentId) return false;

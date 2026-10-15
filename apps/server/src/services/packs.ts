@@ -87,7 +87,7 @@ function readJson<T>(file: string): T | null {
 export async function listPacks(deps: Deps): Promise<AvailablePack[]> {
   const dir = packsDir();
   const installed =
-    await deps.sql`select id, version, manifest, element_count, installed_at from reference_packs`;
+    await deps.sql`select id, name, version, manifest, element_count, installed_at from reference_packs`;
   const counts = await deps.sql`
     select pack, attributes->>'framework' as framework, count(*)::int as n from elements
     where layer = 'reference' and deleted_at is null group by 1, 2`;
@@ -124,13 +124,14 @@ export async function listPacks(deps: Deps): Promise<AvailablePack[]> {
   }
   // Packs installed from uploaded files that have no folder here.
   for (const [id, i] of inst) {
+    const m = i.manifest as Partial<Omit<AvailablePack, 'installed' | 'bundled'>> | null;
     packs.push({
       id,
-      name: id,
-      publisher: '',
-      description: 'Installed from a file',
-      license: '',
-      frameworks: [],
+      name: (i.name as string) || id,
+      publisher: m?.publisher ?? '',
+      description: m?.description || 'Installed from a file',
+      license: m?.license ?? '',
+      frameworks: m?.frameworks ?? [],
       bundled: false,
       installed: installedInfo(i),
     });

@@ -33,6 +33,7 @@ const listQuery = z.object({
   health: z.enum([...HEALTH, 'unknown']).optional(),
   layer: z.enum(['org', 'reference', 'all']).optional(),
   pack: z.string().optional(),
+  framework: z.string().optional(),
   gaps: boolParam,
   missing: z
     .string()

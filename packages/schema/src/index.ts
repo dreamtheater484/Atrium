@@ -6,3 +6,4 @@ export * from './element';
 export * from './enums';
 export * from './metamodel';
 export * from './overlay';
+export * from './reference';

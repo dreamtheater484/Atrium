@@ -85,6 +85,15 @@ contains. *Map your model* suggests the closest reference element for each of yo
 matches are pre-ticked, so mapping is one click. Updating a pack later moves your mappings to the
 new version.
 
+**Browsing a framework.** Click a framework on its pack card, or use *Reference frameworks* in
+Explore. Each framework opens as a tree (eTOM from its level 1 domains down to level 7, SID
+domains → ABEs → entities, and so on) with its own search. Every row shows how many of your
+elements map to it and how much of the branch below is covered; *Mapped* and *Gaps* narrow the
+tree to what you cover and to the branches nothing of yours maps to. Choose an element to read its
+description, see what maps to it, map one of yours to it, and follow its links into other
+frameworks (a TAM application to the Functional Framework functions it realizes). *Table* shows
+the same framework as rows with key, level, domain, parent and how many of yours map to each.
+
 ## Managers
 
 Open **Dashboards**. *Portfolio health* shows applications in use, run cost, the share that is

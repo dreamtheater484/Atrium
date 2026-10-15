@@ -11,7 +11,7 @@ import { NotFoundPage } from './pages/not-found';
 
 const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined);
 
-export type ExploreView = 'table' | 'map' | 'graph' | 'landscape' | 'radar';
+export type ExploreView = 'table' | 'map' | 'graph' | 'landscape' | 'radar' | 'tree';
 
 export interface ExploreSearch {
   type?: ElementType;
@@ -27,6 +27,13 @@ export interface ExploreSearch {
   missing?: string;
   health?: string;
   layer?: 'org' | 'reference';
+  /** A reference framework to browse: the pack and the framework in it (tmforum, etom). */
+  pack?: string;
+  framework?: string;
+  /** The framework element shown in detail. */
+  node?: string;
+  /** Narrow a framework to what your model maps to, or to the gaps. */
+  show?: 'mapped' | 'gaps';
 }
 
 const rootRoute = createRootRoute({ component: RootLayout, notFoundComponent: NotFoundPage });
@@ -42,7 +49,7 @@ const exploreRoute = createRoute({
   path: '/explore',
   validateSearch: (s: Record<string, unknown>): ExploreSearch => ({
     type: ELEMENT_TYPES.includes(s.type as ElementType) ? (s.type as ElementType) : undefined,
-    view: ['table', 'map', 'graph', 'landscape', 'radar'].includes(s.view as string)
+    view: ['table', 'map', 'graph', 'landscape', 'radar', 'tree'].includes(s.view as string)
       ? (s.view as ExploreView)
       : undefined,
     q: str(s.q),
@@ -56,6 +63,10 @@ const exploreRoute = createRoute({
       : undefined,
     health: str(s.health),
     layer: s.layer === 'reference' ? 'reference' : undefined,
+    pack: str(s.pack),
+    framework: str(s.framework),
+    node: str(s.node),
+    show: s.show === 'mapped' || s.show === 'gaps' ? s.show : undefined,
   }),
   component: lazyRouteComponent(() => import('./pages/explore'), 'ExplorePage'),
 });

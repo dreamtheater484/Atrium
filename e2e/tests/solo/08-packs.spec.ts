@@ -1,4 +1,4 @@
-import { expect, resetClicks, test, toast, withinBudget } from '../helpers';
+import { CSRF, expect, resetClicks, test, toast, withinBudget } from '../helpers';
 
 test('J9 · install a reference pack and map the model to it in bulk', async ({ page, request }) => {
   await page.goto('/settings?tab=packs');
@@ -27,7 +27,152 @@ test('J9 · install a reference pack and map the model to it in bulk', async ({ 
   expect(data.referenceCovered).toBeGreaterThan(5);
 });
 
-test('J9 · the reference layer can be browsed next to your own map', async ({ page }) => {
-  await page.goto('/explore?type=capability&view=table&layer=reference');
-  await expect(page.getByText('Identity and access management').first()).toBeVisible();
+test('J9 · a framework opens from its pack as a tree, with what of yours maps to it', async ({
+  page,
+}) => {
+  await page.goto('/settings?tab=packs');
+  await resetClicks(page);
+
+  // Each installed framework on the pack card opens that framework.
+  await page.getByRole('button', { name: /Generic capabilities → capabilities/ }).click();
+  await expect(page).toHaveURL(/framework=capabilities/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Generic capabilities' })).toBeVisible();
+  const tree = page.getByRole('tree', { name: 'Generic capabilities' });
+  // The top level starts open, with how much of each branch your model covers.
+  await expect(
+    tree.getByRole('treeitem', { name: /Identity and access management/ }),
+  ).toBeVisible();
+  await expect(page.getByText(/^\d+ of 29 mapped$/)).toBeVisible();
+  const details = page.getByRole('complementary', { name: 'Details' });
+  await expect(details.getByText(/of 29 elements have something of yours mapped/)).toBeVisible();
+
+  // Search inside the framework, then open what it finds.
+  await page.getByRole('textbox', { name: 'Search Generic capabilities' }).fill('identity');
+  await expect(page.getByText('1 match', { exact: true })).toBeVisible();
+  await tree.getByRole('treeitem', { name: /Identity and access management/ }).click();
+  await expect(
+    details.getByRole('heading', { name: 'Identity and access management' }),
+  ).toBeVisible();
+  await expect(details.getByText('7.3', { exact: true })).toBeVisible();
+  await expect(
+    details.getByRole('button', { name: /^Identity & Access Management/ }),
+  ).toBeVisible();
+  await withinBudget(page, 2, 'J9 browse a framework');
+
+  // The gaps: branches nothing of yours maps to.
+  await page.getByRole('textbox', { name: 'Search Generic capabilities' }).fill('');
+  await page.getByRole('radio', { name: 'Gaps' }).click();
+  await expect(page.getByText(/\d+ branch(es)? with nothing mapped/)).toBeVisible();
+
+  // The same framework as a table, with reference columns instead of owner and health.
+  await page.getByRole('radio', { name: 'Table' }).click();
+  const grid = page.getByRole('grid');
+  for (const column of ['Key', 'Name', 'Level', 'Domain', 'Parent', 'Mapped from'])
+    await expect(grid.getByRole('columnheader', { name: column, exact: true })).toBeVisible();
+  await expect(grid.getByRole('columnheader', { name: 'Owner' })).toHaveCount(0);
 });
+
+test('J9 · the tree keeps up with keyboard use', async ({ page }) => {
+  await page.goto('/explore?pack=starter-capabilities&framework=capabilities');
+  const tree = page.getByRole('tree', { name: 'Generic capabilities' });
+  await page.getByRole('button', { name: 'Close everything' }).click();
+  await expect(tree.getByRole('treeitem')).toHaveCount(7);
+  const first = tree.getByRole('treeitem').first();
+  await first.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(first).toHaveAttribute('aria-expanded', 'true');
+  await page.keyboard.press('ArrowDown');
+  await expect(tree.getByRole('treeitem', { name: /Strategy management/ })).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
+  await expect(first).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/node=/);
+  await expect(
+    page.getByRole('complementary', { name: 'Details' }).getByRole('heading', {
+      name: 'Strategy and planning',
+    }),
+  ).toBeVisible();
+});
+
+test('J9 · links between frameworks lead from one to the other', async ({ page, request }) => {
+  // Two small linked frameworks, like TM Forum's applications that realize its functions.
+  const pack = {
+    format: 'atrium-pack',
+    manifest: {
+      id: 'e2e-frameworks',
+      name: 'Example frameworks',
+      version: '1.0',
+      publisher: 'Atrium tests',
+      description: 'Two small frameworks that link to each other.',
+      license: 'CC0 1.0',
+      frameworks: [
+        { id: 'functions', name: 'Example functions', elementType: 'capability' },
+        { id: 'apps', name: 'Example applications', elementType: 'application' },
+      ],
+    },
+    elements: [
+      el('functions:1', 'functions', 'capability', 'Billing functions', 'Domain'),
+      el('functions:1.1', 'functions', 'capability', 'Rate usage', 'Function', 'functions:1'),
+      el('functions:1.2', 'functions', 'capability', 'Produce invoices', 'Function', 'functions:1'),
+      el('apps:1', 'apps', 'application', 'Billing applications', 'Domain'),
+      el('apps:1.1', 'apps', 'application', 'Rating engine', 'Level 1', 'apps:1'),
+    ],
+    relations: [{ type: 'realizes', from: 'apps:1.1', to: 'functions:1.1' }],
+  };
+  const res = await request.post('/api/v1/packs/upload', {
+    headers: CSRF,
+    multipart: {
+      file: {
+        name: 'example.atrium-pack.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(JSON.stringify(pack)),
+      },
+    },
+  });
+  expect(res.ok(), await res.text()).toBeTruthy();
+
+  try {
+    await page.goto('/explore?type=capability');
+    await page.getByRole('button', { name: 'Reference frameworks' }).click();
+    await page.getByRole('menuitem', { name: /Example applications/ }).click();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Example applications' }),
+    ).toBeVisible();
+    await page.getByRole('treeitem', { name: /Rating engine/ }).click();
+
+    const details = page.getByRole('complementary', { name: 'Details' });
+    await expect(details.getByText('Realizes · Example functions')).toBeVisible();
+    await details.getByRole('button', { name: /Rate usage/ }).click();
+    await expect(page).toHaveURL(/framework=functions/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Example functions' })).toBeVisible();
+    await expect(page.getByRole('treeitem', { name: /Rate usage/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(details.getByText('Realized by · Example applications')).toBeVisible();
+
+    // Map one of your capabilities to it from here, and see the coverage follow.
+    await expect(page.getByText('0 of 3 mapped')).toBeVisible();
+    await details.getByRole('button', { name: 'Map one of your capabilities' }).click();
+    await page.getByPlaceholder('Type to search…').fill('invoic');
+    await page.getByRole('option').first().click();
+    await toast(page, /maps to Rate usage/);
+    await expect(page.getByText('1 of 3 mapped')).toBeVisible();
+    await expect(page.getByRole('treeitem', { name: /Rate usage/ })).toContainText(
+      '1 of your elements map here',
+    );
+  } finally {
+    await request.delete('/api/v1/packs/e2e-frameworks', { headers: CSRF });
+  }
+});
+
+function el(
+  sourceId: string,
+  framework: string,
+  type: string,
+  name: string,
+  level: string,
+  parentSourceId?: string,
+) {
+  return { sourceId, framework, type, name, parentSourceId, attributes: { level } };
+}

@@ -3,7 +3,9 @@ import { typeDef } from '@atrium/schema';
 import {
   Badge,
   Button,
+  badgeVariants,
   Card,
+  cn,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -16,31 +18,16 @@ import {
   TypeIcon,
   toast,
 } from '@atrium/ui';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { FileUp, Link2, Map as MapIcon, Package, Trash2 } from 'lucide-react';
+import { ChevronRight, FileUp, Link2, ListTree, Package, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api';
-import { useInvalidateModel } from '../../lib/queries';
+import { type ReferencePack, useInvalidateModel, usePacks } from '../../lib/queries';
 import { ui, useUi } from '../../lib/store';
 import { MapToPackDialog } from './map-to-pack-dialog';
 
-interface Pack {
-  id: string;
-  name: string;
-  publisher: string;
-  description: string;
-  license: string;
-  homepage?: string;
-  frameworks: Array<{ id: string; name: string; elementType: ElementType; description?: string }>;
-  bundled: boolean;
-  installed: {
-    version: string;
-    elements: number;
-    installedAt: string;
-    frameworks?: Record<string, { elements: number; version?: string }>;
-  } | null;
-}
+type Pack = ReferencePack;
 
 interface FilesReport {
   version: string;
@@ -70,7 +57,7 @@ interface FilesPreview {
 }
 
 export function PacksPanel() {
-  const packs = useQuery({ queryKey: ['packs'], queryFn: () => api<Pack[]>('/packs') });
+  const packs = usePacks();
   const invalidate = useInvalidateModel();
   const navigate = useNavigate();
   const [loading, setLoading] = useState<Pack | null>(null);
@@ -99,6 +86,12 @@ export function PacksPanel() {
   const refresh = () => {
     invalidate();
     void packs.refetch();
+  };
+  /** Opens a framework of the pack as a tree in Explore (the first installed one by default). */
+  const browse = (p: Pack, framework?: string) => {
+    const fw = framework ?? p.frameworks.find((f) => p.installed?.frameworks?.[f.id])?.id;
+    if (fw) navigate({ to: '/explore', search: { pack: p.id, framework: fw, view: 'tree' } });
+    else navigate({ to: '/explore', search: { layer: 'reference', view: 'table' } });
   };
   const install = useMutation({
     mutationFn: (id: string) => api<{ added: number }>(`/packs/${id}/install`, { body: {} }),
@@ -179,12 +172,31 @@ export function PacksPanel() {
           <div className="flex flex-wrap gap-1.5">
             {p.frameworks.map((f) => {
               const inst = p.installed?.frameworks?.[f.id];
-              return (
-                <Badge key={f.id} tone={inst ? 'good' : 'outline'}>
+              const label = (
+                <>
                   <TypeIcon type={f.elementType} size="xs" /> {f.name} →{' '}
                   {typeDef(f.elementType).plural.toLowerCase()}
                   {inst &&
                     ` · ${inst.elements.toLocaleString('en-GB')}${inst.version ? ` from ${inst.version}` : ''}`}
+                </>
+              );
+              return inst ? (
+                <button
+                  key={f.id}
+                  type="button"
+                  title={`Browse ${f.name}`}
+                  onClick={() => browse(p, f.id)}
+                  className={cn(
+                    badgeVariants({ tone: 'good' }),
+                    'cursor-pointer outline-none transition-colors hover:bg-good-soft/70 hover:underline focus-visible:ring-2 focus-visible:ring-ring',
+                  )}
+                >
+                  {label}
+                  <ChevronRight />
+                </button>
+              ) : (
+                <Badge key={f.id} tone="outline">
+                  {label}
                 </Badge>
               );
             })}
@@ -208,25 +220,8 @@ export function PacksPanel() {
                 <Button variant="primary" onClick={() => setMapping(p)}>
                   <Link2 /> Map your model
                 </Button>
-                <Button
-                  onClick={() => {
-                    const fw = p.frameworks.find((f) => f.elementType === 'capability');
-                    if (fw)
-                      navigate({
-                        to: '/explore',
-                        search: { type: 'capability', view: 'table', layer: 'reference' },
-                      });
-                    else
-                      navigate({
-                        to: '/explore',
-                        search: {
-                          type: p.frameworks[0]?.elementType ?? 'capability',
-                          layer: 'reference',
-                        },
-                      });
-                  }}
-                >
-                  <MapIcon /> Browse
+                <Button onClick={() => browse(p)}>
+                  <ListTree /> Browse
                 </Button>
                 <Button
                   variant="ghost"

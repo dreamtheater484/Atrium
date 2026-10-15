@@ -16,18 +16,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Input,
+  Progress,
   Segmented,
   Select,
   Switch,
   TypeIcon,
   toast,
 } from '@atrium/ui';
-import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
   Blocks,
+  ChevronDown,
   Download,
   LayoutGrid,
+  Library,
+  ListTree,
   Network,
   Plus,
   Radar,
@@ -35,15 +38,22 @@ import {
   Table2,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
+import { FrameworkTreeView } from '../components/reference/framework-tree';
 import { TimeSlider } from '../components/time-slider';
 import { CapabilityMapView } from '../components/views/capability-map';
 import { GraphView } from '../components/views/graph-view';
 import { LandscapeView } from '../components/views/landscape';
 import { RadarView } from '../components/views/radar';
 import { TableView } from '../components/views/table-view';
-import { api, download } from '../lib/api';
-import { useCounts, useScenario } from '../lib/queries';
+import { download } from '../lib/api';
+import {
+  useCounts,
+  useFrameworkTree,
+  useInstalledFrameworks,
+  usePacks,
+  useScenario,
+} from '../lib/queries';
 import { openAdd } from '../lib/store';
 import type { ExploreSearch, ExploreView } from '../router';
 
@@ -92,6 +102,7 @@ const VIEW_META: Record<ExploreView, { label: string; icon: React.ReactNode }> =
   graph: { label: 'Graph', icon: <Network /> },
   landscape: { label: 'Landscape', icon: <LayoutGrid /> },
   radar: { label: 'Radar', icon: <Radar /> },
+  tree: { label: 'Tree', icon: <ListTree /> },
 };
 
 const OVERLAYS: Array<{ value: MapOverlay; label: string }> = [
@@ -109,15 +120,20 @@ export function ExplorePage() {
   const search = useSearch({ from: '/explore' }) as ExploreSearch;
   const navigate = useNavigate({ from: '/explore' });
   const counts = useCounts().data ?? {};
-  const packs = useQuery({
-    queryKey: ['packs'],
-    queryFn: () => api<Array<{ installed: unknown }>>('/packs'),
-    staleTime: 60_000,
-  });
+  const packs = usePacks();
   const hasPacks = (packs.data ?? []).some((p) => p.installed);
+  const installed = useInstalledFrameworks();
   const scenario = useScenario();
-  const type = search.type ?? (search.gaps || search.missing ? undefined : 'application');
-  const available = viewsFor(type);
+  // A reference framework instead of your own elements: ?pack=tmforum&framework=etom
+  const reference = search.pack && search.framework ? search : null;
+  const refPack = reference ? packs.data?.find((p) => p.id === reference.pack) : undefined;
+  const refFramework = refPack?.frameworks.find((f) => f.id === reference?.framework);
+  const tree = useFrameworkTree(reference?.pack, reference?.framework);
+  const refType = tree.data?.framework.elementType ?? refFramework?.elementType;
+  const type = reference
+    ? refType
+    : (search.type ?? (search.gaps || search.missing ? undefined : 'application'));
+  const available: ExploreView[] = reference ? ['tree', 'table'] : viewsFor(type);
   const view =
     search.view && available.includes(search.view)
       ? search.view
@@ -139,19 +155,45 @@ export function ExplorePage() {
 
   const def = type ? typeDef(type) : null;
   const total = Object.values(counts).reduce((s, n) => s + n, 0);
+  const refName = tree.data?.framework.name ?? refFramework?.name ?? 'Reference framework';
+  const refCount =
+    tree.data?.totals.nodes ??
+    refPack?.installed?.frameworks?.[reference?.framework ?? '']?.elements;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-col gap-3 border-b border-border bg-surface px-6 pt-5 pb-3">
         <div className="flex flex-wrap items-center gap-3">
           {def ? <TypeIcon type={type!} size="md" /> : null}
-          <h1 className="text-xl font-semibold tracking-tight">
-            {search.gaps && !def ? 'Fill the gaps' : (def?.plural ?? 'Everything')}
-          </h1>
-          <span className="text-[13px] text-muted-foreground tabular">
-            {type ? (counts[type] ?? 0) : total}
-          </span>
+          {reference ? (
+            <>
+              <h1 className="text-xl font-semibold tracking-tight">{refName}</h1>
+              <span className="text-[13px] text-muted-foreground tabular">
+                {refCount?.toLocaleString('en-GB') ?? ''}
+              </span>
+              <Badge tone="outline">
+                <Library /> {tree.data?.pack.name ?? refPack?.name ?? 'Reference'}
+                {tree.data?.framework.version ? ` ${tree.data.framework.version}` : ''}
+              </Badge>
+            </>
+          ) : (
+            <>
+              <h1 className="text-xl font-semibold tracking-tight">
+                {search.gaps && !def ? 'Fill the gaps' : (def?.plural ?? 'Everything')}
+              </h1>
+              <span className="text-[13px] text-muted-foreground tabular">
+                {type ? (counts[type] ?? 0) : total}
+              </span>
+            </>
+          )}
           <div className="flex-1" />
+          {installed.length > 0 && (
+            <FrameworkMenu
+              installed={installed}
+              current={reference ? `${reference.pack}/${reference.framework}` : undefined}
+              onOpen={(pack, framework) => navigate({ search: { pack, framework, view: 'tree' } })}
+            />
+          )}
           {available.length > 1 && (
             <Segmented
               value={view}
@@ -165,44 +207,46 @@ export function ExplorePage() {
               }))}
             />
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="md">
-                <Download /> Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-60">
-              <DropdownMenuLabel>{def ? def.plural : 'Everything'}</DropdownMenuLabel>
-              <DropdownMenuItem onSelect={() => exportFile('xlsx', type, scenario)}>
-                Excel workbook
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => exportFile('csv', type, scenario)}>
-                CSV
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Whole model</DropdownMenuLabel>
-              <DropdownMenuItem onSelect={() => exportFile('xlsx', undefined, scenario)}>
-                Excel, all types
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => exportFile('archimate', undefined, scenario)}>
-                ArchiMate exchange file
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => exportFile('json', undefined, scenario)}>
-                Atrium bundle (JSON)
-              </DropdownMenuItem>
-              {view === 'map' && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={() => exportFile('pptx-map', type, scenario, overlay)}
-                  >
-                    Capability map as PowerPoint
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {def && (
+          {!reference && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="md">
+                  <Download /> Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-60">
+                <DropdownMenuLabel>{def ? def.plural : 'Everything'}</DropdownMenuLabel>
+                <DropdownMenuItem onSelect={() => exportFile('xlsx', type, scenario)}>
+                  Excel workbook
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => exportFile('csv', type, scenario)}>
+                  CSV
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Whole model</DropdownMenuLabel>
+                <DropdownMenuItem onSelect={() => exportFile('xlsx', undefined, scenario)}>
+                  Excel, all types
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => exportFile('archimate', undefined, scenario)}>
+                  ArchiMate exchange file
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => exportFile('json', undefined, scenario)}>
+                  Atrium bundle (JSON)
+                </DropdownMenuItem>
+                {view === 'map' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => exportFile('pptx-map', type, scenario, overlay)}
+                    >
+                      Capability map as PowerPoint
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {def && !reference && (
             <Button variant="primary" onClick={() => openAdd(type!)}>
               <Plus /> New {def.label.toLowerCase()}
             </Button>
@@ -219,7 +263,7 @@ export function ExplorePage() {
             >
               {g.types.map((t) => {
                 const d = ELEMENT_TYPE_LIST.find((x) => x.type === t)!;
-                const active = t === type;
+                const active = !reference && t === type;
                 return (
                   <button
                     key={t}
@@ -250,11 +294,30 @@ export function ExplorePage() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder={`Filter ${def?.plural.toLowerCase() ?? 'everything'}…`}
+            placeholder={
+              reference
+                ? `Search ${refName}…`
+                : `Filter ${def?.plural.toLowerCase() ?? 'everything'}…`
+            }
+            aria-label={reference ? `Search ${refName}` : undefined}
             className="pl-8"
           />
         </div>
-        {(view === 'table' || view === 'landscape') &&
+        {reference && view === 'tree' && (
+          <Segmented
+            size="md"
+            value={search.show ?? 'all'}
+            onValueChange={(v) => set({ show: v === 'all' ? undefined : v })}
+            options={[
+              { value: 'all', label: 'Everything' },
+              { value: 'mapped', label: 'Mapped' },
+              { value: 'gaps', label: 'Gaps' },
+            ]}
+          />
+        )}
+        {!reference &&
+          !(view === 'table' && search.layer === 'reference') &&
+          (view === 'table' || view === 'landscape') &&
           (type === 'application' || type === 'technology' || view === 'table') && (
             <Select
               size="md"
@@ -272,7 +335,7 @@ export function ExplorePage() {
               aria-label="Health filter"
             />
           )}
-        {view === 'table' && search.missing && (
+        {!reference && view === 'table' && search.missing && (
           <Badge tone="primary" className="gap-1">
             Missing {missingLabel(type, search.missing)}
             <button
@@ -285,7 +348,7 @@ export function ExplorePage() {
             </button>
           </Badge>
         )}
-        {view === 'table' && (
+        {!reference && view === 'table' && search.layer !== 'reference' && (
           <label className="flex items-center gap-2 text-[13px] text-muted-foreground">
             <Switch
               checked={!!search.gaps}
@@ -309,7 +372,7 @@ export function ExplorePage() {
             />
           </div>
         )}
-        {view === 'table' && hasPacks && (
+        {!reference && view === 'table' && hasPacks && (
           <Segmented
             size="md"
             value={search.layer ?? 'org'}
@@ -321,10 +384,48 @@ export function ExplorePage() {
           />
         )}
         <div className="flex-1" />
-        {view !== 'table' && view !== 'radar' && <TimeSlider />}
+        {reference && tree.data && (
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="tabular">
+              {tree.data.totals.covered.toLocaleString('en-GB')} of{' '}
+              {tree.data.totals.nodes.toLocaleString('en-GB')} mapped
+            </span>
+            <Progress
+              value={
+                tree.data.totals.covered
+                  ? Math.max(2, (tree.data.totals.covered / tree.data.totals.nodes) * 100)
+                  : 0
+              }
+              tone="good"
+              label="Elements of the framework with a mapping"
+              className="w-24"
+            />
+          </span>
+        )}
+        {!reference && view !== 'table' && view !== 'radar' && view !== 'tree' && <TimeSlider />}
       </div>
       <div className="min-h-0 flex-1">
-        {view === 'table' && (
+        {reference && view === 'tree' && (
+          <FrameworkTreeView
+            data={tree.data}
+            isLoading={tree.isLoading}
+            error={tree.error}
+            q={q}
+            show={search.show}
+            selected={search.node}
+            onSelect={(id) => set({ node: id })}
+          />
+        )}
+        {reference && view === 'table' && (
+          <TableView
+            type={type}
+            q={search.q}
+            layer="reference"
+            pack={reference.pack}
+            framework={reference.framework}
+          />
+        )}
+        {!reference && view === 'table' && (
           <TableView
             type={type}
             q={search.q}
@@ -359,6 +460,48 @@ export function ExplorePage() {
         {view === 'radar' && <RadarView q={search.q} />}
       </div>
     </div>
+  );
+}
+
+/** The installed reference frameworks, pack by pack, to browse one of them. */
+function FrameworkMenu({
+  installed,
+  current,
+  onOpen,
+}: {
+  installed: ReturnType<typeof useInstalledFrameworks>;
+  current: string | undefined;
+  onOpen: (pack: string, framework: string) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="md" variant={current ? 'secondary' : undefined}>
+          <Library /> Reference frameworks <ChevronDown className="size-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        {installed.map(({ pack, frameworks }, i) => (
+          <Fragment key={pack.id}>
+            {i > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuLabel>{pack.name}</DropdownMenuLabel>
+            {frameworks.map((f) => (
+              <DropdownMenuItem
+                key={f.id}
+                onSelect={() => onOpen(pack.id, f.id)}
+                className={cn(current === `${pack.id}/${f.id}` && 'bg-primary-soft/60 font-medium')}
+              >
+                <TypeIcon type={f.elementType} size="xs" />
+                <span className="min-w-0 flex-1 truncate">{f.name}</span>
+                <span className="text-[11px] text-muted-foreground tabular">
+                  {f.elements.toLocaleString('en-GB')}
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </Fragment>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

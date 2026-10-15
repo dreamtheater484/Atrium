@@ -7,6 +7,8 @@ const PAGES = [
   '/explore?type=capability&view=map',
   '/explore?type=application&view=landscape',
   '/explore?type=technology&view=radar',
+  '/explore?pack=starter-capabilities&framework=capabilities',
+  '/explore?pack=starter-capabilities&framework=capabilities&view=table',
   '/dashboards?id=portfolio',
   '/roadmap',
   '/changes',

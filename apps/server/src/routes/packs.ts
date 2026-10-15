@@ -1,6 +1,7 @@
 import { packContentSchema } from '@atrium/packs-core';
 import { z } from 'zod';
 import { badRequest, forbidden } from '../http/errors';
+import { resolveScenario } from '../http/query';
 import { route } from '../http/route';
 import { exportBundle, restoreBundle } from '../services/bundle';
 import type { Deps } from '../services/deps';
@@ -15,6 +16,7 @@ import {
   uninstallPack,
 } from '../services/packs';
 import { isAdmin } from '../services/policy';
+import { frameworkNode, frameworkTree } from '../services/reference';
 
 async function readUploads(req: {
   isMultipart(): boolean;
@@ -157,6 +159,38 @@ export function packRoutes(deps: Deps) {
           .max(2000),
       }),
       handler: async ({ params, body, ctx }) => applyMappings(deps, ctx, params.id, body.pairs),
+    }),
+    route({
+      method: 'GET',
+      url: '/api/v1/packs/:id/frameworks/:framework',
+      summary:
+        'One installed framework as a tree, with how many of your elements map to each element and below it',
+      tag: 'Reference packs',
+      access: 'any',
+      params: z.object({ id: z.string(), framework: z.string() }),
+      query: z.object({ scenario: z.string().optional() }),
+      handler: async ({ params, query, ctx }) =>
+        frameworkTree(deps, ctx, params.id, params.framework, {
+          scenarioId: await resolveScenario(deps.sql, query.scenario),
+        }),
+    }),
+    route({
+      method: 'GET',
+      url: '/api/v1/packs/:id/frameworks/:framework/nodes/:nodeId',
+      summary:
+        'One element of a framework: where it sits, what maps to it, and its links to other frameworks',
+      tag: 'Reference packs',
+      access: 'any',
+      params: z.object({
+        id: z.string(),
+        framework: z.string(),
+        nodeId: z.string().uuid('Not a valid id'),
+      }),
+      query: z.object({ scenario: z.string().optional() }),
+      handler: async ({ params, query, ctx }) =>
+        frameworkNode(deps, ctx, params.id, params.framework, params.nodeId, {
+          scenarioId: await resolveScenario(deps.sql, query.scenario),
+        }),
     }),
     route({
       method: 'GET',

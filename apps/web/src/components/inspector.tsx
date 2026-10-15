@@ -11,7 +11,7 @@ import {
   toast,
 } from '@atrium/ui';
 import { useNavigate } from '@tanstack/react-router';
-import { Expand, Link2, MoreHorizontal, Network, Trash2, X, Zap } from 'lucide-react';
+import { Expand, Link2, ListTree, MoreHorizontal, Network, Trash2, X, Zap } from 'lucide-react';
 import { Dialog as D } from 'radix-ui';
 import { useEffect, useMemo } from 'react';
 import { api } from '../lib/api';
@@ -78,18 +78,38 @@ export function Inspector() {
             <div className="flex-1" />
             {el && (
               <>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    navigate({
-                      to: '/explore',
-                      search: { view: 'graph', focus: el.id, type: el.type, mode: 'impact' },
-                    })
-                  }
-                >
-                  <Zap /> Impact
-                </Button>
+                {el.layer === 'reference' && el.pack && el.attributes.framework ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() =>
+                      navigate({
+                        to: '/explore',
+                        search: {
+                          pack: el.pack!,
+                          framework: String(el.attributes.framework),
+                          node: el.id,
+                          view: 'tree',
+                        },
+                      })
+                    }
+                  >
+                    <ListTree /> Show in framework
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() =>
+                      navigate({
+                        to: '/explore',
+                        search: { view: 'graph', focus: el.id, type: el.type, mode: 'impact' },
+                      })
+                    }
+                  >
+                    <Zap /> Impact
+                  </Button>
+                )}
                 <Button
                   size="icon-sm"
                   variant="ghost"

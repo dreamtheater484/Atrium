@@ -7,6 +7,8 @@ import {
   type ElementType,
   enumLabel,
   LIFECYCLE_PHASES,
+  referenceKey,
+  referenceLevel,
   typeDef,
 } from '@atrium/schema';
 import {
@@ -45,7 +47,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowDown, ArrowUp, ClipboardPaste, Plus, Sparkles, Trash2, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
-import { useDeleteElement, useElements, useUpdateElement } from '../../lib/queries';
+import { useDeleteElement, useElements, usePacks, useUpdateElement } from '../../lib/queries';
 import { inspect, openAdd, openImport, useUi } from '../../lib/store';
 import { ElementPicker } from '../element-picker';
 import { AttributeField, InlineText } from '../fields';
@@ -139,6 +141,122 @@ function EditableCell({ row, def }: { row: ElementRow; def: AttributeDef }) {
   );
 }
 
+const keyOrder = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+
+/**
+ * Columns for reference elements: where they sit in their framework and how much of your model
+ * maps to them, instead of owner, lifecycle and health, which a standard doesn't have.
+ */
+function referenceColumns(frameworkNames: Map<string, string> | null): ColumnDef<ElementRow>[] {
+  const cols: ColumnDef<ElementRow>[] = [
+    {
+      id: 'key',
+      accessorFn: (r) => referenceKey(r) ?? '',
+      header: 'Key',
+      size: 90,
+      sortingFn: (a, b, id) =>
+        keyOrder.compare(a.getValue<string>(id) || '\uffff', b.getValue<string>(id) || '\uffff'),
+      cell: ({ getValue }) => (
+        <span className="truncate font-mono text-[11px] text-muted-foreground">
+          {(getValue() as string) || '—'}
+        </span>
+      ),
+    },
+    {
+      id: 'name',
+      accessorKey: 'name',
+      header: 'Name',
+      size: 280,
+      cell: ({ row }) => {
+        const r = row.original;
+        return (
+          <button
+            type="button"
+            className="flex min-w-0 flex-col items-start text-left"
+            onClick={(e) => {
+              e.stopPropagation();
+              inspect(r.id);
+            }}
+          >
+            <span className="flex max-w-full items-center gap-2">
+              <TypeIcon type={r.type} size="sm" />
+              <span className="truncate font-medium hover:underline">{r.name}</span>
+            </span>
+            {r.description && (
+              <span className="block max-w-full truncate pl-7 text-[11px] text-muted-foreground">
+                {r.description.split('\n')[0]}
+              </span>
+            )}
+          </button>
+        );
+      },
+    },
+    {
+      id: 'level',
+      accessorFn: (r) => referenceLevel(r, r.level),
+      header: 'Level',
+      size: 150,
+      cell: ({ getValue }) => (
+        <Badge tone="outline" className="font-normal">
+          {getValue() as string}
+        </Badge>
+      ),
+    },
+    {
+      id: 'domain',
+      accessorFn: (r) => (typeof r.attributes.domain === 'string' ? r.attributes.domain : ''),
+      header: 'Domain',
+      size: 150,
+      cell: ({ getValue }) => (
+        <span className="truncate text-muted-foreground">{(getValue() as string) || '—'}</span>
+      ),
+    },
+    {
+      id: 'parent',
+      accessorFn: (r) => r.parentName ?? '',
+      header: 'Parent',
+      size: 190,
+      cell: ({ getValue }) => (
+        <span className="truncate text-muted-foreground">{(getValue() as string) || '—'}</span>
+      ),
+    },
+  ];
+  if (frameworkNames)
+    cols.push({
+      id: 'framework',
+      accessorFn: (r) => {
+        const fw = String(r.attributes.framework ?? '');
+        return frameworkNames.get(`${r.pack}/${fw}`) ?? fw;
+      },
+      header: 'Framework',
+      size: 170,
+      cell: ({ getValue }) => (
+        <span className="truncate text-muted-foreground">{getValue() as string}</span>
+      ),
+    });
+  cols.push({
+    id: 'mapped',
+    accessorFn: (r) => r.mappedFrom ?? 0,
+    header: 'Mapped from',
+    size: 100,
+    sortDescFirst: true,
+    cell: ({ getValue }) => {
+      const n = getValue() as number;
+      return n > 0 ? (
+        <span
+          className="inline-flex min-w-6 justify-center rounded-md bg-good-soft px-1.5 text-[11px] font-semibold text-good-foreground tabular"
+          title={`${n} of your elements map to this`}
+        >
+          {n}
+        </span>
+      ) : (
+        <span className="text-subtle-foreground">—</span>
+      );
+    },
+  });
+  return cols;
+}
+
 function SortIcon({ dir }: { dir: false | 'asc' | 'desc' }) {
   if (!dir) return null;
   return dir === 'asc' ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />;
@@ -151,6 +269,8 @@ export function TableView({
   missing,
   health,
   layer,
+  pack,
+  framework,
 }: {
   type?: ElementType;
   q?: string;
@@ -158,19 +278,37 @@ export function TableView({
   missing?: string;
   health?: string;
   layer?: 'org' | 'reference';
+  /** Reference elements of one pack, or one framework of it. */
+  pack?: string;
+  framework?: string;
   onToggleGaps?: () => void;
 }) {
   const at = useUi((s) => s.at) ?? undefined;
+  const reference = layer === 'reference';
   const { data, isLoading } = useElements({
     type,
     q,
-    gaps,
-    missing,
-    health,
-    at,
+    // Reference elements have no owner, lifecycle or health to filter on.
+    gaps: reference ? undefined : gaps,
+    missing: reference ? undefined : missing,
+    health: reference ? undefined : health,
+    at: reference ? undefined : at,
     layer,
-    limit: 5000,
+    pack,
+    framework,
+    sort: reference ? 'key' : undefined,
+    limit: reference ? 10000 : 5000,
   });
+  const packs = usePacks();
+  const frameworkNames = useMemo(
+    () =>
+      reference && !framework
+        ? new Map(
+            (packs.data ?? []).flatMap((p) => p.frameworks.map((f) => [`${p.id}/${f.id}`, f.name])),
+          )
+        : null,
+    [reference, framework, packs.data],
+  );
   const update = useUpdateElement();
   const remove = useDeleteElement();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -178,6 +316,7 @@ export function TableView({
   const def = type ? ELEMENT_TYPE_DEFS[type] : null;
 
   const columns = useMemo<ColumnDef<ElementRow>[]>(() => {
+    if (reference) return referenceColumns(frameworkNames);
     const cols: ColumnDef<ElementRow>[] = [
       {
         id: 'select',
@@ -380,7 +519,7 @@ export function TableView({
         ),
     });
     return cols;
-  }, [type, def, update]);
+  }, [type, def, update, reference, frameworkNames]);
 
   const table = useReactTable({
     data: data?.items ?? [],
@@ -421,6 +560,14 @@ export function TableView({
     );
   }
 
+  if (!rows.length && reference) {
+    return (
+      <EmptyState icon={<Plus />} title="Nothing matches" className="mt-16">
+        {q ? 'Try other words.' : 'Install a reference pack under Settings → Packs.'}
+      </EmptyState>
+    );
+  }
+
   if (!rows.length) {
     return (
       <EmptyState
@@ -455,6 +602,7 @@ export function TableView({
     <div
       className="relative flex h-full flex-col"
       onPaste={(e) => {
+        if (reference) return;
         const target = e.target as HTMLElement;
         if (['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
         const text = e.clipboardData.getData('text/plain');
@@ -558,9 +706,11 @@ export function TableView({
             ? (def?.label.toLowerCase() ?? 'item')
             : (def?.plural.toLowerCase() ?? 'items')}
         </span>
-        <span className="hidden items-center gap-1 md:flex">
-          · <ClipboardPaste className="size-3" /> Paste rows from Excel to add them
-        </span>
+        {!reference && (
+          <span className="hidden items-center gap-1 md:flex">
+            · <ClipboardPaste className="size-3" /> Paste rows from Excel to add them
+          </span>
+        )}
       </div>
       {selected.length > 0 && (
         <div className="absolute bottom-12 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-border bg-surface p-1.5 shadow-lg">

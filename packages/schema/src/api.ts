@@ -221,6 +221,121 @@ export interface ElementRow extends Element {
   mark?: 'added' | 'changed' | 'removed';
   /** Applications: share of contract costs on top of their own cost. */
   contractCost?: number;
+  /** Reference elements: how many of your own elements map to it. */
+  mappedFrom?: number;
+}
+
+/* ------------------------------------------------------------------ */
+/* Reference frameworks (installed packs) as trees                     */
+/* ------------------------------------------------------------------ */
+
+/** One element of a reference framework, with how much of your model maps to it. */
+export interface FrameworkNode {
+  id: string;
+  /** Parent inside the same framework; null at the top. */
+  parentId: string | null;
+  /** The framework's own id ("1.1.3" for etom:1.1.3); null when it only repeats the name. */
+  key: string | null;
+  name: string;
+  /** "Level 3", "ABE", "Aggregate function level 1"… */
+  level: string;
+  domain: string | null;
+  description: string;
+  depth: number;
+  /** Your elements that map to this one. */
+  mapped: number;
+  /** Your elements that map to this one or anything below it (each counted once). */
+  mappedBelow: number;
+  /** Elements in this branch, itself included. */
+  size: number;
+  /** Elements in this branch with at least one mapping. */
+  covered: number;
+  /** Links to elements of other frameworks (a TAM application realizes functions). */
+  links: number;
+}
+
+export interface FrameworkRef {
+  packId: string;
+  packName: string;
+  id: string;
+  name: string;
+}
+
+export interface FrameworkLinkSummary {
+  type: RelationType;
+  /** As read from this framework: "realizes", "realized by". */
+  label: string;
+  direction: 'out' | 'in';
+  framework: FrameworkRef;
+  /** Links, and elements of this framework that have one. */
+  count: number;
+  elements: number;
+}
+
+export interface FrameworkTree {
+  pack: { id: string; name: string; version: string };
+  framework: {
+    id: string;
+    name: string;
+    elementType: ElementType;
+    description: string | null;
+    version: string | null;
+  };
+  /** In tree order: each parent before its children, siblings by key. */
+  nodes: FrameworkNode[];
+  totals: {
+    nodes: number;
+    /** Elements with at least one mapping. */
+    covered: number;
+    /** Your elements that map into this framework. */
+    mappedElements: number;
+    /** Your elements of this framework's type: what could map to it. */
+    candidates: number;
+  };
+  links: FrameworkLinkSummary[];
+}
+
+export interface FrameworkNodeLink {
+  relationId: string;
+  type: RelationType;
+  label: string;
+  direction: 'out' | 'in';
+  other: {
+    id: string;
+    key: string | null;
+    name: string;
+    level: string | null;
+    framework: FrameworkRef;
+  };
+}
+
+export interface FrameworkNodeDetail {
+  id: string;
+  /** As stored, e.g. "etom:1.1.3". */
+  sourceKey: string | null;
+  key: string | null;
+  name: string;
+  description: string;
+  level: string;
+  domain: string | null;
+  /** Other details the framework gives, e.g. a SID entity's attribute names. */
+  details: Array<{ label: string; value: string | string[] }>;
+  /** From the top down to the parent. */
+  path: Array<{ id: string; key: string | null; name: string }>;
+  children: number;
+  mappedFrom: Array<{
+    relationId: string;
+    element: ElementSummary & { domainName: string | null };
+  }>;
+  /** Your elements mapped further down this branch, with what they map to. */
+  mappedBelow: {
+    elements: number;
+    items: Array<{
+      element: ElementSummary;
+      to: Array<{ id: string; key: string | null; name: string }>;
+    }>;
+  };
+  links: FrameworkNodeLink[];
 }
 
 export interface SuggestedRelation {

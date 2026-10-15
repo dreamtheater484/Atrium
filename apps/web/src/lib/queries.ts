@@ -6,6 +6,8 @@ import type {
   ElementDetail,
   ElementRow,
   ElementType,
+  FrameworkNodeDetail,
+  FrameworkTree,
   Page,
   SearchHit,
   SuggestedRelation,
@@ -80,6 +82,7 @@ export interface ElementListParams {
   health?: string;
   layer?: 'org' | 'reference' | 'all';
   pack?: string;
+  framework?: string;
   gaps?: boolean;
   /** Only elements missing this field, e.g. attributes.eol_date or relation.integration. */
   missing?: string;
@@ -99,6 +102,80 @@ export function useElements(params: ElementListParams, opts: { enabled?: boolean
       }),
     placeholderData: keepPreviousData,
     enabled: opts.enabled,
+  });
+}
+
+/** An industry reference pack, as listed under Settings → Packs. */
+export interface ReferencePack {
+  id: string;
+  name: string;
+  publisher: string;
+  description: string;
+  license: string;
+  homepage?: string;
+  frameworks: Array<{ id: string; name: string; elementType: ElementType; description?: string }>;
+  bundled: boolean;
+  installed: {
+    version: string;
+    elements: number;
+    installedAt: string;
+    frameworks?: Record<string, { elements: number; version?: string }>;
+  } | null;
+}
+
+export function usePacks() {
+  return useQuery({
+    queryKey: ['packs'],
+    queryFn: () => api<ReferencePack[]>('/packs'),
+    staleTime: 60_000,
+  });
+}
+
+/** Installed frameworks, pack by pack, with their element counts. */
+export function useInstalledFrameworks() {
+  const packs = usePacks();
+  return (packs.data ?? [])
+    .filter((p) => p.installed)
+    .map((p) => ({
+      pack: p,
+      frameworks: p.frameworks
+        .map((f) => ({ ...f, elements: p.installed?.frameworks?.[f.id]?.elements ?? 0 }))
+        .filter((f) => f.elements > 0),
+    }))
+    .filter((p) => p.frameworks.length > 0);
+}
+
+/** One framework as a tree with coverage; under 'model' so mapping changes refresh it. */
+export function useFrameworkTree(pack: string | undefined, framework: string | undefined) {
+  const scenario = useScenario();
+  return useQuery({
+    queryKey: ['model', 'framework', pack, framework, scenario],
+    queryFn: () =>
+      api<FrameworkTree>(`/packs/${pack}/frameworks/${encodeURIComponent(framework!)}`, {
+        query: { scenario },
+      }),
+    enabled: !!pack && !!framework,
+    staleTime: 60_000,
+    placeholderData: (prev, prevQuery) =>
+      prevQuery?.queryKey[2] === pack && prevQuery?.queryKey[3] === framework ? prev : undefined,
+  });
+}
+
+export function useFrameworkNode(
+  pack: string | undefined,
+  framework: string | undefined,
+  id: string | undefined,
+) {
+  const scenario = useScenario();
+  return useQuery({
+    queryKey: ['model', 'framework-node', pack, framework, id, scenario],
+    queryFn: () =>
+      api<FrameworkNodeDetail>(
+        `/packs/${pack}/frameworks/${encodeURIComponent(framework!)}/nodes/${id}`,
+        { query: { scenario } },
+      ),
+    enabled: !!pack && !!framework && !!id,
+    placeholderData: keepPreviousData,
   });
 }
 

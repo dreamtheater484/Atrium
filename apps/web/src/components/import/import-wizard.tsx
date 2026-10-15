@@ -30,6 +30,7 @@ import {
   EyeOff,
   FileUp,
   Link2,
+  Package,
   Sparkles,
   TriangleAlert,
   Undo2,
@@ -38,7 +39,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, api } from '../../lib/api';
 import { useInvalidateModel } from '../../lib/queries';
-import { ui, useUi } from '../../lib/store';
+import { openPackFiles, ui, useUi } from '../../lib/store';
 
 type Target =
   | { kind: 'core'; field: string }
@@ -89,6 +90,8 @@ interface Preview {
   }>;
   totals: { create: number; update: number; unchanged: number; relations: number };
   mode: 'direct' | 'suggestion';
+  /** Files that belong in a reference pack (TM Forum workbooks); their sheets start skipped. */
+  reference?: Array<{ file: string; packId: string; packName: string; label: string }>;
 }
 
 interface Result {
@@ -350,11 +353,13 @@ export function ImportWizard() {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploaded, setUploaded] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const invalidate = useInvalidateModel();
   const navigate = useNavigate();
 
   const upload = useMutation({
+    onMutate: (list: File[]) => setUploaded(list),
     mutationFn: (list: File[]) => {
       const form = new FormData();
       for (const f of list) form.append('file', f, f.name);
@@ -461,6 +466,38 @@ export function ImportWizard() {
 
         {preview && !result && (
           <div className="flex max-h-[62vh] flex-col gap-3 overflow-y-auto pr-1">
+            {!!preview.reference?.length && (
+              <div className="flex flex-col gap-2 rounded-xl border border-primary/40 bg-primary-soft/40 p-3 text-[13px]">
+                <div className="flex items-start gap-2">
+                  <Package className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <div>
+                    <p className="font-semibold">
+                      {preview.reference.length === 1 ? 'This is a' : 'These are'} reference model
+                      {preview.reference.length === 1 ? '' : 's'}, not your own data
+                    </p>
+                    <p className="mt-0.5 text-muted-foreground">
+                      {preview.reference.map((r) => r.label).join(', ')}. They belong in the{' '}
+                      {preview.reference[0]!.packName} pack, next to your model rather than in it,
+                      so they are left out of this import.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="primary"
+                  className="self-start"
+                  onClick={() => {
+                    const ref = preview.reference!;
+                    openPackFiles(
+                      ref[0]!.packId,
+                      uploaded.filter((f) => ref.some((r) => r.file === f.name)),
+                    );
+                    navigate({ to: '/settings', search: { tab: 'packs' } });
+                  }}
+                >
+                  <Package /> Load into {preview.reference[0]!.packName}
+                </Button>
+              </div>
+            )}
             <div className="grid grid-cols-4 gap-2">
               {[
                 ['New', preview.totals.create, 'text-good-foreground'],

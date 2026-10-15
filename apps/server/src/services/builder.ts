@@ -19,12 +19,41 @@ import { ModelIndex } from './model-index';
 import { bestMatch } from './search';
 import type { ResolvedState } from './store';
 
-interface PendingChange {
+export interface PendingChange {
   op: ChangeOp;
   entity: 'element' | 'relation';
   id: string;
   before: object | null;
   after: object | null;
+}
+
+/**
+ * The changes in an order the database accepts: every element or link after the elements it
+ * points to that are created in the same set. Otherwise the order they were made in. An import
+ * can meet a parent by name, create it, and only later reach the parent's own row and give it
+ * a parent of its own that is created after it.
+ */
+export function applyOrder(changes: PendingChange[]): PendingChange[] {
+  const creates = new Map<string, PendingChange>();
+  for (const c of changes) if (c.op === 'create') creates.set(c.id, c);
+  const refs = (c: PendingChange): unknown[] => {
+    const a = c.after as Record<string, unknown> | null;
+    if (!a) return [];
+    return c.entity === 'element' ? [a.parentId, a.domainId] : [a.sourceId, a.targetId];
+  };
+  const out: PendingChange[] = [];
+  const seen = new Set<PendingChange>();
+  const visit = (c: PendingChange) => {
+    if (seen.has(c)) return;
+    seen.add(c);
+    for (const id of refs(c)) {
+      const dep = typeof id === 'string' ? creates.get(id) : undefined;
+      if (dep && dep !== c) visit(dep);
+    }
+    out.push(c);
+  };
+  for (const c of changes) visit(c);
+  return out;
 }
 
 export interface CommitOptions {
@@ -182,7 +211,7 @@ export class ChangeBuilder {
               description: o.description,
             });
       const touched: string[] = [];
-      for (const c of this.changes) {
+      for (const c of applyOrder(this.changes)) {
         await recordChange(
           tx,
           csId,

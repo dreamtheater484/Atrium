@@ -57,6 +57,8 @@ export interface UiState {
   addType: string | null;
   importOpen: boolean;
   importFiles: File[];
+  /** Files handed to a reference pack's "add source files" dialog (from the import). */
+  packFiles: { packId: string; files: File[] } | null;
   connectAgentOpen: boolean;
   researchOpen: boolean;
   sidebarCollapsed: boolean;
@@ -73,6 +75,7 @@ export const ui = createStore<UiState>(
     addType: null,
     importOpen: false,
     importFiles: [],
+    packFiles: null,
     connectAgentOpen: false,
     researchOpen: false,
     sidebarCollapsed: false,
@@ -90,6 +93,11 @@ export function inspect(id: string | null) {
 
 export function openImport(files: File[] = []) {
   ui.set({ importOpen: true, importFiles: files });
+}
+
+/** Opens a reference pack's source-file dialog (Settings → Industry packs) with these files. */
+export function openPackFiles(packId: string, files: File[]) {
+  ui.set({ importOpen: false, importFiles: [], packFiles: { packId, files } });
 }
 
 export function openAdd(type: string | null = null) {

@@ -19,9 +19,10 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { FileUp, Link2, Map as MapIcon, Package, Trash2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api';
 import { useInvalidateModel } from '../../lib/queries';
+import { ui, useUi } from '../../lib/store';
 import { MapToPackDialog } from './map-to-pack-dialog';
 
 interface Pack {
@@ -78,6 +79,22 @@ export function PacksPanel() {
   const [preview, setPreview] = useState<FilesPreview | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [mapping, setMapping] = useState<Pack | null>(null);
+  const handedOver = useUi((s) => s.packFiles);
+
+  const openFiles = (p: Pack, list: File[] = []) => {
+    setLoading(p);
+    setFiles(list);
+    setPreview(null);
+    setVersion('');
+  };
+  // Files the import recognised as this pack's source files.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: run when files are handed over
+  useEffect(() => {
+    const pack = handedOver && packs.data?.find((p) => p.id === handedOver.packId);
+    if (!pack) return;
+    openFiles(pack, handedOver.files);
+    ui.set({ packFiles: null });
+  }, [handedOver, packs.data]);
 
   const refresh = () => {
     invalidate();
@@ -182,15 +199,7 @@ export function PacksPanel() {
                 {p.installed ? 'Reinstall' : 'Install'}
               </Button>
             ) : (
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setLoading(p);
-                  setFiles([]);
-                  setPreview(null);
-                  setVersion('');
-                }}
-              >
+              <Button variant="primary" onClick={() => openFiles(p)}>
                 <FileUp /> {p.installed ? 'Update with new files' : 'Add source files'}
               </Button>
             )}
@@ -250,11 +259,22 @@ export function PacksPanel() {
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                // Handled here, not by the app-wide drop zone (which imports into your model).
+                e.preventDefault();
+                e.stopPropagation();
+                const list = Array.from(e.dataTransfer.files);
+                if (list.length) {
+                  setFiles(list);
+                  setPreview(null);
+                }
+              }}
               className="rounded-xl border-2 border-dashed border-border p-6 text-center text-[13px] text-muted-foreground hover:border-primary"
             >
               {files.length
                 ? files.map((f) => f.name).join(', ')
-                : 'Click to choose Excel or CSV files'}
+                : 'Drop the Excel files here, or click to choose'}
             </button>
             <input
               ref={inputRef}

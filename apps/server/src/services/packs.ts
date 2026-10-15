@@ -253,6 +253,20 @@ export async function packFromFiles(
   };
 }
 
+/** The pack a file is reference material for, when one of its readers recognises it. */
+export async function referencePackFor(file: {
+  name: string;
+  sheets: Array<{ name: string; headers: string[]; rows: Array<Record<string, unknown>> }>;
+}): Promise<{ packId: string; packName: string; label: string } | undefined> {
+  for (const [packId, readers] of Object.entries(PACK_READERS)) {
+    const reader = readers.find((r) => r.recognises(file));
+    if (!reader) continue;
+    const meta = (await listPacksStatic()).find((p) => p.id === packId);
+    return { packId, packName: meta?.name ?? packId, label: reader.label };
+  }
+  return undefined;
+}
+
 async function listPacksStatic(): Promise<AvailablePack[]> {
   const dir = packsDir();
   const out: AvailablePack[] = [];

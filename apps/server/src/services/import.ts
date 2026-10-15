@@ -29,6 +29,7 @@ import { badRequest, notFound } from '../http/errors';
 import { audit } from './audit';
 import { ChangeBuilder } from './builder';
 import type { Deps } from './deps';
+import { referencePackFor } from './packs';
 import { canEditDirectly } from './policy';
 import { resolveState } from './store';
 
@@ -49,6 +50,15 @@ interface StoredImport {
     remembered: boolean;
   }>;
   models: Array<{ fileIndex: number; model: NormalizedModel }>;
+  /** Files that are reference material for a pack (TM Forum workbooks): left out by default. */
+  reference: ReferenceFile[];
+}
+
+interface ReferenceFile {
+  file: string;
+  packId: string;
+  packName: string;
+  label: string;
 }
 
 /** Parsed uploads waiting for the person to confirm (kept for 30 minutes). */
@@ -325,6 +335,8 @@ export interface ImportPreview {
   }>;
   totals: { create: number; update: number; unchanged: number; relations: number };
   mode: 'direct' | 'suggestion';
+  /** Files that belong in a reference pack rather than in your own model. */
+  reference: ReferenceFile[];
 }
 
 function candidateDiff(c: Candidate, el: Element, domainName: string | null): string[] {
@@ -386,12 +398,15 @@ async function buildPreview(
         }
       }
       if (s.role === 'skip') outcome.skipped = s.sheet.rows.length;
+      const pack = stored.reference.find((r) => r.file === base.file);
       return {
         ...base,
         typeReason:
-          s.role === 'skip'
-            ? 'Looks like notes rather than data, so it is left out.'
-            : 'One link per row: a type, where it starts and where it points.',
+          s.role === 'relations'
+            ? 'One link per row: a type, where it starts and where it points.'
+            : pack
+              ? `Part of the ${pack.label}, so it is left out: load it into the pack instead.`
+              : 'Looks like notes rather than data, so it is left out.',
         confidence: 1,
         columns: [],
         outcome,
@@ -532,6 +547,7 @@ async function buildPreview(
       ctx.kind === 'user' && canEditDirectly(ctx, null, { get: () => undefined } as never)
         ? 'direct'
         : 'suggestion',
+    reference: stored.reference,
   };
 }
 
@@ -548,6 +564,7 @@ export async function previewImport(
     files: [],
     sheets: [],
     models: [],
+    reference: [],
   };
   for (const f of files) {
     const parsed = await parseFile(f.name, f.data);
@@ -556,8 +573,24 @@ export async function previewImport(
         `${f.name} isn't a format Atrium can read. Use Excel (.xlsx), CSV, ArchiMate exchange (.xml), Backstage (catalog-info.yaml) or atrium.yaml.`,
       );
     const fileIndex = stored.files.push({ name: f.name, parsed }) - 1;
+    // A standard's reference model (a TM Forum workbook) goes into its pack, not your model.
+    const pack = parsed.sheets
+      ? await referencePackFor({ name: f.name, sheets: parsed.sheets })
+      : undefined;
+    if (pack) stored.reference.push({ file: f.name, ...pack });
     for (const sheet of parsed.sheets ?? []) {
       if (!sheet.rows.length) continue;
+      if (pack) {
+        stored.sheets.push({
+          fileIndex,
+          sheet,
+          role: 'skip',
+          type: detectElementType(sheet).type,
+          mapping: guessMapping(sheet, detectElementType(sheet).type),
+          remembered: false,
+        });
+        continue;
+      }
       const [remembered] =
         await deps.sql`select element_type, mapping from import_mappings where signature = ${signature(sheet)}`;
       const role = guessRole(sheet);
@@ -643,6 +676,9 @@ export async function applyImport(
   const b = new ChangeBuilder(deps, ctx, state);
   const idx = matchIndex(state.elements.values());
   const made = new Map<string, Element>(); // `${type}:${normalized name}` → element created in this import
+  // Keys are unique per type: a second, differently named row with a key already in use is
+  // imported without it (and a warning) rather than failing the whole import.
+  const keysUsed = new Set(idx.byKey.keys());
   let created = 0;
   let updated = 0;
   let linked = 0;
@@ -717,10 +753,17 @@ export async function applyImport(
       if (next && next !== current) updated++;
       el = next ?? current;
     } else {
+      const keyId = c.key ? `${c.type}:${c.key.toLowerCase()}` : undefined;
+      const keyFree = !!keyId && !keysUsed.has(keyId);
+      if (keyId && !keyFree)
+        b.warnings.push(
+          `"${c.name}": its key "${c.key}" is already used by another element of this type, so it was imported without a key.`,
+        );
+      if (keyFree) keysUsed.add(keyId);
       el = await b.create({
         type: c.type,
         name: c.name,
-        key: c.key,
+        key: keyFree ? c.key : undefined,
         description: c.description,
         owner: c.owner,
         lifecycle: c.lifecycle,

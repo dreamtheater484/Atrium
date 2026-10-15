@@ -34,6 +34,8 @@ export interface ExploreSearch {
   node?: string;
   /** Narrow a framework to what your model maps to, or to the gaps. */
   show?: 'mapped' | 'gaps';
+  /** For those: count what's covered through other frameworks as mapped. */
+  through?: boolean;
 }
 
 const rootRoute = createRootRoute({ component: RootLayout, notFoundComponent: NotFoundPage });
@@ -67,6 +69,7 @@ const exploreRoute = createRoute({
     framework: str(s.framework),
     node: str(s.node),
     show: s.show === 'mapped' || s.show === 'gaps' ? s.show : undefined,
+    through: s.through === true || s.through === 'true' ? true : undefined,
   }),
   component: lazyRouteComponent(() => import('./pages/explore'), 'ExplorePage'),
 });

@@ -94,6 +94,13 @@ description, see what maps to it, map one of yours to it, and follow its links i
 frameworks (a TAM application to the Functional Framework functions it realizes). *Table* shows
 the same framework as rows with key, level, domain, parent and how many of yours map to each.
 
+**Coverage through links.** Coverage also comes through those links: when one of your applications
+maps to a TAM application, the Functional Framework functions that application realizes count as
+covered *through* TAM. It shows apart from your direct mappings: a dashed count in the row, a
+lighter, striped part of the branch bar, and a *Through Application Framework (TAM)* list in the
+details saying which of yours reaches the element and how. With *Mapped* or *Gaps* on, *Count
+coverage through links* decides whether that coverage counts.
+
 ## Managers
 
 Open **Dashboards**. *Portfolio health* shows applications in use, run cost, the share that is

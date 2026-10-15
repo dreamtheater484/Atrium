@@ -114,10 +114,16 @@ test('J9 · links between frameworks lead from one to the other', async ({ page,
       el('functions:1', 'functions', 'capability', 'Billing functions', 'Domain'),
       el('functions:1.1', 'functions', 'capability', 'Rate usage', 'Function', 'functions:1'),
       el('functions:1.2', 'functions', 'capability', 'Produce invoices', 'Function', 'functions:1'),
+      el('functions:2', 'functions', 'capability', 'Collections', 'Domain'),
+      el('functions:2.1', 'functions', 'capability', 'Chase payments', 'Function', 'functions:2'),
       el('apps:1', 'apps', 'application', 'Billing applications', 'Domain'),
       el('apps:1.1', 'apps', 'application', 'Rating engine', 'Level 1', 'apps:1'),
+      el('apps:1.2', 'apps', 'application', 'Dunning manager', 'Level 1', 'apps:1'),
     ],
-    relations: [{ type: 'realizes', from: 'apps:1.1', to: 'functions:1.1' }],
+    relations: [
+      { type: 'realizes', from: 'apps:1.1', to: 'functions:1.1' },
+      { type: 'realizes', from: 'apps:1.2', to: 'functions:2.1' },
+    ],
   };
   const res = await request.post('/api/v1/packs/upload', {
     headers: CSRF,
@@ -152,15 +158,65 @@ test('J9 · links between frameworks lead from one to the other', async ({ page,
     await expect(details.getByText('Realized by · Example applications')).toBeVisible();
 
     // Map one of your capabilities to it from here, and see the coverage follow.
-    await expect(page.getByText('0 of 3 mapped')).toBeVisible();
+    await expect(page.getByText('0 of 5 mapped')).toBeVisible();
     await details.getByRole('button', { name: 'Map one of your capabilities' }).click();
     await page.getByPlaceholder('Type to search…').fill('invoic');
     await page.getByRole('option').first().click();
     await toast(page, /maps to Rate usage/);
-    await expect(page.getByText('1 of 3 mapped')).toBeVisible();
+    await expect(page.getByText('1 of 5 mapped')).toBeVisible();
     await expect(page.getByRole('treeitem', { name: /Rate usage/ })).toContainText(
       '1 of your elements map here',
     );
+
+    // The gaps: what nothing of yours maps to. Nothing reaches them through links yet.
+    await page.getByRole('radio', { name: 'Gaps' }).click();
+    await expect(page.getByText('2 branches with nothing mapped', { exact: true })).toBeVisible();
+    const countThrough = page.getByRole('switch', { name: 'Count coverage through links' });
+    await expect(countThrough).toHaveCount(0);
+
+    // One of your applications maps to the application that realizes "Chase payments"…
+    await page.getByRole('button', { name: 'Reference frameworks' }).click();
+    await page.getByRole('menuitem', { name: /Example applications/ }).click();
+    await page.getByRole('treeitem', { name: /Dunning manager/ }).click();
+    await details.getByRole('button', { name: 'Map one of your applications' }).click();
+    await page.getByPlaceholder('Type to search…').fill('collections');
+    await page.getByRole('option', { name: /Collections Manager/ }).click();
+    await toast(page, /Collections Manager maps to Dunning manager/);
+
+    // …so that function is covered through the applications, apart from direct mappings.
+    await details.getByRole('button', { name: /Chase payments/ }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Example functions' })).toBeVisible();
+    await expect(page.getByText('1 of 5 mapped')).toBeVisible();
+    await expect(page.getByText('+1 through links')).toBeVisible();
+    await expect(page.getByRole('treeitem', { name: /Chase payments/ })).toContainText(
+      '1 of your elements reach here through other frameworks',
+    );
+    await expect(details.getByText('Nothing of yours maps to this directly.')).toBeVisible();
+    await expect(details.getByText('Through Example applications')).toBeVisible();
+    await expect(details.getByRole('button', { name: /^Collections Manager/ })).toBeVisible();
+    await expect(
+      details.getByText(/maps to 1\.2 Dunning manager, which realizes this/),
+    ).toBeVisible();
+
+    // The gaps can count it as covered, or not.
+    await page.getByRole('radio', { name: 'Gaps' }).click();
+    const tree = page.getByRole('tree', { name: 'Example functions' });
+    await expect(page.getByText('2 branches with nothing mapped', { exact: true })).toBeVisible();
+    await expect(tree.getByRole('treeitem', { name: /Collections/ })).toBeVisible();
+    await countThrough.click();
+    await expect(page).toHaveURL(/through=true/);
+    await expect(
+      page.getByText('1 branch with nothing mapped, directly or through links', { exact: true }),
+    ).toBeVisible();
+    await expect(tree.getByRole('treeitem', { name: /Collections/ })).toHaveCount(0);
+    await expect(tree.getByRole('treeitem', { name: /Produce invoices/ })).toBeVisible();
+
+    // The overview says where that coverage comes from.
+    await details.getByRole('button', { name: 'Close details' }).click();
+    await expect(details.getByText(/1 more is covered through other frameworks/)).toBeVisible();
+    await expect(
+      details.getByRole('button', { name: /1 through Example applications/ }),
+    ).toBeVisible();
   } finally {
     await request.delete('/api/v1/packs/e2e-frameworks', { headers: CSRF });
   }

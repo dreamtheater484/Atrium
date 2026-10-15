@@ -103,6 +103,7 @@ export function FrameworkTreeView({
   error,
   q,
   show,
+  through = false,
   selected,
   onSelect,
 }: {
@@ -111,6 +112,8 @@ export function FrameworkTreeView({
   error?: Error | null;
   q: string;
   show: FrameworkShow;
+  /** Count what's covered through other frameworks as mapped, for the filters. */
+  through?: boolean;
   selected: string | undefined;
   onSelect: (id: string | undefined) => void;
 }) {
@@ -141,14 +144,16 @@ export function FrameworkTreeView({
   const { included, lead } = useMemo(() => {
     if (!filtering) return { included: null, lead: new Set<string>() };
     const w = wordsKey ? wordsKey.split(' ') : [];
+    const mapped = (n: FrameworkNode) => n.mapped > 0 || (through && n.mappedThrough > 0);
+    const gap = (n: FrameworkNode) => n.mappedBelow === 0 && !(through && n.mappedThroughBelow > 0);
     const included = new Set<string>();
     for (const n of model.byId.values()) {
-      if (show === 'mapped' && n.mapped === 0) continue;
+      if (show === 'mapped' && !mapped(n)) continue;
       if (show === 'gaps') {
-        if (n.mappedBelow > 0) continue;
+        if (!gap(n)) continue;
         // Without a search, only where a gap starts: the rest of it is inside.
         const parent = n.parentId ? model.byId.get(n.parentId) : undefined;
-        if (!w.length && parent && parent.mappedBelow === 0) continue;
+        if (!w.length && parent && gap(parent)) continue;
       }
       if (w.length && !matches(n, w)) continue;
       included.add(n.id);
@@ -156,7 +161,7 @@ export function FrameworkTreeView({
     const lead = new Set<string>();
     for (const id of included) for (const a of ancestorsOf(model, id)) lead.add(a);
     return { included, lead };
-  }, [filtering, wordsKey, show, model]);
+  }, [filtering, wordsKey, show, through, model]);
 
   // While filtering, branches leading to matches start open; your clicks override that.
   const [toggles, setToggles] = useState<{ for: unknown; map: Map<string, boolean> }>({
@@ -317,14 +322,24 @@ export function FrameworkTreeView({
     : words.length
       ? count('match', 'matches')
       : show === 'gaps'
-        ? count('branch with nothing mapped', 'branches with nothing mapped')
-        : count('element with a mapping', 'elements with a mapping');
+        ? through
+          ? count(
+              'branch with nothing mapped, directly or through links',
+              'branches with nothing mapped, directly or through links',
+            )
+          : count('branch with nothing mapped', 'branches with nothing mapped')
+        : through
+          ? count(
+              'element mapped, directly or through links',
+              'elements mapped, directly or through links',
+            )
+          : count('element with a mapping', 'elements with a mapping');
 
   return (
     <div className="flex h-full min-h-0">
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex h-9 shrink-0 items-center gap-1 border-b border-border bg-surface-2/90 px-3 text-xs font-medium text-muted-foreground">
-          <span className="flex-1">{data ? heading : 'Name'}</span>
+          <span className="min-w-0 flex-1 truncate">{data ? heading : 'Name'}</span>
           <Tooltip content="Open everything">
             <Button
               size="icon-sm"
@@ -506,10 +521,26 @@ function TreeRow({
             {n.mapped}
             <span className="sr-only"> of your elements map here</span>
           </span>
-        ) : (
+        ) : n.mappedThrough > 0 ? null : (
           <span className="text-subtle-foreground" aria-hidden>
             –
           </span>
+        )}
+        {n.mappedThrough > 0 && (
+          <Tooltip
+            content={`${n.mappedThrough} of your ${n.mappedThrough === 1 ? 'elements covers' : 'elements cover'} this through other frameworks`}
+          >
+            <span
+              data-through
+              className={cn(
+                'inline-flex min-w-6 justify-center rounded-md px-1 outline-1 -outline-offset-1 outline-good outline-dashed text-[11px] text-good-foreground tabular',
+                n.mapped > 0 && 'ml-1',
+              )}
+            >
+              {n.mappedThrough}
+              <span className="sr-only"> of your elements reach here through other frameworks</span>
+            </span>
+          </Tooltip>
         )}
       </span>
       <span className="flex w-40 shrink-0 items-center gap-2 pl-4">

@@ -16,7 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Input,
-  Progress,
   Segmented,
   Select,
   Switch,
@@ -39,6 +38,7 @@ import {
   X,
 } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
+import { CoverageBar } from '../components/reference/coverage';
 import { FrameworkTreeView } from '../components/reference/framework-tree';
 import { TimeSlider } from '../components/time-slider';
 import { CapabilityMapView } from '../components/views/capability-map';
@@ -159,6 +159,8 @@ export function ExplorePage() {
   const refCount =
     tree.data?.totals.nodes ??
     refPack?.installed?.frameworks?.[reference?.framework ?? '']?.elements;
+  // Something is covered through another framework (a TAM application that realizes it).
+  const hasThrough = (tree.data?.totals.coveredThrough ?? 0) > 0;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -315,6 +317,15 @@ export function ExplorePage() {
             ]}
           />
         )}
+        {reference && view === 'tree' && search.show && hasThrough && (
+          <label className="flex items-center gap-2 text-[13px] text-muted-foreground">
+            <Switch
+              checked={!!search.through}
+              onCheckedChange={(c) => set({ through: c || undefined })}
+            />{' '}
+            Count coverage through links
+          </label>
+        )}
         {!reference &&
           !(view === 'table' && search.layer === 'reference') &&
           (view === 'table' || view === 'landscape') &&
@@ -390,13 +401,16 @@ export function ExplorePage() {
               {tree.data.totals.covered.toLocaleString('en-GB')} of{' '}
               {tree.data.totals.nodes.toLocaleString('en-GB')} mapped
             </span>
-            <Progress
-              value={
-                tree.data.totals.covered
-                  ? Math.max(2, (tree.data.totals.covered / tree.data.totals.nodes) * 100)
-                  : 0
-              }
-              tone="good"
+            {hasThrough && (
+              <span className="tabular">
+                +{tree.data.totals.coveredThrough.toLocaleString('en-GB')} through links
+              </span>
+            )}
+            <CoverageBar
+              covered={tree.data.totals.covered}
+              through={tree.data.totals.coveredThrough}
+              total={tree.data.totals.nodes}
+              min={2}
               label="Elements of the framework with a mapping"
               className="w-24"
             />
@@ -412,6 +426,7 @@ export function ExplorePage() {
             error={tree.error}
             q={q}
             show={search.show}
+            through={!!search.through && hasThrough}
             selected={search.node}
             onSelect={(id) => set({ node: id })}
           />

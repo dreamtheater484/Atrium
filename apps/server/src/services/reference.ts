@@ -136,6 +136,48 @@ function crossLinks(index: ModelIndex, el: Element, inFramework: Set<string>) {
   return out;
 }
 
+/**
+ * Links that pass coverage on: an element of another framework that realizes or supports this
+ * one covers it for everything of yours that maps to that element (a TAM application realizes
+ * a function). Only that way round: mapping to the function says nothing about the application.
+ */
+const COVERING_LINKS: ReadonlySet<Relation['type']> = new Set(['realizes', 'supports']);
+
+interface Through {
+  rel: Relation;
+  via: Element;
+  mappers: Relation[];
+}
+
+/** Elements of other frameworks that cover this one, with your elements that map to them. */
+function throughLinks(
+  index: ModelIndex,
+  el: Element,
+  inFramework: Set<string>,
+  mappersOf: (id: string) => Relation[] = (id) => mappers(index, id),
+): Through[] {
+  const out: Through[] = [];
+  for (const rel of index.incoming(el.id)) {
+    if (!COVERING_LINKS.has(rel.type)) continue;
+    const via = index.get(rel.sourceId);
+    if (via?.layer !== 'reference' || inFramework.has(via.id)) continue;
+    const m = mappersOf(via.id);
+    if (m.length) out.push({ rel, via, mappers: m });
+  }
+  return out;
+}
+
+/** A node's own ids and those of its children's branches; undefined when there are none. */
+function union(own: Set<string> | undefined, kids: Element[], below: Map<string, Set<string>>) {
+  let set: Set<string> | undefined;
+  for (const sets of [...kids.map((c) => below.get(c.id)), own])
+    if (sets?.size) {
+      set ??= new Set();
+      for (const x of sets) set.add(x);
+    }
+  return set;
+}
+
 function relationLabel(type: Relation['type'], direction: 'out' | 'in') {
   const def = RELATION_TYPE_DEFS[type];
   return direction === 'out' ? def.label : (def.inverseLabel ?? def.label);
@@ -188,31 +230,61 @@ export function buildFrameworkTree(m: Members, packs: Map<string, PackInfo>): Fr
     const rels = mappers(index, m.id);
     if (rels.length) direct.set(m.id, new Set(rels.map((r) => r.sourceId)));
   }
+  // And what reaches it through other frameworks, per framework for the overview.
+  const through = new Map<string, Set<string>>();
+  const viaMappers = new Map<string, Relation[]>();
+  const mappersOf = (id: string) => {
+    const known = viaMappers.get(id);
+    if (known) return known;
+    const m = mappers(index, id);
+    viaMappers.set(id, m);
+    return m;
+  };
+  const byFramework = new Map<
+    string,
+    { framework: FrameworkRef; covered: Set<string>; mapped: Set<string> }
+  >();
+  for (const m of members) {
+    const links = throughLinks(index, m, inFramework, mappersOf);
+    if (!links.length) continue;
+    const set = new Set<string>();
+    for (const l of links) {
+      const fw = frameworkRef(packs, l.via);
+      const k = `${fw.packId}|${fw.id}`;
+      const g = byFramework.get(k) ?? { framework: fw, covered: new Set(), mapped: new Set() };
+      if (!direct.has(m.id)) g.covered.add(m.id);
+      for (const r of l.mappers) {
+        set.add(r.sourceId);
+        g.mapped.add(r.sourceId);
+      }
+      byFramework.set(k, g);
+    }
+    through.set(m.id, set);
+  }
+
   const below = new Map<string, Set<string>>();
+  const throughBelow = new Map<string, Set<string>>();
   const size = new Map<string, number>();
   const covered = new Map<string, number>();
+  const coveredThrough = new Map<string, number>();
   for (let i = order.length - 1; i >= 0; i--) {
     const { el } = order[i]!;
-    let set: Set<string> | undefined;
+    const kids = children.get(el.id) ?? [];
     let n = 1;
     let c = direct.has(el.id) ? 1 : 0;
-    for (const child of children.get(el.id) ?? []) {
+    let t = !c && through.has(el.id) ? 1 : 0;
+    for (const child of kids) {
       n += size.get(child.id) ?? 0;
       c += covered.get(child.id) ?? 0;
-      const cs = below.get(child.id);
-      if (cs?.size) {
-        set ??= new Set();
-        for (const x of cs) set.add(x);
-      }
+      t += coveredThrough.get(child.id) ?? 0;
     }
-    const own = direct.get(el.id);
-    if (own) {
-      set ??= new Set();
-      for (const x of own) set.add(x);
-    }
+    const set = union(direct.get(el.id), kids, below);
     if (set) below.set(el.id, set);
+    const tset = union(through.get(el.id), kids, throughBelow);
+    if (tset) throughBelow.set(el.id, tset);
     size.set(el.id, n);
     covered.set(el.id, c);
+    coveredThrough.set(el.id, t);
   }
 
   const linkGroups = new Map<string, FrameworkLinkSummary & { ids: Set<string> }>();
@@ -248,12 +320,17 @@ export function buildFrameworkTree(m: Members, packs: Map<string, PackInfo>): Fr
       mappedBelow: below.get(el.id)?.size ?? 0,
       size: size.get(el.id) ?? 1,
       covered: covered.get(el.id) ?? 0,
+      mappedThrough: through.get(el.id)?.size ?? 0,
+      mappedThroughBelow: throughBelow.get(el.id)?.size ?? 0,
+      coveredThrough: coveredThrough.get(el.id) ?? 0,
       links: links.length,
     };
   });
 
   const allMapped = new Set<string>();
   for (const s of direct.values()) for (const x of s) allMapped.add(x);
+  const allThrough = new Set<string>();
+  for (const s of through.values()) for (const x of s) allThrough.add(x);
   const elementType = config?.elementType ?? members[0]!.type;
   return {
     pack: { id: packId, name: pack?.name ?? packId, version: pack?.version ?? '' },
@@ -270,10 +347,19 @@ export function buildFrameworkTree(m: Members, packs: Map<string, PackInfo>): Fr
       covered: direct.size,
       mappedElements: allMapped.size,
       candidates: index.ofType(elementType, 'org').length,
+      coveredThrough: [...through.keys()].filter((id) => !direct.has(id)).length,
+      mappedThroughElements: allThrough.size,
     },
     links: [...linkGroups.values()]
       .map(({ ids, ...g }) => ({ ...g, elements: ids.size }))
       .sort((a, b) => b.count - a.count),
+    through: [...byFramework.values()]
+      .map((g) => ({
+        framework: g.framework,
+        covered: g.covered.size,
+        mappedElements: g.mapped.size,
+      }))
+      .sort((a, b) => b.covered - a.covered || b.mappedElements - a.mappedElements),
   };
 }
 
@@ -305,16 +391,19 @@ export async function frameworkNode(
   nodeId: string,
   opts: { scenarioId?: string } = {},
 ): Promise<FrameworkNodeDetail> {
-  const { index, inFramework, children, parentOf } = await loadFramework(
-    deps,
-    ctx,
-    packId,
-    frameworkId,
-    opts.scenarioId,
-  );
+  const members = await loadFramework(deps, ctx, packId, frameworkId, opts.scenarioId);
+  return buildFrameworkNode(members, await installedPacks(deps), nodeId);
+}
+
+/** One element of the framework: where it sits, what of yours maps to it, and its links. */
+export function buildFrameworkNode(
+  m: Members,
+  packs: Map<string, PackInfo>,
+  nodeId: string,
+): FrameworkNodeDetail {
+  const { index, inFramework, children, parentOf } = m;
   const el = index.get(nodeId);
   if (!el || !inFramework.has(nodeId)) throw notFound('That element of the framework');
-  const packs = await installedPacks(deps);
 
   const path: FrameworkNodeDetail['path'] = [];
   const seen = new Set([el.id]);
@@ -386,6 +475,45 @@ export async function frameworkNode(
     }))
     .sort((a, b) => a.element.name.localeCompare(b.element.name));
 
+  // Your elements that reach it through other frameworks, grouped by framework and element.
+  type ThroughItem = FrameworkNodeDetail['mappedThrough'][number]['items'][number];
+  const throughGroups = new Map<
+    string,
+    { framework: FrameworkRef; byElement: Map<string, ThroughItem> }
+  >();
+  for (const { rel, via, mappers: rels } of throughLinks(index, el, inFramework)) {
+    const fw = frameworkRef(packs, via);
+    const k = `${fw.packId}|${fw.id}`;
+    const g = throughGroups.get(k) ?? { framework: fw, byElement: new Map<string, ThroughItem>() };
+    for (const r of rels) {
+      const src = index.get(r.sourceId)!;
+      const item = g.byElement.get(src.id) ?? {
+        element: { ...index.summary(src), domainName: index.domainName(src) },
+        via: [],
+      };
+      if (!item.via.some((v) => v.id === via.id))
+        item.via.push({
+          id: via.id,
+          key: referenceKey(via),
+          name: via.name,
+          label: relationLabel(rel.type, 'out'),
+        });
+      g.byElement.set(src.id, item);
+    }
+    throughGroups.set(k, g);
+  }
+  const mappedThrough = [...throughGroups.values()]
+    .map((g) => ({
+      framework: g.framework,
+      items: [...g.byElement.values()]
+        .map((item) => ({
+          ...item,
+          via: item.via.sort((a, b) => collator.compare(a.key ?? a.name, b.key ?? b.name)),
+        }))
+        .sort((a, b) => a.element.name.localeCompare(b.element.name)),
+    }))
+    .sort((a, b) => a.framework.name.localeCompare(b.framework.name));
+
   const domain = el.attributes.domain;
   return {
     id: el.id,
@@ -400,6 +528,7 @@ export async function frameworkNode(
     children: children.get(el.id)?.length ?? 0,
     mappedFrom,
     mappedBelow: { elements: items.length, items: items.slice(0, MAPPED_BELOW_LIMIT) },
+    mappedThrough,
     links,
   };
 }

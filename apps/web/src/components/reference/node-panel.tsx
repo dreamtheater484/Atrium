@@ -1,12 +1,12 @@
 import { type FrameworkNodeLink, type FrameworkTree, typeDef } from '@atrium/schema';
-import { Badge, Button, cn, HealthDot, Progress, Skeleton, TypeIcon, toast } from '@atrium/ui';
+import { Badge, Button, cn, HealthDot, Skeleton, TypeIcon, toast } from '@atrium/ui';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronRight, ExternalLink, Link2, Plus, X } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useCreateRelation, useDeleteRelation, useFrameworkNode } from '../../lib/queries';
 import { inspect } from '../../lib/store';
 import { ElementPicker } from '../element-picker';
-import { BranchCoverage } from './coverage';
+import { BranchCoverage, CoverageBar, ThroughSwatch } from './coverage';
 
 const n = (v: number) => v.toLocaleString('en-GB');
 
@@ -102,9 +102,11 @@ function Overview({
       </div>
       <Section title="Your model against it">
         <div className="flex items-center gap-3">
-          <Progress
-            value={pct > 0 ? Math.max(pct, 2) : 0}
-            tone="good"
+          <CoverageBar
+            covered={totals.covered}
+            through={totals.coveredThrough}
+            total={totals.nodes}
+            min={2}
             label="Elements of the framework with a mapping"
             className="flex-1"
           />
@@ -119,6 +121,34 @@ function Overview({
             {n(totals.mappedElements)} of your {n(totals.candidates)} {plural} map here.
           </span>
         </p>
+        {totals.coveredThrough > 0 && (
+          <>
+            <p className="text-[13px]">
+              <strong className="font-semibold">{n(totals.coveredThrough)}</strong> more{' '}
+              {totals.coveredThrough === 1 ? 'is' : 'are'} covered through other frameworks, by{' '}
+              {n(totals.mappedThroughElements)} of your elements that map there.
+            </p>
+            <ul className="flex flex-col gap-1">
+              {tree.through.map((t) => (
+                <li key={`${t.framework.packId}-${t.framework.id}`}>
+                  <button
+                    type="button"
+                    onClick={() => openFramework(t.framework.packId, t.framework.id)}
+                    className="flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] hover:bg-surface-2"
+                  >
+                    <ThroughSwatch />
+                    <span className="min-w-0 flex-1">
+                      {n(t.covered)} through <span className="font-medium">{t.framework.name}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {n(t.mappedElements)} of your elements map to it
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </Section>
       <Section title="By branch">
         <ul className="flex flex-col">
@@ -289,7 +319,9 @@ function NodeDetail({
           <>
             {d.mappedFrom.length === 0 ? (
               <p className="text-[13px] text-muted-foreground">
-                Nothing of yours maps to this yet.
+                {d.mappedThrough.length
+                  ? 'Nothing of yours maps to this directly.'
+                  : 'Nothing of yours maps to this yet.'}
               </p>
             ) : (
               <ul className="flex flex-col">
@@ -346,6 +378,49 @@ function NodeDetail({
                 </Button>
               }
             />
+            {d.mappedThrough.map((g) => (
+              <div
+                key={`${g.framework.packId}-${g.framework.id}`}
+                className="flex flex-col gap-0.5 pt-2"
+              >
+                <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <ThroughSwatch className="mt-0" />
+                  Through {g.framework.name}
+                </p>
+                <ul className="flex flex-col">
+                  {g.items.map((m) => (
+                    <li key={m.element.id} className="flex flex-col rounded-lg px-2 py-1">
+                      <button
+                        type="button"
+                        onClick={() => inspect(m.element.id)}
+                        className="flex items-center gap-2 text-left text-[13px] hover:underline"
+                      >
+                        <TypeIcon type={m.element.type} size="xs" />
+                        <span className="truncate font-medium">{m.element.name}</span>
+                        <HealthDot health={m.element.health} />
+                        <span className="ml-auto truncate text-xs text-muted-foreground">
+                          {m.element.domainName}
+                        </span>
+                      </button>
+                      {m.via.map((v) => (
+                        <span key={v.id} className="pl-6 text-xs text-muted-foreground">
+                          maps to{' '}
+                          <button
+                            type="button"
+                            onClick={() => openFramework(g.framework.packId, g.framework.id, v.id)}
+                            className="hover:text-foreground hover:underline"
+                          >
+                            {v.key ? `${v.key} ` : ''}
+                            {v.name}
+                          </button>
+                          , which {v.label} this
+                        </span>
+                      ))}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
             {node && node.size > 1 && (
               <div className="flex flex-col gap-1.5 pt-2">
                 <p className="text-[13px]">
@@ -355,6 +430,14 @@ function NodeDetail({
                     ? typeLabel.label.toLowerCase()
                     : typeLabel.plural.toLowerCase()}
                   .
+                  {node.coveredThrough > 0 && (
+                    <>
+                      {' '}
+                      <strong className="font-semibold">{n(node.coveredThrough)}</strong> more{' '}
+                      {node.coveredThrough === 1 ? 'is' : 'are'} covered through other frameworks,
+                      by {n(node.mappedThroughBelow)} of your elements.
+                    </>
+                  )}
                 </p>
                 <BranchCoverage node={node} wide />
                 {d.mappedBelow.items.length > 0 && (

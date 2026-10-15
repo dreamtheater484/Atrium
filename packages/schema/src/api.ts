@@ -250,6 +250,16 @@ export interface FrameworkNode {
   size: number;
   /** Elements in this branch with at least one mapping. */
   covered: number;
+  /**
+   * Your elements that reach this one through another framework: they map to an element there
+   * that realizes or supports it (an application mapped to a TAM application that realizes this
+   * function).
+   */
+  mappedThrough: number;
+  /** The same for this one or anything below it (each counted once). */
+  mappedThroughBelow: number;
+  /** Elements in this branch reached only through other frameworks (not counted in covered). */
+  coveredThrough: number;
   /** Links to elements of other frameworks (a TAM application realizes functions). */
   links: number;
 }
@@ -291,8 +301,20 @@ export interface FrameworkTree {
     mappedElements: number;
     /** Your elements of this framework's type: what could map to it. */
     candidates: number;
+    /** Elements reached only through other frameworks (not counted in covered). */
+    coveredThrough: number;
+    /** Your elements that reach this framework through others. */
+    mappedThroughElements: number;
   };
   links: FrameworkLinkSummary[];
+  /** Coverage through each other framework, most first. */
+  through: Array<{
+    framework: FrameworkRef;
+    /** Elements of this framework reached through it and not mapped directly. */
+    covered: number;
+    /** Your elements that map to it and reach this framework. */
+    mappedElements: number;
+  }>;
 }
 
 export interface FrameworkNodeLink {
@@ -335,6 +357,15 @@ export interface FrameworkNodeDetail {
       to: Array<{ id: string; key: string | null; name: string }>;
     }>;
   };
+  /** Your elements that reach this one through other frameworks, framework by framework. */
+  mappedThrough: Array<{
+    framework: FrameworkRef;
+    items: Array<{
+      element: ElementSummary & { domainName: string | null };
+      /** What it maps to there, and how that links here ("realizes"). */
+      via: Array<{ id: string; key: string | null; name: string; label: string }>;
+    }>;
+  }>;
   links: FrameworkNodeLink[];
 }
 

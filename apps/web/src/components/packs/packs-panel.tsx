@@ -33,11 +33,29 @@ interface Pack {
   homepage?: string;
   frameworks: Array<{ id: string; name: string; elementType: ElementType; description?: string }>;
   bundled: boolean;
-  installed: { version: string; elements: number; installedAt: string } | null;
+  installed: {
+    version: string;
+    elements: number;
+    installedAt: string;
+    frameworks?: Record<string, { elements: number; version?: string }>;
+  } | null;
+}
+
+interface FilesReport {
+  version: string;
+  versionFrom: 'entered' | 'files' | 'date';
+  files: Array<{
+    name: string;
+    reader: string | null;
+    sheets: Array<{ name: string; loaded: boolean; note: string }>;
+    notes: string[];
+  }>;
+  frameworks: Array<{ id: string; name: string; elementType: ElementType; elements: number }>;
+  notes: string[];
 }
 
 interface FilesPreview {
-  warnings: string[];
+  report: FilesReport;
   installedVersion: string | null;
   validation: { ok: boolean; errors: string[]; warnings: string[]; counts: Record<string, number> };
   diff: {
@@ -83,20 +101,28 @@ export function PacksPanel() {
     mutationFn: ({ install: doInstall }: { install: boolean }) => {
       const form = new FormData();
       for (const f of files) form.append('file', f, f.name);
-      return api<FilesPreview & { added?: number; moved?: number; flagged?: number }>(
-        `/packs/${loading!.id}/files`,
-        {
-          body: form,
-          query: { version: version || undefined, install: doInstall ? 'true' : undefined },
-        },
-      );
+      return api<
+        FilesPreview & {
+          added?: number;
+          changed?: number;
+          renamed?: number;
+          removed?: number;
+          links?: number;
+          moved?: number;
+          flagged?: number;
+        }
+      >(`/packs/${loading!.id}/files`, {
+        body: form,
+        query: { version: version || undefined, install: doInstall ? 'true' : undefined },
+      });
     },
     onSuccess: (r, vars) => {
       if (vars.install) {
         refresh();
         setLoading(null);
+        const changes = (r.added ?? 0) + (r.changed ?? 0) + (r.renamed ?? 0) + (r.removed ?? 0);
         toast.success(
-          `Installed. ${r.moved ? `${r.moved} mappings moved to new elements. ` : ''}${r.flagged ? `${r.flagged} mappings need a look.` : ''}`,
+          `Installed ${r.report.frameworks.map((f) => f.name).join(', ')} ${r.report.version}. ${count(changes, 'element')} added or updated${r.links ? `, ${count(r.links, 'link')} added` : ''}. ${r.moved ? `${count(r.moved, 'mapping')} moved to new elements. ` : ''}${r.flagged ? `${count(r.flagged, 'mapping')} need a look.` : ''}`,
         );
       } else setPreview(r);
     },
@@ -134,12 +160,17 @@ export function PacksPanel() {
             </div>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {p.frameworks.map((f) => (
-              <Badge key={f.id} tone="outline">
-                <TypeIcon type={f.elementType} size="xs" /> {f.name} →{' '}
-                {typeDef(f.elementType).plural.toLowerCase()}
-              </Badge>
-            ))}
+            {p.frameworks.map((f) => {
+              const inst = p.installed?.frameworks?.[f.id];
+              return (
+                <Badge key={f.id} tone={inst ? 'good' : 'outline'}>
+                  <TypeIcon type={f.elementType} size="xs" /> {f.name} →{' '}
+                  {typeDef(f.elementType).plural.toLowerCase()}
+                  {inst &&
+                    ` · ${inst.elements.toLocaleString('en-GB')}${inst.version ? ` from ${inst.version}` : ''}`}
+                </Badge>
+              );
+            })}
           </div>
           <div className="flex flex-wrap gap-2">
             {p.bundled ? (
@@ -210,8 +241,9 @@ export function PacksPanel() {
           <DialogHeader>
             <DialogTitle>{loading?.name}: add source files</DialogTitle>
             <DialogDescription>
-              Drop the spreadsheets you are licensed to use. Atrium works out which framework each
-              sheet holds and shows the changes before anything is installed.
+              Choose the spreadsheets you are licensed to use, several at once if you like. Atrium
+              works out which framework each file holds and shows the changes before anything is
+              installed. Frameworks you don't include stay as they are.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3">
@@ -236,35 +268,18 @@ export function PacksPanel() {
               }}
             />
             <div className="grid gap-1.5">
-              <Label>Version (as published)</Label>
+              <Label htmlFor="pack-version">Version (as published)</Label>
               <Input
+                id="pack-version"
                 value={version}
-                onChange={(e) => setVersion(e.target.value)}
-                placeholder="e.g. 24.5"
+                onChange={(e) => {
+                  setVersion(e.target.value);
+                  setPreview(null);
+                }}
+                placeholder="Taken from the files when left empty"
               />
             </div>
-            {preview && (
-              <div className="rounded-xl bg-surface-2 p-3 text-[13px]">
-                <div className="mb-2 flex flex-wrap gap-1.5">
-                  <Badge tone="good">{preview.diff.added} new</Badge>
-                  <Badge tone="primary">{preview.diff.renamed} renamed</Badge>
-                  <Badge>{preview.diff.changed} changed</Badge>
-                  <Badge tone="act">{preview.diff.removed} removed</Badge>
-                  <Badge>{preview.diff.unchanged} unchanged</Badge>
-                </div>
-                {preview.diff.removedMapped.length > 0 && (
-                  <p className="text-xs text-watch-foreground">
-                    {preview.diff.removedMapped.length} removed elements have mappings. They move to
-                    the replacement where the source names one; the rest are flagged for review.
-                  </p>
-                )}
-                <ul className="mt-2 list-disc pl-5 text-xs text-muted-foreground">
-                  {preview.warnings.slice(0, 8).map((w) => (
-                    <li key={w}>{w}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {preview && <FilesPreviewPanel preview={preview} />}
           </div>
           <DialogFooter>
             {!preview ? (
@@ -273,7 +288,7 @@ export function PacksPanel() {
                 disabled={!files.length || upload.isPending}
                 onClick={() => upload.mutate({ install: false })}
               >
-                Check the files
+                {upload.isPending ? 'Reading the files…' : 'Check the files'}
               </Button>
             ) : (
               <Button
@@ -281,12 +296,106 @@ export function PacksPanel() {
                 disabled={upload.isPending || !preview.validation.ok}
                 onClick={() => upload.mutate({ install: true })}
               >
-                Install
+                {upload.isPending ? 'Installing… this can take a minute' : 'Install'}
               </Button>
             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+const count = (n: number, one: string) =>
+  `${n.toLocaleString('en-GB')} ${n === 1 ? one : `${one}s`}`;
+
+/** What the files hold, what changes, and what was left out and why. */
+function FilesPreviewPanel({ preview }: { preview: FilesPreview }) {
+  const { report, diff, validation } = preview;
+  const versionNote = {
+    entered: 'as entered',
+    files: 'from the files',
+    date: "today's date: the files don't state a release",
+  }[report.versionFrom];
+  return (
+    <div className="flex flex-col gap-3 rounded-xl bg-surface-2 p-3 text-[13px]">
+      <div>
+        <p className="font-medium">
+          Version {report.version}{' '}
+          <span className="font-normal text-muted-foreground">({versionNote})</span>
+        </p>
+        <ul className="mt-1.5 flex flex-col gap-1">
+          {report.frameworks.map((f) => (
+            <li key={f.id} className="flex items-center gap-2">
+              <TypeIcon type={f.elementType} size="xs" />
+              <span className="min-w-0 flex-1">{f.name}</span>
+              <span className="text-muted-foreground tabular-nums">
+                {f.elements.toLocaleString('en-GB')} {typeDef(f.elementType).plural.toLowerCase()}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <Badge tone="good">{diff.added.toLocaleString('en-GB')} new</Badge>
+        <Badge tone="primary">{diff.renamed.toLocaleString('en-GB')} renamed</Badge>
+        <Badge>{diff.changed.toLocaleString('en-GB')} changed</Badge>
+        <Badge tone="act">{diff.removed.toLocaleString('en-GB')} removed</Badge>
+        <Badge>{diff.unchanged.toLocaleString('en-GB')} unchanged</Badge>
+      </div>
+      {diff.removedMapped.length > 0 && (
+        <p className="text-xs text-watch-foreground">
+          {diff.removedMapped.length} removed elements have mappings. They move to the replacement
+          where the source names one; the rest are flagged for review.
+        </p>
+      )}
+      {!validation.ok && (
+        <div className="text-xs text-act-foreground">
+          <p className="font-medium">These files can't be installed:</p>
+          <ul className="mt-1 list-disc pl-5">
+            {validation.errors.slice(0, 8).map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+            {validation.errors.length > 8 && <li>and {validation.errors.length - 8} more</li>}
+          </ul>
+        </div>
+      )}
+      {report.notes.length > 0 && (
+        <ul className="list-disc pl-5 text-xs text-muted-foreground">
+          {report.notes.map((n) => (
+            <li key={n}>{n}</li>
+          ))}
+        </ul>
+      )}
+      <details className="text-xs text-muted-foreground">
+        <summary className="cursor-pointer">What was read from each file</summary>
+        <div className="mt-2 flex flex-col gap-2">
+          {report.files.map((f) => (
+            <div key={f.name}>
+              <p className="font-medium text-foreground">
+                {f.name}{' '}
+                <span className="font-normal text-muted-foreground">
+                  · {f.reader ?? 'read by its column headers'}
+                </span>
+              </p>
+              <ul className="mt-0.5 pl-3">
+                {f.sheets.map((sh) => (
+                  <li key={sh.name}>
+                    {sh.loaded ? '✓' : '–'} {sh.name}: {sh.note}
+                  </li>
+                ))}
+              </ul>
+              {f.notes.length > 0 && (
+                <ul className="mt-0.5 list-disc pl-5">
+                  {f.notes.map((n) => (
+                    <li key={n}>{n}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      </details>
     </div>
   );
 }

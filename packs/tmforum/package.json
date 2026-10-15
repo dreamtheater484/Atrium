@@ -1,10 +1,19 @@
 {
   "name": "@atrium/pack-tmforum",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Importer configuration for TM Forum frameworks (eTOM, SID, ODA Functional Framework, ODA Components). Contains no TM Forum content.",
+  "description": "Importers for TM Forum frameworks (eTOM, SID, Functional Framework, Application Framework, ODA Components). Contains no TM Forum content.",
   "type": "module",
   "exports": {
+    ".": "./src/index.ts",
     "./manifest.json": "./manifest.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@atrium/packs-core": "workspace:*",
+    "@atrium/schema": "workspace:*"
   }
 }

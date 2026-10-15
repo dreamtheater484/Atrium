@@ -235,6 +235,9 @@ importers:
       '@atrium/mcp':
         specifier: workspace:*
         version: link:../../packages/mcp
+      '@atrium/pack-tmforum':
+        specifier: workspace:*
+        version: link:../../packs/tmforum
       '@atrium/packs-core':
         specifier: workspace:*
         version: link:../../packages/packs-core
@@ -503,7 +506,14 @@ importers:
         specifier: ^19.3.0
         version: 19.3.0(react@19.3.0)
 
-  packs/tmforum: {}
+  packs/tmforum:
+    dependencies:
+      '@atrium/packs-core':
+        specifier: workspace:*
+        version: link:../../packages/packs-core
+      '@atrium/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
 
 packages:
 

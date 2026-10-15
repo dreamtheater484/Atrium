@@ -54,6 +54,7 @@ export const packRelationSchema = z.object({
   from: z.string(),
   to: z.string(),
 });
+export type PackRelation = z.infer<typeof packRelationSchema>;
 
 export const packContentSchema = z.object({
   format: z.literal('atrium-pack'),
@@ -122,12 +123,34 @@ export interface PackDiff {
  * Compares the installed version with an incoming one. Elements are matched on their stable
  * source id, then on "replaces", then on name, so renames and re-numbering keep your mappings.
  */
+/** JSON with object keys sorted, so equal values compare equal whatever their key order. */
+function stableJson(value: unknown): string {
+  return JSON.stringify(value, (_k, v) =>
+    v && typeof v === 'object' && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+      : v,
+  );
+}
+
 export function diffPack(
-  installed: Array<InstalledReference & { description?: string; parentKey?: string | null }>,
+  installed: Array<
+    InstalledReference & {
+      description?: string;
+      parentKey?: string | null;
+      /** Compared when given (without the "framework" attribute Atrium adds). */
+      attributes?: Record<string, unknown>;
+    }
+  >,
   incoming: PackContent,
 ): PackDiff {
   const byKey = new Map(installed.filter((i) => i.key).map((i) => [i.key!, i]));
-  const byName = new Map(installed.map((i) => [`${i.type}:${normalizeName(i.name)}`, i]));
+  // Matching on name is for elements whose id changed: never take one still present under its own id.
+  const incomingIds = new Set(incoming.elements.map((e) => e.sourceId));
+  const byName = new Map(
+    installed
+      .filter((i) => !i.key || !incomingIds.has(i.key))
+      .map((i) => [`${i.type}:${normalizeName(i.name)}`, i]),
+  );
   const used = new Set<string>();
   const diff: PackDiff = { added: [], renamed: [], changed: [], removed: [], unchanged: 0 };
   for (const e of incoming.elements) {
@@ -143,7 +166,9 @@ export function diffPack(
     else if (
       (hit.description ?? '') !== (e.description ?? '') ||
       (hit.parentKey ?? undefined) !== e.parentSourceId ||
-      hit.key !== e.sourceId
+      hit.key !== e.sourceId ||
+      (hit.attributes !== undefined &&
+        stableJson(hit.attributes) !== stableJson(e.attributes ?? {}))
     )
       diff.changed.push({ element: e, id: hit.id });
     else diff.unchanged++;
@@ -167,3 +192,5 @@ export const PACK_RELATIONS: RelationType[] = [
   'stores',
   'uses',
 ];
+
+export * from './sources';

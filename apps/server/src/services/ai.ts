@@ -53,9 +53,12 @@ const MAP_STOP = new Set(
   ),
 );
 
+/** "CustomerAccount" → "Customer Account": reference models such as SID name entities this way. */
+const spaced = (text: string) => text.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+
 function nameWords(text: string): Set<string> {
   return new Set(
-    normalizeName(text.replace(/&/g, ' and '))
+    normalizeName(spaced(text).replace(/&/g, ' and '))
       .split(' ')
       .filter((w) => w.length > 1 && !MAP_STOP.has(w))
       .map(stem),
@@ -234,7 +237,7 @@ export class RuleBasedAssistant implements AiProvider {
 
   suggestMappings(el: Element, index: ModelIndex, limit = 3): Match[] {
     const mapped = new Set(index.outgoing(el.id, 'maps_to').map((r) => r.targetId));
-    const plain = (s: string) => normalizeName(s.replace(/&/g, ' and '));
+    const plain = (s: string) => normalizeName(spaced(s).replace(/&/g, ' and '));
     const name = nameWords(el.name);
     const desc = words(el.description);
     const matches: Match[] = [];

@@ -78,9 +78,12 @@ arrive in *Changes → Waiting for review*, each with a before and after. *Appro
 *Decline* with a note; anything applied can be undone from history.
 
 **Reference models.** Settings → Industry packs. Install the starter capability reference, or
-load your licensed TM Forum files (eTOM, SID, ODA Functional Framework and Components). *Map your
-model* suggests the closest reference element for each of yours; strong matches are pre-ticked,
-so mapping is one click. Updating a pack later moves your mappings to the new version.
+load your licensed TM Forum workbooks (eTOM GB921, SID GB922, Functional Framework GB1033F and
+Application Framework GB929F) in one go: Atrium recognises each file, takes the version from it
+and shows what it will load before you install. A later upload replaces only the frameworks it
+contains. *Map your model* suggests the closest reference element for each of yours; strong
+matches are pre-ticked, so mapping is one click. Updating a pack later moves your mappings to the
+new version.
 
 ## Managers
 

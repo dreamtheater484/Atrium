@@ -403,12 +403,14 @@ atrium/
 | Videos recorded with Playwright | Sharp 2× screenshots, animated in Remotion | Deterministic, crisp at 1080p, and quick to re-render. |
 | — | Webhooks (signed, batched), added in phase 5 | Lets CI and chat tools react to model changes. |
 | — | Data completeness, contracts and end-of-support research, added after phase 5 | Missing costs, integrations and support dates are common; totals now say how complete they are. |
+| TM Forum: eTOM, SID, ODA Functional Framework and ODA Components importers; `manifest.yaml`, `importers/`, `mappings/` | Readers for the Excel workbooks members download: eTOM (GB921), SID (GB922), Functional Framework (GB1033F) and the Application Framework, TAM (GB929F), whose applications link to their functions. `manifest.json` plus `src/` readers; tests use invented workbooks. ODA Components are read by their column headers only | Those workbooks are what people have. Each needs its own reader: outlines, repeated rows, ids Excel turned into numbers. An upload replaces only the frameworks it contains. |
 
 **Not done yet**
 - **Performance targets** (50,000 elements, 2,000-node views under 1 second, search under 200 ms): designed for, but not load-tested.
 - **Real AI:** end-of-support research uses Claude with web search once `ATRIUM_AI=anthropic` and an API key are set (tested with canned results; no live call has been made yet). Other suggestions are still rule-based; a local model is not supported yet.
 - **Team server:** no SAML yet. No scheduled backups: backups are bundle exports, made by hand or by script. Migrations run automatically on start, but without a backup first, so take a backup before you update.
 - **Dashboard PowerPoint export:** the KPI slide layout needs polish.
+- **ODA Components:** no reader for TM Forum's component specifications yet, so components aren't linked to the Open APIs they expose and use.
 - **Video voiceover:** Kokoro on the CPU is final quality. A GPU is only needed to try other voices (see `apps/videos/voice/README.md`).
 - **Server code** is covered by the end-to-end tests rather than its own unit tests.
 

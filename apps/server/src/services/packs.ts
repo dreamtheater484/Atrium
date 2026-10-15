@@ -3,16 +3,22 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { asSystem } from '@atrium/db';
-import { type ParsedSheet, parseFile } from '@atrium/importers';
+import { parseFile } from '@atrium/importers';
+import { tmforumReaders } from '@atrium/pack-tmforum';
 import {
+  assembleSources,
   diffPack,
   type PackContent,
   type PackDiff,
   type PackElement,
   packContentSchema,
+  readByColumns,
+  type SheetReport,
+  type SourceReader,
+  type SourceResult,
   validatePack,
 } from '@atrium/packs-core';
-import { type Element, type ElementType, normalizeName } from '@atrium/schema';
+import type { Element, ElementType } from '@atrium/schema';
 import type { RequestContext } from '../auth/context';
 import { SYSTEM } from '../auth/context';
 import { badRequest, notFound } from '../http/errors';
@@ -31,8 +37,13 @@ interface FrameworkConfig {
   name: string;
   elementType: ElementType;
   description?: string;
+  /** Release of the installed content (set when installing). */
+  version?: string;
   detect?: { sheetWords?: string[]; headerWords?: string[] };
 }
+
+/** Packs whose source files have dedicated readers; other files fall back to column detection. */
+const PACK_READERS: Record<string, SourceReader[]> = { tmforum: tmforumReaders };
 
 export interface AvailablePack {
   id: string;
@@ -44,7 +55,13 @@ export interface AvailablePack {
   frameworks: FrameworkConfig[];
   columns?: Record<string, string[]>;
   bundled: boolean;
-  installed: { version: string; elements: number; installedAt: string } | null;
+  installed: {
+    version: string;
+    elements: number;
+    installedAt: string;
+    /** Per framework: elements installed and the release they came from. */
+    frameworks: Record<string, { elements: number; version?: string }>;
+  } | null;
 }
 
 function packsDir(): string | null {
@@ -70,8 +87,27 @@ function readJson<T>(file: string): T | null {
 export async function listPacks(deps: Deps): Promise<AvailablePack[]> {
   const dir = packsDir();
   const installed =
-    await deps.sql`select id, version, element_count, installed_at from reference_packs`;
+    await deps.sql`select id, version, manifest, element_count, installed_at from reference_packs`;
+  const counts = await deps.sql`
+    select pack, attributes->>'framework' as framework, count(*)::int as n from elements
+    where layer = 'reference' and deleted_at is null group by 1, 2`;
   const inst = new Map(installed.map((r) => [r.id as string, r]));
+  const installedInfo = (i: (typeof installed)[number]): AvailablePack['installed'] => {
+    const stored = (i.manifest as { frameworks?: FrameworkConfig[] } | null)?.frameworks ?? [];
+    const versions = new Map(stored.map((f) => [f.id, f.version]));
+    const frameworks: Record<string, { elements: number; version?: string }> = {};
+    for (const c of counts.filter((c) => c.pack === i.id))
+      frameworks[String(c.framework ?? '')] = {
+        elements: c.n as number,
+        version: versions.get(c.framework as string),
+      };
+    return {
+      version: i.version as string,
+      elements: Number(i.elementCount),
+      installedAt: new Date(i.installedAt as string).toISOString(),
+      frameworks,
+    };
+  };
   const packs: AvailablePack[] = [];
   for (const name of dir ? readdirSync(dir) : []) {
     const m = readJson<Omit<AvailablePack, 'installed' | 'bundled'> & { bundled?: boolean }>(
@@ -82,13 +118,7 @@ export async function listPacks(deps: Deps): Promise<AvailablePack[]> {
     packs.push({
       ...m,
       bundled: !!m.bundled && existsSync(join(dir!, name, 'pack.json')),
-      installed: i
-        ? {
-            version: i.version as string,
-            elements: Number(i.elementCount),
-            installedAt: new Date(i.installedAt as string).toISOString(),
-          }
-        : null,
+      installed: i ? installedInfo(i) : null,
     });
     inst.delete(m.id);
   }
@@ -102,11 +132,7 @@ export async function listPacks(deps: Deps): Promise<AvailablePack[]> {
       license: '',
       frameworks: [],
       bundled: false,
-      installed: {
-        version: i.version as string,
-        elements: Number(i.elementCount),
-        installedAt: new Date(i.installedAt as string).toISOString(),
-      },
+      installed: installedInfo(i),
     });
   }
   return packs;
@@ -124,114 +150,107 @@ function bundledContent(id: string): PackContent | null {
 }
 
 /* ------------------------------------------------------------------ */
-/* Spreadsheets → pack (TM Forum and similar sources)                  */
+/* Source files → pack (TM Forum and similar sources)                  */
 /* ------------------------------------------------------------------ */
 
-function findColumn(headers: string[], words: string[] = []): string | undefined {
-  const norm = headers.map((h) => [h, normalizeName(h)] as const);
-  for (const w of words) {
-    const exact = norm.find(([, n]) => n === normalizeName(w));
-    if (exact) return exact[0];
-  }
-  for (const w of words) {
-    const partial = norm.find(([, n]) => n.includes(normalizeName(w)));
-    if (partial) return partial[0];
-  }
-  return undefined;
+export interface FilesReport {
+  version: string;
+  /** Where the version came from: typed in, stated in the files, or today's date. */
+  versionFrom: 'entered' | 'files' | 'date';
+  files: Array<{ name: string; reader: string | null; sheets: SheetReport[]; notes: string[] }>;
+  /** Frameworks in these files: an update replaces only these and leaves the others. */
+  frameworks: Array<{ id: string; name: string; elementType: ElementType; elements: number }>;
+  notes: string[];
 }
 
-function detectFramework(
-  sheet: ParsedSheet,
-  frameworks: FrameworkConfig[],
-): FrameworkConfig | undefined {
-  let best: FrameworkConfig | undefined;
-  let bestScore = 0;
-  const sheetName = normalizeName(sheet.name);
-  const headers = sheet.headers.map(normalizeName).join(' ');
-  for (const f of frameworks) {
-    let score = 0;
-    for (const w of f.detect?.sheetWords ?? [])
-      if (sheetName.includes(normalizeName(w))) score += 3;
-    for (const w of f.detect?.headerWords ?? []) if (headers.includes(normalizeName(w))) score += 1;
-    if (score > bestScore) {
-      best = f;
-      bestScore = score;
-    }
-  }
-  return best ?? (frameworks.length === 1 ? frameworks[0] : undefined);
-}
-
-/** Builds a pack from source spreadsheets: finds id, name, parent and description columns. */
+/**
+ * Builds a pack from source files. Files a pack reader recognises (such as TM Forum's
+ * workbooks) are read by it; other spreadsheets fall back to finding id, name, parent and
+ * description columns for the frameworks without a reader.
+ */
 export async function packFromFiles(
+  deps: Deps,
   packId: string,
-  version: string,
+  version: string | undefined,
   files: Array<{ name: string; data: Uint8Array }>,
-) {
+): Promise<{ content: PackContent; report: FilesReport }> {
   const meta = (await listPacksStatic()).find((p) => p.id === packId);
   if (!meta) throw notFound('That pack');
-  const elements: PackElement[] = [];
-  const warnings: string[] = [];
+  const readers = PACK_READERS[packId] ?? [];
+  const withReader = new Set(readers.map((r) => r.framework));
+  const fallback = meta.frameworks.filter((f) => !withReader.has(f.id));
+  const results: SourceResult[] = [];
+  const reportFiles: FilesReport['files'] = [];
   for (const f of files) {
     const parsed = await parseFile(f.name, f.data);
-    if (parsed.format === 'atrium-yaml' || parsed.format === 'unknown') {
-      warnings.push(`${f.name}: not a spreadsheet; skipped.`);
+    if (!parsed.sheets) {
+      reportFiles.push({
+        name: f.name,
+        reader: null,
+        sheets: [],
+        notes: [parsed.warnings[0] ?? 'Not a spreadsheet; skipped.'],
+      });
       continue;
     }
-    for (const sheet of parsed.sheets ?? []) {
-      const fw = detectFramework(sheet, meta.frameworks);
-      if (!fw) {
-        warnings.push(`${f.name} / ${sheet.name}: couldn't tell which framework this is; skipped.`);
-        continue;
-      }
-      const cols = meta.columns ?? {};
-      const idCol = findColumn(sheet.headers, cols.id ?? ['id']);
-      const nameCol = findColumn(sheet.headers, cols.name ?? ['name']);
-      const parentCol = findColumn(sheet.headers, cols.parent ?? ['parent']);
-      const descCol = findColumn(sheet.headers, cols.description ?? ['description']);
-      if (!nameCol) {
-        warnings.push(`${f.name} / ${sheet.name}: no name column found; skipped.`);
-        continue;
-      }
-      let n = 0;
-      for (const row of sheet.rows) {
-        const name = String(row[nameCol] ?? '').trim();
-        if (!name) continue;
-        const sourceId =
-          String(row[idCol ?? ''] ?? '').trim() ||
-          `${fw.id}:${normalizeName(name).replace(/ /g, '-')}`;
-        // Dotted identifiers (eTOM "1.2.3") imply the parent "1.2".
-        let parent = parentCol ? String(row[parentCol] ?? '').trim() || undefined : undefined;
-        if (!parent && /^\d+(\.\d+)+$/.test(sourceId))
-          parent = sourceId.split('.').slice(0, -1).join('.');
-        elements.push({
-          sourceId,
-          framework: fw.id,
-          type: fw.elementType,
-          name,
-          description: descCol ? String(row[descCol] ?? '').trim() || undefined : undefined,
-          parentSourceId: parent,
-        });
-        n++;
-      }
-      warnings.push(`${f.name} / ${sheet.name}: ${n} ${fw.name} elements.`);
-    }
+    const source = { name: f.name, sheets: parsed.sheets };
+    const reader = readers.find((r) => r.recognises(source));
+    const res = reader
+      ? reader.read(source)
+      : readByColumns(source, fallback, meta.columns, { strict: readers.length > 0 });
+    results.push(res);
+    reportFiles.push({
+      name: f.name,
+      reader: reader?.label ?? null,
+      sheets: res.sheets,
+      notes: [...parsed.warnings, ...res.notes],
+    });
   }
+  const installed = (await installedRefs(deps, packId)).map((r) => ({
+    sourceId: r.el.key ?? '',
+    framework: String(r.el.attributes.framework ?? ''),
+    name: r.el.name,
+  }));
+  const assembled = assembleSources(
+    results,
+    installed,
+    Object.fromEntries(meta.frameworks.map((f) => [f.id, f.name])),
+  );
+  const entered = version?.trim();
+  const finalVersion = entered || assembled.version || new Date().toISOString().slice(0, 10);
   const content: PackContent = {
     format: 'atrium-pack',
     manifest: {
       id: meta.id,
       name: meta.name,
-      version,
+      version: finalVersion,
       publisher: meta.publisher,
       description: meta.description,
       license: meta.license,
       homepage: meta.homepage,
       frameworks: meta.frameworks,
     },
-    elements,
-    relations: [],
+    elements: assembled.elements,
+    relations: assembled.relations,
   };
-  return { content, warnings };
+  const counts = new Map<string, number>();
+  for (const e of assembled.elements) counts.set(e.framework, (counts.get(e.framework) ?? 0) + 1);
+  return {
+    content,
+    report: {
+      version: finalVersion,
+      versionFrom: entered ? 'entered' : assembled.version ? 'files' : 'date',
+      files: reportFiles,
+      frameworks: meta.frameworks
+        .filter((f) => counts.has(f.id))
+        .map((f) => ({
+          id: f.id,
+          name: f.name,
+          elementType: f.elementType,
+          elements: counts.get(f.id)!,
+        })),
+      notes: assembled.notes,
+    },
+  };
 }
 
 async function listPacksStatic(): Promise<AvailablePack[]> {
@@ -259,27 +278,41 @@ async function installedRefs(deps: Deps, packId: string) {
   return rows.map((r) => ({ el: rowToElement(r), mapped: Number(r.mapped) }));
 }
 
+/**
+ * Which installed frameworks an update replaces. Files hold one framework each, so an upload of
+ * only the SID file must leave the installed eTOM alone; a complete pack file replaces everything.
+ */
+export type PackScope = string[] | undefined;
+
+const frameworkOf = (el: Element) => String(el.attributes.framework ?? '');
+
 export async function previewPack(
   deps: Deps,
   content: PackContent,
+  scope?: PackScope,
 ): Promise<{
   validation: ReturnType<typeof validatePack>;
   diff: PackDiff;
   installedVersion: string | null;
 }> {
   const validation = validatePack(content);
-  const installed = await installedRefs(deps, content.manifest.id);
-  const byId = new Map(installed.map((i) => [i.el.id, i.el]));
+  const all = await installedRefs(deps, content.manifest.id);
+  const byId = new Map(all.map((i) => [i.el.id, i.el]));
+  const installed = scope ? all.filter((i) => scope.includes(frameworkOf(i.el))) : all;
   const diff = diffPack(
-    installed.map((i) => ({
-      id: i.el.id,
-      key: i.el.key,
-      name: i.el.name,
-      type: i.el.type,
-      mappedFrom: i.mapped,
-      description: i.el.description,
-      parentKey: byId.get(i.el.parentId ?? '')?.key ?? null,
-    })),
+    installed.map((i) => {
+      const { framework: _, ...attributes } = i.el.attributes;
+      return {
+        id: i.el.id,
+        key: i.el.key,
+        name: i.el.name,
+        type: i.el.type,
+        mappedFrom: i.mapped,
+        description: i.el.description,
+        parentKey: byId.get(i.el.parentId ?? '')?.key ?? null,
+        attributes,
+      };
+    }),
     content,
   );
   const [row] =
@@ -287,8 +320,13 @@ export async function previewPack(
   return { validation, diff, installedVersion: (row?.version as string) ?? null };
 }
 
-export async function installPack(deps: Deps, ctx: RequestContext, content: PackContent) {
-  const { validation, diff } = await previewPack(deps, content);
+export async function installPack(
+  deps: Deps,
+  ctx: RequestContext,
+  content: PackContent,
+  scope?: PackScope,
+) {
+  const { validation, diff } = await previewPack(deps, content, scope);
   if (!validation.ok)
     throw badRequest(`The pack has problems: ${validation.errors.slice(0, 5).join('; ')}`);
   const sys = SYSTEM(ctx.mode);
@@ -301,8 +339,8 @@ export async function installPack(deps: Deps, ctx: RequestContext, content: Pack
       title: `${diff.added.length && diff.renamed.length + diff.changed.length + diff.removed.length === 0 ? 'Installed' : 'Updated'} ${content.manifest.name} ${content.manifest.version}`,
     });
     const idBySource = new Map<string, string>();
-    for (const r of await installedRefs(deps, packId))
-      if (r.el.key) idBySource.set(r.el.key, r.el.id);
+    const installed = await installedRefs(deps, packId);
+    for (const r of installed) if (r.el.key) idBySource.set(r.el.key, r.el.id);
     const touched: string[] = [];
     const base = (e: PackElement, id: string): Element => ({
       id,
@@ -363,19 +401,49 @@ export async function installPack(deps: Deps, ctx: RequestContext, content: Pack
       );
       idBySource.set(r.element.sourceId, r.id);
     }
-    // 3. hierarchy
-    for (const e of content.elements) {
+    // 3. hierarchy (unchanged elements keep their parent)
+    for (const e of [
+      ...diff.added,
+      ...diff.renamed.map((r) => r.element),
+      ...diff.changed.map((c) => c.element),
+    ]) {
       const id = idBySource.get(e.sourceId);
       const parent = e.parentSourceId ? idBySource.get(e.parentSourceId) : null;
       if (id) await tx`update elements set parent_id = ${parent ?? null} where id = ${id}`;
     }
-    // 4. relations inside the pack
+    // 4. relations inside the pack: those from the frameworks being replaced now match the files
+    const inScope = new Set(
+      installed.filter((r) => !scope || scope.includes(frameworkOf(r.el))).map((r) => r.el.id),
+    );
+    for (const e of content.elements) inScope.add(idBySource.get(e.sourceId)!);
+    const packIds = new Set(idBySource.values());
+    const wanted = new Map<string, { type: string; source: string; target: string }>();
     for (const r of content.relations) {
-      const s = idBySource.get(r.from);
-      const t = idBySource.get(r.to);
-      if (!s || !t) continue;
-      await tx`insert into relations (type, source_id, target_id, created_by) values (${r.type}, ${s}, ${t}, ${ctx.name}) on conflict do nothing`;
+      const source = idBySource.get(r.from);
+      const target = idBySource.get(r.to);
+      if (source && target)
+        wanted.set(`${r.type}|${source}|${target}`, { type: r.type, source, target });
     }
+    const current = await tx`
+      select id, type, source_id, target_id from relations
+      where deleted_at is null and type <> 'maps_to' and source_id in (
+        select id from elements where pack = ${packId} and deleted_at is null)`;
+    const stale: string[] = [];
+    for (const r of current) {
+      const k = `${r.type}|${r.sourceId}|${r.targetId}`;
+      if (wanted.has(k)) wanted.delete(k);
+      else if (inScope.has(r.sourceId as string) && packIds.has(r.targetId as string))
+        stale.push(r.id as string);
+    }
+    if (stale.length) await tx`update relations set deleted_at = now() where id in ${tx(stale)}`;
+    const fresh = [...wanted.values()].map((r) => ({
+      type: r.type,
+      sourceId: r.source,
+      targetId: r.target,
+      createdBy: ctx.name,
+    }));
+    for (let i = 0; i < fresh.length; i += 1000)
+      await tx`insert into relations ${tx(fresh.slice(i, i + 1000))} on conflict do nothing`;
     // 5. removals: move mappings to the replacement when the source says so, otherwise flag them
     let moved = 0;
     let flagged = 0;
@@ -406,12 +474,29 @@ export async function installPack(deps: Deps, ctx: RequestContext, content: Pack
       }
     }
     await refreshDerived(tx, touched);
+    // Each framework remembers the release it was last loaded from.
+    const [prev] = await tx`select manifest from reference_packs where id = ${packId}`;
+    const prevVersions = new Map(
+      ((prev?.manifest as { frameworks?: FrameworkConfig[] } | undefined)?.frameworks ?? []).map(
+        (f) => [f.id, f.version],
+      ),
+    );
+    const loaded = new Set(content.elements.map((e) => e.framework));
+    const manifest = {
+      ...content.manifest,
+      frameworks: content.manifest.frameworks.map((f) => ({
+        ...f,
+        version: loaded.has(f.id) ? content.manifest.version : prevVersions.get(f.id),
+      })),
+    };
+    const [{ n }] = await tx`
+      select count(*)::int as n from elements where pack = ${packId} and deleted_at is null`;
     await tx`
       insert into reference_packs (id, name, version, manifest, element_count, installed_by)
-      values (${packId}, ${content.manifest.name}, ${content.manifest.version}, ${tx.json(content.manifest as never)}, ${content.elements.length}, ${ctx.name})
+      values (${packId}, ${content.manifest.name}, ${content.manifest.version}, ${tx.json(manifest as never)}, ${n as number}, ${ctx.name})
       on conflict (id) do update set name = excluded.name, version = excluded.version, manifest = excluded.manifest,
         element_count = excluded.element_count, installed_at = now(), installed_by = excluded.installed_by`;
-    return { moved, flagged };
+    return { moved, flagged, links: fresh.length, unlinked: stale.length };
   });
   await audit(
     deps.sql,

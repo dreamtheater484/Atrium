@@ -43,14 +43,15 @@ await build({
   logLevel: 'warning',
 });
 
-const copy = (from, to) => {
+const copy = (from, to, filter) => {
   if (!existsSync(from)) return false;
-  cpSync(from, join(out, to), { recursive: true });
+  cpSync(from, join(out, to), { recursive: true, filter });
   return true;
 };
 copy(join(root, 'packages/db/migrations'), 'migrations');
 copy(join(here, 'src/data'), 'data');
-copy(join(root, 'packs'), 'packs');
+// Pack manifests and content only: a pack's importer code is bundled into main.js.
+copy(join(root, 'packs'), 'packs', (src) => !/[\\/](node_modules|src)([\\/]|$)/.test(src));
 if (!copy(join(root, 'apps/cli/dist/atrium.js'), 'cli/atrium.js'))
   console.warn('apps/cli is not built yet: /cli/atrium.mjs will be missing.');
 if (!copy(join(root, 'apps/web/dist'), 'public'))

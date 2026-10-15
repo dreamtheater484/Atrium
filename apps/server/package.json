@@ -19,6 +19,7 @@
     "@atrium/exporters": "workspace:*",
     "@atrium/importers": "workspace:*",
     "@atrium/mcp": "workspace:*",
+    "@atrium/pack-tmforum": "workspace:*",
     "@atrium/packs-core": "workspace:*",
     "@atrium/schema": "workspace:*",
     "@fastify/cookie": "^11.1.3",

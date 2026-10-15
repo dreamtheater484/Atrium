@@ -63,21 +63,29 @@ export function packRoutes(deps: Deps) {
       multipart: true,
       params: z.object({ id: z.string() }),
       query: z.object({
-        version: z.string().default(new Date().toISOString().slice(0, 10)),
+        /** Release as published; by default the one the files state, else today's date. */
+        version: z.string().optional(),
         install: z.enum(['true', 'false']).optional(),
       }),
       handler: async ({ params, query, req, ctx }) => {
         if (!isAdmin(ctx) && ctx.role !== 'architect')
           throw forbidden('Only architects can install reference packs.');
         const files = await readUploads(req as never);
-        const { content, warnings } = await packFromFiles(params.id, query.version, files);
-        if (!content.elements.length)
-          throw badRequest(`No reference elements found. ${warnings.join(' ')}`);
+        if (!files.length) throw badRequest('Choose one or more files.');
+        const { content, report } = await packFromFiles(deps, params.id, query.version, files);
+        if (!content.elements.length) {
+          const why = report.files.map(
+            (f) => `${f.name}: ${f.reader ?? 'not a file Atrium recognises for this pack'}`,
+          );
+          throw badRequest(`No reference elements found in the files. ${why.join('; ')}.`);
+        }
+        // Only the frameworks in these files are replaced; the others stay as installed.
+        const scope = report.frameworks.map((f) => f.id);
         if (query.install === 'true')
-          return { ...(await installPack(deps, ctx, content)), warnings };
-        const preview = await previewPack(deps, content);
+          return { ...(await installPack(deps, ctx, content, scope)), report };
+        const preview = await previewPack(deps, content, scope);
         return {
-          warnings,
+          report,
           installedVersion: preview.installedVersion,
           validation: preview.validation,
           diff: {
